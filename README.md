@@ -1,193 +1,234 @@
-# Dental Clinic Management System
+# Hệ Thống Quản Lý Phòng Khám Nha Khoa
 
-A full-stack dental clinic management system for handling users, roles, appointments, patients, services, pricing, doctor schedules, and patient appointment booking.
+Đây là tài liệu hướng dẫn đầy đủ cho dự án **Dental Clinic Management System** - hệ thống quản lý phòng khám nha khoa dùng Flutter, FastAPI và Supabase PostgreSQL.
 
-The project uses:
+Dự án hướng đến một hệ thống có thể dùng cho phòng khám nha khoa nhỏ hoặc vừa, hỗ trợ quản lý người dùng, bệnh nhân, lịch hẹn, dịch vụ, bảng giá, lịch làm việc của bác sĩ và hồ sơ điều trị.
 
-- **Frontend:** Flutter for mobile and web
-- **Backend:** FastAPI
-- **Database:** Supabase PostgreSQL
-- **Authentication:** Supabase Auth or backend-issued JWT tokens
-- **Authorization:** Role-based access control for Admin, Staff, Doctor, and Patient users
+## Công Nghệ Sử Dụng
 
-## Table of Contents
+| Thành phần | Công nghệ |
+| --- | --- |
+| Frontend | Flutter, hỗ trợ Mobile và Web |
+| Backend | FastAPI |
+| Database | Supabase PostgreSQL |
+| Authentication | Supabase Auth hoặc JWT do backend cấp |
+| Authorization | Role-Based Access Control |
+| API Style | REST API |
+| API Docs | Swagger UI do FastAPI tự sinh |
 
-- [Project Goals](#project-goals)
-- [System Roles](#system-roles)
-- [Architecture Overview](#architecture-overview)
-- [Folder Structure](#folder-structure)
-- [Database Design Overview](#database-design-overview)
-- [Role-Based Access Control](#role-based-access-control)
-- [API Structure](#api-structure)
-- [Real API Examples](#real-api-examples)
-- [Development Setup](#development-setup)
-- [How to Run the Backend](#how-to-run-the-backend)
-- [How to Run the Frontend](#how-to-run-the-frontend)
-- [Development Workflow](#development-workflow)
-- [Task Division for a 2-Person Team](#task-division-for-a-2-person-team)
-- [Testing Guide](#testing-guide)
-- [Deployment Notes](#deployment-notes)
+## Mục Tiêu Của Dự Án
 
-## Project Goals
+Hệ thống được xây dựng để giải quyết các nghiệp vụ chính trong phòng khám nha khoa:
 
-The system is designed to help a dental clinic manage its daily operations in one application.
+- Bệnh nhân có thể đăng ký tài khoản và đặt lịch khám.
+- Nhân viên có thể quản lý bệnh nhân, lịch hẹn, dịch vụ và giá dịch vụ.
+- Bác sĩ có thể xem lịch làm việc và tạo hồ sơ điều trị.
+- Admin có thể quản lý tài khoản người dùng và phân quyền.
+- Dữ liệu được lưu trữ tập trung trong Supabase PostgreSQL.
+- Backend kiểm soát toàn bộ nghiệp vụ và phân quyền.
+- Frontend Flutter có thể chạy trên web, Android và iOS.
 
-Main goals:
+## Vai Trò Trong Hệ Thống
 
-- Allow patients to book dental appointments online.
-- Allow staff to manage patients, appointments, services, and pricing.
-- Allow doctors to view schedules and create medical records.
-- Allow admins to manage users and role permissions.
-- Store clinic data in a structured PostgreSQL database using Supabase.
-- Provide a clean API layer using FastAPI.
-- Support Flutter mobile and Flutter web from the same codebase.
+Hệ thống có 4 vai trò chính:
 
-## System Roles
+```text
+Admin
+Staff
+Doctor
+Patient
+```
 
-### Admin
+Mỗi vai trò có trách nhiệm và quyền truy cập khác nhau.
 
-Admins manage the system and user access.
+## Trách Nhiệm Của Từng Vai Trò
 
-Responsibilities:
+### 1. Admin
 
-- Create, update, deactivate, and delete users.
-- Assign roles to users.
-- View all system data.
-- Manage clinic-level settings.
-- Audit user activity when needed.
+Admin là người quản trị cao nhất trong hệ thống.
 
-Typical screens:
+Admin có trách nhiệm:
 
-- User management
-- Role management
-- Dashboard
-- Clinic settings
+- Quản lý tài khoản người dùng.
+- Thêm, sửa, khóa hoặc vô hiệu hóa tài khoản.
+- Gán vai trò cho người dùng.
+- Xem toàn bộ dữ liệu trong hệ thống.
+- Quản lý cấu hình chung của phòng khám.
+- Theo dõi các thao tác quan trọng thông qua audit log.
 
-### Staff
+Chức năng nên có cho Admin:
 
-Staff members handle clinic operations.
+- Trang dashboard tổng quan.
+- Quản lý người dùng.
+- Quản lý vai trò.
+- Quản lý trạng thái tài khoản.
+- Xem thống kê lịch hẹn, bệnh nhân, bác sĩ.
 
-Responsibilities:
+### 2. Staff
 
-- Create and update patient profiles.
-- Create, reschedule, cancel, and confirm appointments.
-- Manage dental services.
-- Manage service prices.
-- View doctor availability.
-- Handle appointment status changes.
+Staff là nhân viên lễ tân hoặc nhân viên vận hành phòng khám.
 
-Typical screens:
+Staff có trách nhiệm:
 
-- Appointment calendar
-- Patient list
-- Patient detail
-- Service and pricing management
+- Quản lý danh sách bệnh nhân.
+- Tạo hồ sơ bệnh nhân mới.
+- Tạo lịch hẹn cho bệnh nhân.
+- Xác nhận, hủy hoặc dời lịch hẹn.
+- Quản lý danh sách dịch vụ nha khoa.
+- Quản lý giá dịch vụ.
+- Xem lịch làm việc của bác sĩ.
 
-### Doctor
+Chức năng nên có cho Staff:
 
-Doctors use the system mainly for schedule and treatment documentation.
+- Quản lý lịch hẹn.
+- Quản lý bệnh nhân.
+- Quản lý dịch vụ.
+- Quản lý bảng giá.
+- Tìm kiếm bệnh nhân theo tên, số điện thoại hoặc mã bệnh nhân.
 
-Responsibilities:
+### 3. Doctor
 
-- View personal appointment schedule.
-- View assigned patient information.
-- Create medical records.
-- Add diagnosis, treatment notes, prescriptions, and follow-up instructions.
-- Update appointment treatment status.
+Doctor là bác sĩ nha khoa sử dụng hệ thống để theo dõi lịch khám và ghi nhận điều trị.
 
-Typical screens:
+Doctor có trách nhiệm:
 
-- My schedule
-- Appointment detail
-- Medical record form
-- Patient treatment history
+- Xem lịch hẹn được phân công.
+- Xem thông tin bệnh nhân liên quan đến lịch khám của mình.
+- Tạo hồ sơ bệnh án hoặc hồ sơ điều trị.
+- Ghi chẩn đoán, phương pháp điều trị, đơn thuốc và ghi chú.
+- Cập nhật kết quả khám.
+- Đề xuất ngày tái khám.
 
-### Patient
+Chức năng nên có cho Doctor:
 
-Patients use the app to book and track their appointments.
+- Trang lịch làm việc cá nhân.
+- Chi tiết lịch hẹn.
+- Chi tiết bệnh nhân.
+- Tạo hồ sơ điều trị.
+- Xem lịch sử điều trị của bệnh nhân.
 
-Responsibilities:
+### 4. Patient
 
-- Register or log in.
-- View available services.
-- Book appointments.
-- View appointment history.
-- Cancel appointments if clinic policy allows.
-- Update basic personal information.
+Patient là bệnh nhân sử dụng ứng dụng để đặt lịch và theo dõi lịch khám.
 
-Typical screens:
+Patient có trách nhiệm:
 
-- Service list
-- Book appointment
-- My appointments
-- Profile
+- Đăng ký tài khoản.
+- Đăng nhập.
+- Xem danh sách dịch vụ nha khoa.
+- Chọn bác sĩ, dịch vụ, ngày và giờ khám.
+- Đặt lịch hẹn.
+- Xem lịch hẹn của bản thân.
+- Hủy lịch hẹn nếu chính sách phòng khám cho phép.
+- Cập nhật thông tin cá nhân.
 
-## Architecture Overview
+Chức năng nên có cho Patient:
 
-The application follows a simple client-server architecture.
+- Đăng ký, đăng nhập.
+- Xem dịch vụ.
+- Đặt lịch khám.
+- Xem lịch hẹn cá nhân.
+- Xem hồ sơ điều trị của bản thân.
+- Cập nhật hồ sơ cá nhân.
+
+## Kiến Trúc Tổng Quan
+
+Hệ thống sử dụng mô hình client-server.
 
 ```text
 Flutter App
 Mobile + Web
     |
-    | HTTPS REST API
+    | Gửi HTTP request qua REST API
     v
 FastAPI Backend
-Authentication, validation, business rules, RBAC
+Xử lý đăng nhập, nghiệp vụ, kiểm tra phân quyền
     |
-    | SQL queries / Supabase client
+    | Truy vấn dữ liệu
     v
 Supabase PostgreSQL
-Users, roles, patients, appointments, services, records
+Lưu users, patients, doctors, appointments, services, medical_records
 ```
 
-### Frontend Layer
+### Luồng Hoạt Động Cơ Bản
 
-Flutter is responsible for:
+Ví dụ bệnh nhân đặt lịch:
 
-- Displaying screens for each role.
-- Calling backend REST APIs.
-- Storing the access token locally after login.
-- Showing or hiding UI features based on the current user's role.
-- Validating simple form input before sending requests.
+```text
+1. Patient đăng nhập trên Flutter app
+2. Flutter lưu access token
+3. Patient chọn dịch vụ, bác sĩ, ngày giờ
+4. Flutter gửi request POST /appointments lên FastAPI
+5. FastAPI kiểm tra token
+6. FastAPI kiểm tra role patient
+7. FastAPI kiểm tra bệnh nhân có được đặt lịch cho chính mình không
+8. FastAPI kiểm tra bác sĩ có trống lịch không
+9. FastAPI ghi lịch hẹn vào Supabase
+10. FastAPI trả kết quả về Flutter
+11. Flutter hiển thị đặt lịch thành công
+```
 
-Recommended frontend state management options:
+## Giải Thích Từng Tầng Kiến Trúc
 
-- `provider`
-- `riverpod`
-- `bloc`
+### Frontend - Flutter
 
-For this project, beginners can start with `provider` or `riverpod` because they are easier to organize as the app grows.
+Flutter chịu trách nhiệm hiển thị giao diện và tương tác với người dùng.
 
-### Backend Layer
+Frontend nên làm:
 
-FastAPI is responsible for:
+- Hiển thị màn hình theo từng vai trò.
+- Gọi API backend.
+- Lưu token sau khi đăng nhập.
+- Gửi token trong header `Authorization`.
+- Validate form cơ bản trước khi gửi request.
+- Hiển thị loading, error, empty state và success state.
+- Điều hướng người dùng đến đúng dashboard theo role.
 
-- Receiving requests from the Flutter app.
-- Validating request data with Pydantic schemas.
-- Checking authentication tokens.
-- Enforcing role-based access rules.
-- Running business logic.
-- Reading and writing data in Supabase PostgreSQL.
-- Returning consistent JSON responses.
+Frontend không nên làm:
 
-The backend should be the main place where permission checks happen. The frontend can hide buttons, but the backend must still protect every restricted endpoint.
+- Không tự quyết định quyền truy cập quan trọng.
+- Không chứa Supabase service role key.
+- Không xử lý nghiệp vụ nhạy cảm như phân quyền, đổi role, tạo hồ sơ điều trị trái quyền.
 
-### Database Layer
+### Backend - FastAPI
 
-Supabase PostgreSQL stores the application data.
+FastAPI là tầng xử lý nghiệp vụ chính.
 
-Supabase can provide:
+Backend chịu trách nhiệm:
 
-- PostgreSQL database
-- Authentication
-- Row Level Security policies
-- Storage, if the clinic later needs files such as X-rays or documents
-- Dashboard for inspecting tables
+- Nhận request từ Flutter.
+- Kiểm tra dữ liệu đầu vào bằng Pydantic.
+- Kiểm tra token đăng nhập.
+- Kiểm tra role của người dùng.
+- Xử lý nghiệp vụ đặt lịch, đổi trạng thái, tạo bệnh án.
+- Giao tiếp với Supabase PostgreSQL.
+- Trả JSON response rõ ràng cho frontend.
 
-## Folder Structure
+Backend là nơi bắt buộc phải kiểm tra quyền. Dù frontend có ẩn nút chức năng, người dùng vẫn có thể gọi API trực tiếp, vì vậy mọi endpoint nhạy cảm đều phải có kiểm tra phân quyền.
 
-Current repository layout:
+### Database - Supabase PostgreSQL
+
+Supabase PostgreSQL lưu toàn bộ dữ liệu chính:
+
+- Người dùng.
+- Vai trò.
+- Bệnh nhân.
+- Bác sĩ.
+- Dịch vụ nha khoa.
+- Giá dịch vụ.
+- Lịch hẹn.
+- Hồ sơ điều trị.
+- Nhật ký thao tác.
+
+Supabase cũng có thể mở rộng để dùng:
+
+- Supabase Auth cho đăng nhập.
+- Supabase Storage để lưu ảnh chụp X-quang hoặc file hồ sơ.
+- Row Level Security để bảo vệ dữ liệu ở tầng database.
+
+## Cấu Trúc Thư Mục Hiện Tại
+
+Repository hiện tại có cấu trúc:
 
 ```text
 .
@@ -204,7 +245,15 @@ Current repository layout:
 └── README.md
 ```
 
-Recommended final project structure:
+Trong đó:
+
+- `Backend/`: thư mục dành cho FastAPI backend.
+- `flutter_application_1/`: thư mục chứa Flutter app.
+- `README.md`: tài liệu tổng quan toàn dự án.
+
+## Cấu Trúc Thư Mục Đề Xuất
+
+Khi phát triển đầy đủ, nên tổ chức lại như sau:
 
 ```text
 .
@@ -218,28 +267,26 @@ Recommended final project structure:
 │   │   ├── db/
 │   │   │   ├── supabase.py
 │   │   │   └── migrations/
-│   │   ├── models/
-│   │   │   ├── user.py
-│   │   │   ├── patient.py
-│   │   │   ├── appointment.py
-│   │   │   ├── service.py
-│   │   │   └── medical_record.py
 │   │   ├── schemas/
 │   │   │   ├── auth.py
 │   │   │   ├── user.py
 │   │   │   ├── patient.py
-│   │   │   ├── appointment.py
+│   │   │   ├── doctor.py
 │   │   │   ├── service.py
+│   │   │   ├── appointment.py
 │   │   │   └── medical_record.py
 │   │   ├── routers/
 │   │   │   ├── auth.py
 │   │   │   ├── users.py
 │   │   │   ├── patients.py
-│   │   │   ├── appointments.py
+│   │   │   ├── doctors.py
 │   │   │   ├── services.py
+│   │   │   ├── appointments.py
 │   │   │   └── medical_records.py
 │   │   └── services/
+│   │       ├── auth_service.py
 │   │       ├── user_service.py
+│   │       ├── patient_service.py
 │   │       ├── appointment_service.py
 │   │       └── medical_record_service.py
 │   ├── tests/
@@ -253,6 +300,7 @@ Recommended final project structure:
 │   │   ├── app.dart
 │   │   ├── core/
 │   │   │   ├── constants/
+│   │   │   │   └── api_constants.dart
 │   │   │   ├── routing/
 │   │   │   ├── theme/
 │   │   │   └── utils/
@@ -263,6 +311,10 @@ Recommended final project structure:
 │   │   │   │   ├── appointment_api.dart
 │   │   │   │   └── patient_api.dart
 │   │   │   ├── models/
+│   │   │   │   ├── user_model.dart
+│   │   │   │   ├── patient_model.dart
+│   │   │   │   ├── appointment_model.dart
+│   │   │   │   └── service_model.dart
 │   │   │   └── repositories/
 │   │   ├── features/
 │   │   │   ├── auth/
@@ -280,131 +332,183 @@ Recommended final project structure:
 └── README.md
 ```
 
-## Database Design Overview
+## Thiết Kế Database
 
-The database should be normalized enough to avoid duplicate data, but simple enough for a beginner team to maintain.
+Database nên được thiết kế rõ ràng ngay từ đầu vì đây là phần ảnh hưởng đến toàn bộ hệ thống.
 
-### Main Tables
+Các bảng chính:
 
-### `users`
+```text
+users
+patients
+doctors
+services
+appointments
+medical_records
+audit_logs
+```
 
-Stores application users and links them to roles.
+## Bảng `users`
 
-| Column | Type | Description |
+Bảng này lưu thông tin tài khoản đăng nhập và vai trò.
+
+| Cột | Kiểu dữ liệu | Mô tả |
 | --- | --- | --- |
-| `id` | `uuid` | Primary key |
-| `email` | `text` | Unique login email |
-| `full_name` | `text` | User display name |
-| `phone` | `text` | Contact number |
-| `role` | `text` | `admin`, `staff`, `doctor`, or `patient` |
-| `is_active` | `boolean` | Whether user can access the system |
-| `created_at` | `timestamp` | Creation time |
-| `updated_at` | `timestamp` | Last update time |
+| `id` | `uuid` | Khóa chính |
+| `email` | `text` | Email đăng nhập, không được trùng |
+| `full_name` | `text` | Họ tên người dùng |
+| `phone` | `text` | Số điện thoại |
+| `role` | `text` | `admin`, `staff`, `doctor`, `patient` |
+| `is_active` | `boolean` | Tài khoản có đang hoạt động không |
+| `created_at` | `timestamptz` | Thời điểm tạo |
+| `updated_at` | `timestamptz` | Thời điểm cập nhật |
 
-### `patients`
+## Bảng `patients`
 
-Stores patient-specific information.
+Bảng này lưu thông tin bệnh nhân.
 
-| Column | Type | Description |
+| Cột | Kiểu dữ liệu | Mô tả |
 | --- | --- | --- |
-| `id` | `uuid` | Primary key |
-| `user_id` | `uuid` | Optional link to `users.id` |
-| `full_name` | `text` | Patient name |
-| `date_of_birth` | `date` | Date of birth |
-| `gender` | `text` | Gender |
-| `phone` | `text` | Phone number |
-| `address` | `text` | Address |
-| `allergies` | `text` | Known allergies |
-| `medical_notes` | `text` | General health notes |
-| `created_at` | `timestamp` | Creation time |
+| `id` | `uuid` | Khóa chính |
+| `user_id` | `uuid` | Liên kết đến `users.id`, có thể null |
+| `full_name` | `text` | Họ tên bệnh nhân |
+| `date_of_birth` | `date` | Ngày sinh |
+| `gender` | `text` | Giới tính |
+| `phone` | `text` | Số điện thoại |
+| `address` | `text` | Địa chỉ |
+| `allergies` | `text` | Dị ứng nếu có |
+| `medical_notes` | `text` | Ghi chú y tế tổng quát |
+| `created_at` | `timestamptz` | Thời điểm tạo |
 
-### `doctors`
+## Bảng `doctors`
 
-Stores doctor profile data.
+Bảng này lưu thông tin riêng của bác sĩ.
 
-| Column | Type | Description |
+| Cột | Kiểu dữ liệu | Mô tả |
 | --- | --- | --- |
-| `id` | `uuid` | Primary key |
-| `user_id` | `uuid` | Link to `users.id` |
-| `specialization` | `text` | Example: orthodontics, surgery, general dentistry |
-| `license_number` | `text` | Doctor license number |
-| `is_available` | `boolean` | Whether doctor can receive appointments |
+| `id` | `uuid` | Khóa chính |
+| `user_id` | `uuid` | Liên kết đến `users.id` |
+| `specialization` | `text` | Chuyên môn |
+| `license_number` | `text` | Số giấy phép hành nghề |
+| `is_available` | `boolean` | Có đang nhận lịch không |
 
-### `services`
+## Bảng `services`
 
-Stores dental services and prices.
+Bảng này lưu dịch vụ nha khoa và giá.
 
-| Column | Type | Description |
+| Cột | Kiểu dữ liệu | Mô tả |
 | --- | --- | --- |
-| `id` | `uuid` | Primary key |
-| `name` | `text` | Service name |
-| `description` | `text` | Service description |
-| `duration_minutes` | `integer` | Expected appointment duration |
-| `price` | `numeric` | Current service price |
-| `is_active` | `boolean` | Whether service is bookable |
+| `id` | `uuid` | Khóa chính |
+| `name` | `text` | Tên dịch vụ |
+| `description` | `text` | Mô tả dịch vụ |
+| `duration_minutes` | `integer` | Thời lượng dự kiến |
+| `price` | `numeric` | Giá dịch vụ |
+| `is_active` | `boolean` | Dịch vụ có đang được sử dụng không |
 
-### `appointments`
+Ví dụ dịch vụ:
 
-Stores appointment bookings.
+- Khám tổng quát.
+- Cạo vôi răng.
+- Trám răng.
+- Nhổ răng.
+- Tẩy trắng răng.
+- Niềng răng.
+- Điều trị tủy.
 
-| Column | Type | Description |
+## Bảng `appointments`
+
+Bảng này lưu lịch hẹn khám.
+
+| Cột | Kiểu dữ liệu | Mô tả |
 | --- | --- | --- |
-| `id` | `uuid` | Primary key |
-| `patient_id` | `uuid` | Link to `patients.id` |
-| `doctor_id` | `uuid` | Link to `doctors.id` |
-| `service_id` | `uuid` | Link to `services.id` |
-| `appointment_time` | `timestamp` | Scheduled start time |
-| `status` | `text` | `pending`, `confirmed`, `completed`, `cancelled`, `no_show` |
-| `reason` | `text` | Patient reason or complaint |
-| `created_by` | `uuid` | User who created the appointment |
-| `created_at` | `timestamp` | Creation time |
-| `updated_at` | `timestamp` | Last update time |
+| `id` | `uuid` | Khóa chính |
+| `patient_id` | `uuid` | Bệnh nhân đặt lịch |
+| `doctor_id` | `uuid` | Bác sĩ phụ trách |
+| `service_id` | `uuid` | Dịch vụ được chọn |
+| `appointment_time` | `timestamptz` | Thời gian khám |
+| `status` | `text` | Trạng thái lịch hẹn |
+| `reason` | `text` | Lý do khám |
+| `created_by` | `uuid` | Người tạo lịch |
+| `created_at` | `timestamptz` | Thời điểm tạo |
+| `updated_at` | `timestamptz` | Thời điểm cập nhật |
 
-### `medical_records`
+Các trạng thái lịch hẹn:
 
-Stores doctor-created clinical records.
+| Trạng thái | Ý nghĩa |
+| --- | --- |
+| `pending` | Chờ xác nhận |
+| `confirmed` | Đã xác nhận |
+| `completed` | Đã khám xong |
+| `cancelled` | Đã hủy |
+| `no_show` | Bệnh nhân không đến |
 
-| Column | Type | Description |
+## Bảng `medical_records`
+
+Bảng này lưu hồ sơ điều trị do bác sĩ tạo.
+
+| Cột | Kiểu dữ liệu | Mô tả |
 | --- | --- | --- |
-| `id` | `uuid` | Primary key |
-| `appointment_id` | `uuid` | Link to `appointments.id` |
-| `patient_id` | `uuid` | Link to `patients.id` |
-| `doctor_id` | `uuid` | Link to `doctors.id` |
-| `diagnosis` | `text` | Diagnosis |
-| `treatment` | `text` | Treatment performed |
-| `prescription` | `text` | Medication instructions |
-| `notes` | `text` | Additional notes |
-| `follow_up_date` | `date` | Optional follow-up date |
-| `created_at` | `timestamp` | Creation time |
+| `id` | `uuid` | Khóa chính |
+| `appointment_id` | `uuid` | Liên kết lịch hẹn |
+| `patient_id` | `uuid` | Bệnh nhân |
+| `doctor_id` | `uuid` | Bác sĩ tạo hồ sơ |
+| `diagnosis` | `text` | Chẩn đoán |
+| `treatment` | `text` | Phương pháp điều trị |
+| `prescription` | `text` | Đơn thuốc |
+| `notes` | `text` | Ghi chú |
+| `follow_up_date` | `date` | Ngày tái khám |
+| `created_at` | `timestamptz` | Thời điểm tạo |
 
-### `audit_logs`
+## Bảng `audit_logs`
 
-Tracks important actions.
+Bảng này ghi lại các hành động quan trọng.
 
-| Column | Type | Description |
+| Cột | Kiểu dữ liệu | Mô tả |
 | --- | --- | --- |
-| `id` | `uuid` | Primary key |
-| `user_id` | `uuid` | User who performed the action |
-| `action` | `text` | Example: `CREATE_APPOINTMENT` |
-| `entity_type` | `text` | Example: `appointment` |
-| `entity_id` | `uuid` | ID of affected record |
-| `created_at` | `timestamp` | Action time |
+| `id` | `uuid` | Khóa chính |
+| `user_id` | `uuid` | Người thực hiện |
+| `action` | `text` | Hành động |
+| `entity_type` | `text` | Loại dữ liệu bị tác động |
+| `entity_id` | `uuid` | ID bản ghi bị tác động |
+| `created_at` | `timestamptz` | Thời điểm thực hiện |
 
-### Relationships
+Ví dụ `action`:
+
+```text
+CREATE_USER
+CHANGE_USER_ROLE
+CREATE_APPOINTMENT
+CANCEL_APPOINTMENT
+CREATE_MEDICAL_RECORD
+UPDATE_SERVICE_PRICE
+```
+
+## Quan Hệ Giữa Các Bảng
 
 ```text
 users 1--1 doctors
 users 1--1 patients
-patients 1--many appointments
-doctors 1--many appointments
-services 1--many appointments
+patients 1--n appointments
+doctors 1--n appointments
+services 1--n appointments
 appointments 1--1 medical_records
-patients 1--many medical_records
-doctors 1--many medical_records
-users 1--many audit_logs
+patients 1--n medical_records
+doctors 1--n medical_records
+users 1--n audit_logs
 ```
 
-### Example SQL Schema
+Giải thích:
+
+- Một user có thể là doctor hoặc patient.
+- Một patient có nhiều appointments.
+- Một doctor có nhiều appointments.
+- Một appointment thuộc về một service.
+- Một appointment sau khi khám có thể có một medical record.
+- Một patient có thể có nhiều medical records theo thời gian.
+
+## SQL Schema Mẫu
+
+Có thể chạy SQL này trong Supabase SQL Editor để tạo database cơ bản.
 
 ```sql
 create table users (
@@ -474,47 +578,78 @@ create table medical_records (
   follow_up_date date,
   created_at timestamptz not null default now()
 );
+
+create table audit_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete set null,
+  action text not null,
+  entity_type text not null,
+  entity_id uuid,
+  created_at timestamptz not null default now()
+);
 ```
 
-## Role-Based Access Control
+## Phân Quyền Role-Based Access Control
 
-Role-based access control decides what each user can do.
+Phân quyền là phần rất quan trọng vì hệ thống có dữ liệu y tế.
 
-### Permission Matrix
+Nguyên tắc:
 
-| Feature | Admin | Staff | Doctor | Patient |
+- Người dùng phải đăng nhập mới được gọi API bảo vệ.
+- Token phải hợp lệ.
+- Tài khoản phải đang hoạt động.
+- Role phải có quyền với chức năng đang gọi.
+- Patient chỉ được xem và thao tác dữ liệu của chính mình.
+- Doctor chỉ được tạo hồ sơ điều trị cho lịch hẹn được giao.
+- Staff không được tạo hồ sơ điều trị.
+- Admin có quyền quản trị người dùng nhưng không nên tự ý sửa nội dung chuyên môn y tế.
+
+## Bảng Phân Quyền
+
+| Chức năng | Admin | Staff | Doctor | Patient |
 | --- | --- | --- | --- | --- |
-| Manage users | Yes | No | No | No |
-| Assign roles | Yes | No | No | No |
-| Manage patients | Yes | Yes | View assigned | Own profile only |
-| Manage services | Yes | Yes | View only | View only |
-| Manage pricing | Yes | Yes | No | No |
-| Create appointments | Yes | Yes | No | Yes, for self |
-| Update appointment status | Yes | Yes | Limited | Cancel own only |
-| View all appointments | Yes | Yes | No | No |
-| View doctor schedule | Yes | Yes | Own schedule | No |
-| Create medical records | No | No | Yes | No |
-| View medical records | Yes | Staff-limited | Own patients | Own records |
+| Quản lý user | Có | Không | Không | Không |
+| Gán role | Có | Không | Không | Không |
+| Xem danh sách bệnh nhân | Có | Có | Bệnh nhân được giao | Không |
+| Tạo bệnh nhân | Có | Có | Không | Tự đăng ký |
+| Sửa thông tin bệnh nhân | Có | Có | Hạn chế | Chính mình |
+| Xem dịch vụ | Có | Có | Có | Có |
+| Tạo dịch vụ | Có | Có | Không | Không |
+| Sửa giá dịch vụ | Có | Có | Không | Không |
+| Tạo lịch hẹn | Có | Có | Không | Cho chính mình |
+| Xem toàn bộ lịch hẹn | Có | Có | Không | Không |
+| Xem lịch cá nhân | Có | Có | Có | Có |
+| Cập nhật trạng thái lịch hẹn | Có | Có | Hạn chế | Hủy lịch của mình |
+| Tạo hồ sơ điều trị | Không | Không | Có | Không |
+| Xem hồ sơ điều trị | Có | Hạn chế | Bệnh nhân được giao | Của chính mình |
 
-### Backend RBAC Example
+## Ví Dụ RBAC Trong FastAPI
 
-Use a dependency to require a role before allowing a request.
+Ví dụ hàm kiểm tra role:
 
 ```python
 from fastapi import Depends, HTTPException, status
 
 def require_roles(*allowed_roles: str):
     def checker(current_user = Depends(get_current_user)):
+        if not current_user.get("is_active"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Tài khoản đã bị vô hiệu hóa",
+            )
+
         if current_user["role"] not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have permission to perform this action",
+                detail="Bạn không có quyền thực hiện chức năng này",
             )
+
         return current_user
+
     return checker
 ```
 
-Example route:
+Ví dụ route chỉ cho Admin và Staff tạo dịch vụ:
 
 ```python
 @router.post("/services")
@@ -525,100 +660,107 @@ async def create_service(
     return service_service.create_service(payload)
 ```
 
-Important rule:
+Ví dụ route chỉ cho Doctor tạo hồ sơ điều trị:
 
-The frontend can hide restricted buttons, but the backend must always enforce permissions.
+```python
+@router.post("/medical-records")
+async def create_medical_record(
+    payload: MedicalRecordCreate,
+    current_user = Depends(require_roles("doctor")),
+):
+    return medical_record_service.create_record(payload, current_user)
+```
 
-## API Structure
+## Cấu Trúc API
 
-Recommended API base URL during local development:
+API base URL khi chạy local:
 
 ```text
 http://localhost:8000/api/v1
 ```
 
-### Main API Groups
+Các nhóm API chính:
 
-| Group | Prefix | Purpose |
+| Nhóm | Prefix | Mục đích |
 | --- | --- | --- |
-| Auth | `/api/v1/auth` | Login, register, current user |
-| Users | `/api/v1/users` | Admin user management |
-| Patients | `/api/v1/patients` | Patient profiles |
-| Doctors | `/api/v1/doctors` | Doctor profiles and availability |
-| Services | `/api/v1/services` | Dental services and prices |
-| Appointments | `/api/v1/appointments` | Booking and schedule management |
-| Medical Records | `/api/v1/medical-records` | Diagnosis and treatment records |
+| Auth | `/api/v1/auth` | Đăng ký, đăng nhập, lấy thông tin user hiện tại |
+| Users | `/api/v1/users` | Quản lý người dùng |
+| Patients | `/api/v1/patients` | Quản lý bệnh nhân |
+| Doctors | `/api/v1/doctors` | Quản lý bác sĩ |
+| Services | `/api/v1/services` | Quản lý dịch vụ và giá |
+| Appointments | `/api/v1/appointments` | Quản lý lịch hẹn |
+| Medical Records | `/api/v1/medical-records` | Quản lý hồ sơ điều trị |
 
-### Suggested Endpoints
+## Danh Sách Endpoint Đề Xuất
 
-### Auth
+### Auth API
 
-| Method | Endpoint | Roles | Description |
+| Method | Endpoint | Quyền | Mô tả |
 | --- | --- | --- | --- |
-| `POST` | `/auth/register` | Public | Register a patient account |
-| `POST` | `/auth/login` | Public | Log in and receive token |
-| `GET` | `/auth/me` | All authenticated users | Get current user profile |
-| `POST` | `/auth/logout` | All authenticated users | Log out |
+| `POST` | `/auth/register` | Public | Đăng ký tài khoản patient |
+| `POST` | `/auth/login` | Public | Đăng nhập |
+| `GET` | `/auth/me` | Đã đăng nhập | Lấy thông tin user hiện tại |
+| `POST` | `/auth/logout` | Đã đăng nhập | Đăng xuất |
 
-### Users
+### Users API
 
-| Method | Endpoint | Roles | Description |
+| Method | Endpoint | Quyền | Mô tả |
 | --- | --- | --- | --- |
-| `GET` | `/users` | Admin | List users |
-| `POST` | `/users` | Admin | Create user |
-| `GET` | `/users/{user_id}` | Admin | Get user detail |
-| `PATCH` | `/users/{user_id}` | Admin | Update user |
-| `PATCH` | `/users/{user_id}/role` | Admin | Change user role |
-| `DELETE` | `/users/{user_id}` | Admin | Deactivate user |
+| `GET` | `/users` | Admin | Lấy danh sách user |
+| `POST` | `/users` | Admin | Tạo user |
+| `GET` | `/users/{user_id}` | Admin | Xem chi tiết user |
+| `PATCH` | `/users/{user_id}` | Admin | Cập nhật user |
+| `PATCH` | `/users/{user_id}/role` | Admin | Đổi role |
+| `DELETE` | `/users/{user_id}` | Admin | Vô hiệu hóa user |
 
-### Patients
+### Patients API
 
-| Method | Endpoint | Roles | Description |
+| Method | Endpoint | Quyền | Mô tả |
 | --- | --- | --- | --- |
-| `GET` | `/patients` | Admin, Staff | List patients |
-| `POST` | `/patients` | Admin, Staff | Create patient |
-| `GET` | `/patients/{patient_id}` | Admin, Staff, Doctor, Patient owner | Get patient detail |
-| `PATCH` | `/patients/{patient_id}` | Admin, Staff, Patient owner | Update patient |
+| `GET` | `/patients` | Admin, Staff | Lấy danh sách bệnh nhân |
+| `POST` | `/patients` | Admin, Staff | Tạo hồ sơ bệnh nhân |
+| `GET` | `/patients/{patient_id}` | Admin, Staff, Doctor liên quan, Patient chủ sở hữu | Xem chi tiết bệnh nhân |
+| `PATCH` | `/patients/{patient_id}` | Admin, Staff, Patient chủ sở hữu | Cập nhật bệnh nhân |
 
-### Services
+### Services API
 
-| Method | Endpoint | Roles | Description |
+| Method | Endpoint | Quyền | Mô tả |
 | --- | --- | --- | --- |
-| `GET` | `/services` | All authenticated users | List active services |
-| `POST` | `/services` | Admin, Staff | Create service |
-| `PATCH` | `/services/{service_id}` | Admin, Staff | Update service or price |
-| `DELETE` | `/services/{service_id}` | Admin, Staff | Disable service |
+| `GET` | `/services` | Đã đăng nhập | Lấy danh sách dịch vụ |
+| `POST` | `/services` | Admin, Staff | Tạo dịch vụ |
+| `PATCH` | `/services/{service_id}` | Admin, Staff | Cập nhật dịch vụ hoặc giá |
+| `DELETE` | `/services/{service_id}` | Admin, Staff | Ngừng sử dụng dịch vụ |
 
-### Appointments
+### Appointments API
 
-| Method | Endpoint | Roles | Description |
+| Method | Endpoint | Quyền | Mô tả |
 | --- | --- | --- | --- |
-| `GET` | `/appointments` | Admin, Staff | List all appointments |
-| `POST` | `/appointments` | Admin, Staff, Patient | Create appointment |
-| `GET` | `/appointments/my` | Doctor, Patient | List current user's appointments |
-| `GET` | `/appointments/{appointment_id}` | Authorized users | Get appointment detail |
-| `PATCH` | `/appointments/{appointment_id}` | Admin, Staff | Reschedule or edit appointment |
-| `PATCH` | `/appointments/{appointment_id}/status` | Admin, Staff, Doctor | Update appointment status |
-| `DELETE` | `/appointments/{appointment_id}` | Admin, Staff, Patient owner | Cancel appointment |
+| `GET` | `/appointments` | Admin, Staff | Lấy toàn bộ lịch hẹn |
+| `POST` | `/appointments` | Admin, Staff, Patient | Tạo lịch hẹn |
+| `GET` | `/appointments/my` | Doctor, Patient | Lấy lịch hẹn của chính mình |
+| `GET` | `/appointments/{appointment_id}` | Người có quyền | Xem chi tiết lịch hẹn |
+| `PATCH` | `/appointments/{appointment_id}` | Admin, Staff | Dời lịch hoặc sửa lịch |
+| `PATCH` | `/appointments/{appointment_id}/status` | Admin, Staff, Doctor | Cập nhật trạng thái |
+| `DELETE` | `/appointments/{appointment_id}` | Admin, Staff, Patient chủ sở hữu | Hủy lịch |
 
-### Medical Records
+### Medical Records API
 
-| Method | Endpoint | Roles | Description |
+| Method | Endpoint | Quyền | Mô tả |
 | --- | --- | --- | --- |
-| `GET` | `/medical-records` | Admin, Doctor | List medical records |
-| `POST` | `/medical-records` | Doctor | Create medical record |
-| `GET` | `/medical-records/{record_id}` | Authorized users | Get medical record detail |
-| `PATCH` | `/medical-records/{record_id}` | Doctor owner | Update medical record |
+| `GET` | `/medical-records` | Admin, Doctor | Lấy danh sách hồ sơ điều trị |
+| `POST` | `/medical-records` | Doctor | Tạo hồ sơ điều trị |
+| `GET` | `/medical-records/{record_id}` | Người có quyền | Xem chi tiết hồ sơ |
+| `PATCH` | `/medical-records/{record_id}` | Doctor tạo hồ sơ | Cập nhật hồ sơ |
 
-## Real API Examples
+## Ví Dụ API Thực Tế
 
-The examples below assume the backend is running at:
+Các ví dụ dưới đây dùng base URL:
 
 ```text
 http://localhost:8000/api/v1
 ```
 
-### Register a Patient
+## Đăng Ký Tài Khoản Patient
 
 Request:
 
@@ -646,7 +788,7 @@ Response:
 }
 ```
 
-### Login
+## Đăng Nhập
 
 Request:
 
@@ -674,9 +816,31 @@ Response:
 }
 ```
 
-### Create a Dental Service
+## Lấy Thông Tin User Hiện Tại
 
-Allowed roles: Admin, Staff.
+Request:
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/auth/me" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+Response:
+
+```json
+{
+  "id": "97f8c930-4f36-4404-8901-3e8b02aa01c6",
+  "email": "staff@example.com",
+  "full_name": "Clinic Staff",
+  "phone": "0900000000",
+  "role": "staff",
+  "is_active": true
+}
+```
+
+## Tạo Dịch Vụ Nha Khoa
+
+Chỉ `admin` và `staff` được gọi API này.
 
 Request:
 
@@ -685,8 +849,8 @@ curl -X POST "http://localhost:8000/api/v1/services" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Dental Cleaning",
-    "description": "Basic teeth cleaning and oral hygiene check",
+    "name": "Cao voi rang",
+    "description": "Lam sach cao rang va kiem tra ve sinh rang mieng",
     "duration_minutes": 30,
     "price": 300000
   }'
@@ -697,17 +861,47 @@ Response:
 ```json
 {
   "id": "c57a49d5-2eec-407b-9e9e-41fa5c7c6f6d",
-  "name": "Dental Cleaning",
-  "description": "Basic teeth cleaning and oral hygiene check",
+  "name": "Cao voi rang",
+  "description": "Lam sach cao rang va kiem tra ve sinh rang mieng",
   "duration_minutes": 30,
   "price": 300000,
   "is_active": true
 }
 ```
 
-### Book an Appointment
+## Lấy Danh Sách Dịch Vụ
 
-Allowed roles: Admin, Staff, Patient.
+Request:
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/services" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+Response:
+
+```json
+[
+  {
+    "id": "c57a49d5-2eec-407b-9e9e-41fa5c7c6f6d",
+    "name": "Cao voi rang",
+    "duration_minutes": 30,
+    "price": 300000,
+    "is_active": true
+  },
+  {
+    "id": "6d23a365-e2cd-4b83-9d2f-7cde1cc4f456",
+    "name": "Tram rang",
+    "duration_minutes": 45,
+    "price": 500000,
+    "is_active": true
+  }
+]
+```
+
+## Đặt Lịch Hẹn
+
+`patient` chỉ được đặt lịch cho chính mình. `staff` và `admin` có thể đặt lịch thay bệnh nhân.
 
 Request:
 
@@ -720,7 +914,7 @@ curl -X POST "http://localhost:8000/api/v1/appointments" \
     "doctor_id": "f80ec2dc-e97d-4f9a-a0be-860e3e620908",
     "service_id": "c57a49d5-2eec-407b-9e9e-41fa5c7c6f6d",
     "appointment_time": "2026-05-10T09:00:00+07:00",
-    "reason": "Tooth pain on lower right side"
+    "reason": "Dau rang ham duoi ben phai"
   }'
 ```
 
@@ -734,13 +928,11 @@ Response:
   "service_id": "c57a49d5-2eec-407b-9e9e-41fa5c7c6f6d",
   "appointment_time": "2026-05-10T09:00:00+07:00",
   "status": "pending",
-  "reason": "Tooth pain on lower right side"
+  "reason": "Dau rang ham duoi ben phai"
 }
 ```
 
-### Update Appointment Status
-
-Allowed roles: Admin, Staff, Doctor.
+## Cập Nhật Trạng Thái Lịch Hẹn
 
 Request:
 
@@ -763,9 +955,9 @@ Response:
 }
 ```
 
-### Create a Medical Record
+## Tạo Hồ Sơ Điều Trị
 
-Allowed roles: Doctor.
+Chỉ `doctor` được tạo hồ sơ điều trị.
 
 Request:
 
@@ -777,10 +969,10 @@ curl -X POST "http://localhost:8000/api/v1/medical-records" \
     "appointment_id": "ad4cf0f4-7c3a-4be4-a8da-d6f690975337",
     "patient_id": "4b9f7060-4cf4-49c2-b515-5e14d09f5f20",
     "doctor_id": "f80ec2dc-e97d-4f9a-a0be-860e3e620908",
-    "diagnosis": "Dental caries",
-    "treatment": "Cavity cleaning and composite filling",
-    "prescription": "Ibuprofen 400mg if pain occurs",
-    "notes": "Patient should avoid hard food for 24 hours",
+    "diagnosis": "Sau rang",
+    "treatment": "Lam sach lo sau va tram composite",
+    "prescription": "Ibuprofen 400mg khi dau",
+    "notes": "Khong an do cung trong 24 gio",
     "follow_up_date": "2026-05-24"
   }'
 ```
@@ -793,57 +985,57 @@ Response:
   "appointment_id": "ad4cf0f4-7c3a-4be4-a8da-d6f690975337",
   "patient_id": "4b9f7060-4cf4-49c2-b515-5e14d09f5f20",
   "doctor_id": "f80ec2dc-e97d-4f9a-a0be-860e3e620908",
-  "diagnosis": "Dental caries",
-  "treatment": "Cavity cleaning and composite filling",
-  "prescription": "Ibuprofen 400mg if pain occurs",
-  "notes": "Patient should avoid hard food for 24 hours",
+  "diagnosis": "Sau rang",
+  "treatment": "Lam sach lo sau va tram composite",
+  "prescription": "Ibuprofen 400mg khi dau",
+  "notes": "Khong an do cung trong 24 gio",
   "follow_up_date": "2026-05-24",
   "created_at": "2026-05-03T15:25:00Z"
 }
 ```
 
-### Error Response Format
+## Format Lỗi API
 
-Use a consistent error format across the backend.
+Backend nên trả lỗi theo format thống nhất:
 
 ```json
 {
   "detail": {
     "code": "FORBIDDEN",
-    "message": "You do not have permission to perform this action"
+    "message": "Bạn không có quyền thực hiện chức năng này"
   }
 }
 ```
 
-Common HTTP status codes:
+Các HTTP status thường dùng:
 
-| Status | Meaning |
+| Status | Ý nghĩa |
 | --- | --- |
-| `200` | Request succeeded |
-| `201` | Resource created |
-| `400` | Invalid request |
-| `401` | Missing or invalid token |
-| `403` | User does not have permission |
-| `404` | Resource not found |
-| `409` | Conflict, such as duplicate appointment time |
-| `422` | Validation error |
-| `500` | Server error |
+| `200` | Thành công |
+| `201` | Tạo mới thành công |
+| `400` | Request sai |
+| `401` | Chưa đăng nhập hoặc token không hợp lệ |
+| `403` | Không có quyền |
+| `404` | Không tìm thấy dữ liệu |
+| `409` | Xung đột dữ liệu, ví dụ trùng lịch |
+| `422` | Lỗi validate dữ liệu |
+| `500` | Lỗi server |
 
-## Development Setup
+## Cài Đặt Môi Trường Phát Triển
 
-### Required Software
+## Phần Mềm Cần Có
 
-Install the following:
+Cần cài:
 
-- Flutter SDK
-- Dart SDK, included with Flutter
-- Python 3.11 or newer
-- Git
-- Supabase account
-- Code editor such as VS Code or Android Studio
-- Android Studio emulator or a physical Android device for mobile testing
+- Flutter SDK.
+- Dart SDK, đi kèm Flutter.
+- Python 3.11 hoặc mới hơn.
+- Git.
+- Tài khoản Supabase.
+- VS Code hoặc Android Studio.
+- Android Studio Emulator nếu chạy mobile Android.
 
-Check versions:
+Kiểm tra phiên bản:
 
 ```bash
 flutter --version
@@ -851,15 +1043,19 @@ python --version
 git --version
 ```
 
-### Supabase Setup
+## Cài Đặt Supabase
 
-1. Create a Supabase project.
-2. Open the SQL Editor in the Supabase dashboard.
-3. Run the schema from the [Example SQL Schema](#example-sql-schema) section.
-4. Copy the project URL and API keys.
-5. Configure environment variables in the backend.
+Các bước:
 
-Recommended backend `.env` file:
+1. Truy cập Supabase và tạo project mới.
+2. Mở SQL Editor.
+3. Chạy SQL schema ở phần trên.
+4. Vào Project Settings để lấy `SUPABASE_URL`.
+5. Lấy `SUPABASE_ANON_KEY`.
+6. Lấy `SUPABASE_SERVICE_ROLE_KEY`.
+7. Tạo file `.env` trong backend.
+
+File môi trường mẫu:
 
 ```env
 SUPABASE_URL=https://your-project.supabase.co
@@ -870,18 +1066,23 @@ JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
 ```
 
-Important:
+Lưu ý bảo mật:
 
-- Never commit `.env` files.
-- Use `.env.example` to document required variables.
-- Use the Supabase service role key only on the backend.
-- Never put the service role key inside the Flutter app.
+- Không commit file `.env`.
+- Chỉ commit `.env.example`.
+- Không đưa `SUPABASE_SERVICE_ROLE_KEY` vào Flutter.
+- Service role key chỉ được dùng ở backend.
+- Khi deploy production phải dùng HTTPS.
 
-## How to Run the Backend
+## Cách Chạy Backend FastAPI
 
-The `Backend` folder is intended to contain the FastAPI application.
+Backend nằm trong thư mục:
 
-### 1. Create a Virtual Environment
+```text
+Backend
+```
+
+## Bước 1: Tạo Virtual Environment
 
 Windows PowerShell:
 
@@ -891,7 +1092,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-macOS or Linux:
+macOS hoặc Linux:
 
 ```bash
 cd Backend
@@ -899,9 +1100,9 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 2. Install Dependencies
+## Bước 2: Tạo `requirements.txt`
 
-Create `requirements.txt` with:
+Nội dung đề xuất:
 
 ```txt
 fastapi
@@ -911,23 +1112,25 @@ pydantic
 supabase
 python-jose[cryptography]
 passlib[bcrypt]
+pytest
+httpx
 ```
 
-Install:
+Cài dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Create the FastAPI Entry Point
+## Bước 3: Tạo File FastAPI Chính
 
-Recommended file:
+Tạo file:
 
 ```text
 Backend/app/main.py
 ```
 
-Minimal example:
+Code mẫu:
 
 ```python
 from fastapi import FastAPI
@@ -937,7 +1140,11 @@ app = FastAPI(title="Dental Clinic Management API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:8080"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://localhost:53365",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -948,61 +1155,74 @@ def health_check():
     return {"status": "ok"}
 ```
 
-### 4. Run the Backend Server
+## Bước 4: Chạy Backend
 
-From the `Backend` folder:
+Từ thư mục `Backend`:
 
 ```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Open:
+Kiểm tra API:
+
+```text
+http://localhost:8000/health
+```
+
+Mở Swagger Docs:
 
 ```text
 http://localhost:8000/docs
 ```
 
-FastAPI automatically generates Swagger documentation at `/docs`.
+Swagger Docs giúp test API trực tiếp trên trình duyệt, rất hữu ích cho người mới bắt đầu.
 
-## How to Run the Frontend
+## Cách Chạy Frontend Flutter
 
-The Flutter project is located in:
+Frontend nằm trong thư mục:
 
 ```text
 flutter_application_1
 ```
 
-### 1. Install Flutter Dependencies
+## Bước 1: Cài Dependencies
 
 ```bash
 cd flutter_application_1
 flutter pub get
 ```
 
-### 2. Run on Web
+## Bước 2: Chạy Flutter Web
 
 ```bash
 flutter run -d chrome
 ```
 
-### 3. Run on Android Emulator
+## Bước 3: Chạy Android Emulator
+
+Xem danh sách thiết bị:
 
 ```bash
 flutter devices
+```
+
+Chạy app:
+
+```bash
 flutter run -d emulator-5554
 ```
 
-Use the device ID shown by `flutter devices`.
+Thay `emulator-5554` bằng device ID thực tế trên máy.
 
-### 4. Configure API Base URL
+## Cấu Hình API Base URL Trong Flutter
 
-Recommended Flutter config file:
+Tạo file:
 
 ```text
 flutter_application_1/lib/core/constants/api_constants.dart
 ```
 
-Example:
+Nếu chạy Flutter Web:
 
 ```dart
 class ApiConstants {
@@ -1010,7 +1230,7 @@ class ApiConstants {
 }
 ```
 
-For Android emulator, use:
+Nếu chạy Android Emulator:
 
 ```dart
 class ApiConstants {
@@ -1018,169 +1238,227 @@ class ApiConstants {
 }
 ```
 
-Why:
+Giải thích:
 
-- `localhost` inside an Android emulator points to the emulator itself.
-- `10.0.2.2` points from the Android emulator to the host computer.
+- `localhost` trên web là máy tính hiện tại.
+- `localhost` trong Android Emulator là chính emulator.
+- `10.0.2.2` là địa chỉ để emulator gọi về máy tính host.
 
-## Development Workflow
+## Luồng Phát Triển Tính Năng
 
-Use a simple and consistent workflow.
+Khi làm một chức năng mới, nên đi theo thứ tự:
 
-### 1. Create a Git Branch
+```text
+Database -> Backend API -> Test API -> Flutter UI -> Test UI
+```
+
+Ví dụ chức năng đặt lịch:
+
+1. Tạo bảng `appointments`.
+2. Tạo schema `AppointmentCreate`.
+3. Tạo endpoint `POST /appointments`.
+4. Kiểm tra role.
+5. Kiểm tra bác sĩ có bị trùng lịch không.
+6. Test bằng Swagger hoặc curl.
+7. Tạo Flutter model `AppointmentModel`.
+8. Tạo `AppointmentApi`.
+9. Tạo màn hình đặt lịch.
+10. Gọi API từ Flutter.
+11. Hiển thị kết quả cho người dùng.
+
+## Quy Trình Làm Việc Với Git
+
+Tạo branch mới cho từng chức năng:
 
 ```bash
 git checkout -b feature/appointment-booking
 ```
 
-Branch naming examples:
+Ví dụ tên branch:
 
-- `feature/auth-login`
-- `feature/admin-users`
-- `feature/staff-appointments`
-- `feature/doctor-medical-records`
-- `fix/appointment-status-validation`
-
-### 2. Implement Backend First for Each Feature
-
-For example, appointment booking:
-
-1. Create database table or migration.
-2. Create Pydantic request and response schemas.
-3. Create FastAPI route.
-4. Add role checks.
-5. Test the endpoint in Swagger or with `curl`.
-6. Share the request and response format with the frontend developer.
-
-### 3. Implement Frontend Screen
-
-For example, appointment booking:
-
-1. Create Dart model.
-2. Create API client method.
-3. Create repository method.
-4. Build form screen.
-5. Validate fields.
-6. Call backend API.
-7. Show loading, success, and error states.
-
-### 4. Test Before Merging
-
-Run backend checks:
-
-```bash
-cd Backend
-pytest
+```text
+feature/auth-login
+feature/admin-users
+feature/staff-appointments
+feature/doctor-medical-records
+fix/appointment-status-validation
 ```
 
-Run frontend checks:
+Trước khi merge:
 
-```bash
-cd flutter_application_1
-flutter analyze
-flutter test
+- Code chạy được.
+- Không có lỗi phân tích Flutter.
+- Backend endpoint test được.
+- Không commit file `.env`.
+- Không commit key Supabase thật.
+- API response không thay đổi bất ngờ.
+- Đã kiểm tra quyền của từng role.
+
+## Quy Ước Code Backend
+
+Nên tách backend theo trách nhiệm:
+
+- `routers/`: khai báo endpoint.
+- `schemas/`: Pydantic model cho request và response.
+- `services/`: xử lý nghiệp vụ.
+- `core/`: config, security, RBAC.
+- `db/`: kết nối Supabase.
+
+Không nên viết tất cả code vào một file `main.py` khi dự án lớn dần.
+
+Ví dụ:
+
+```text
+Request vào /appointments
+    |
+appointments.py trong routers nhận request
+    |
+AppointmentCreate trong schemas validate dữ liệu
+    |
+appointment_service.py xử lý nghiệp vụ
+    |
+supabase.py ghi dữ liệu vào database
 ```
 
-### 5. Pull Request Checklist
+## Quy Ước Code Flutter
 
-Before merging a branch, check:
+Nên tách frontend theo feature:
 
-- The feature works for the correct role.
-- Restricted roles cannot access the feature.
-- API request and response examples are updated if changed.
-- Database changes are documented.
-- No secret keys are committed.
-- Flutter screens handle loading and error states.
-- Backend returns useful validation errors.
+```text
+features/auth
+features/admin
+features/staff
+features/doctor
+features/patient
+```
 
-## Task Division for a 2-Person Team
+Mỗi feature nên có:
 
-This project can be split between two developers: one backend-focused and one frontend-focused. Both developers should still review API contracts together.
+```text
+screens/
+widgets/
+providers/
+```
 
-### Developer 1: Backend and Database
+Tầng gọi API nên để trong:
 
-Main responsibilities:
+```text
+data/api
+data/repositories
+data/models
+```
 
-- Design Supabase PostgreSQL tables.
-- Write SQL migrations.
-- Build FastAPI routes.
-- Implement authentication.
-- Implement role-based access control.
-- Validate data with Pydantic schemas.
-- Write backend tests.
-- Document API behavior.
+Ví dụ luồng Flutter:
 
-Suggested task list:
+```text
+BookingScreen
+    |
+AppointmentRepository
+    |
+AppointmentApi
+    |
+ApiClient
+    |
+FastAPI Backend
+```
 
-| Priority | Task | Output |
+## Chia Việc Cho Nhóm 2 Người
+
+Dự án này phù hợp chia cho 2 người:
+
+- Người 1: Backend + Database.
+- Người 2: Flutter Frontend.
+
+Hai người cần thống nhất API contract trước khi code UI.
+
+## Người 1: Backend + Database
+
+Trách nhiệm chính:
+
+- Thiết kế database trên Supabase.
+- Viết SQL tạo bảng.
+- Viết FastAPI backend.
+- Tạo API đăng nhập, đăng ký.
+- Tạo middleware hoặc dependency kiểm tra token.
+- Tạo RBAC.
+- Viết API cho users, patients, doctors, services, appointments, medical_records.
+- Test API bằng Swagger hoặc curl.
+- Viết tài liệu API.
+
+Danh sách task đề xuất:
+
+| Thứ tự | Công việc | Kết quả |
 | --- | --- | --- |
-| 1 | Supabase schema | Tables for users, patients, doctors, services, appointments, medical records |
-| 2 | Auth API | Register, login, current user |
-| 3 | RBAC dependency | `require_roles()` helper |
-| 4 | User API | Admin user management |
-| 5 | Service API | Staff service and pricing management |
-| 6 | Patient API | Patient CRUD |
-| 7 | Appointment API | Booking, schedule, status updates |
-| 8 | Medical record API | Doctor treatment records |
-| 9 | Tests | Unit and integration tests |
+| 1 | Thiết kế database | Có SQL schema chạy được |
+| 2 | Cấu hình Supabase | Backend kết nối được database |
+| 3 | Auth API | Register, login, me |
+| 4 | RBAC | Có `require_roles()` |
+| 5 | Users API | Admin quản lý user |
+| 6 | Services API | Staff quản lý dịch vụ, giá |
+| 7 | Patients API | Staff quản lý bệnh nhân |
+| 8 | Appointments API | Đặt lịch, sửa lịch, hủy lịch |
+| 9 | Medical Records API | Doctor tạo hồ sơ điều trị |
+| 10 | Testing | Test các luồng chính |
 
-### Developer 2: Flutter Frontend
+## Người 2: Flutter Frontend
 
-Main responsibilities:
+Trách nhiệm chính:
 
-- Build role-specific UI screens.
-- Create API client layer.
-- Store and attach authentication token.
-- Build forms and validation.
-- Handle loading, empty, success, and error states.
-- Implement navigation based on user role.
-- Test on mobile and web.
+- Xây dựng giao diện Flutter.
+- Tạo routing.
+- Tạo theme.
+- Tạo màn hình đăng nhập, đăng ký.
+- Lưu token sau khi login.
+- Gọi API backend.
+- Xây dựng dashboard theo role.
+- Xây dựng màn hình cho Admin, Staff, Doctor, Patient.
+- Test trên web và mobile.
 
-Suggested task list:
+Danh sách task đề xuất:
 
-| Priority | Task | Output |
+| Thứ tự | Công việc | Kết quả |
 | --- | --- | --- |
-| 1 | App structure | Routing, theme, shared widgets |
-| 2 | Auth UI | Login and patient registration |
-| 3 | API client | Reusable HTTP client with bearer token |
-| 4 | Role navigation | Admin, Staff, Doctor, Patient home screens |
-| 5 | Patient booking | Service selection, doctor selection, date/time form |
-| 6 | Staff screens | Appointment, patient, service, pricing management |
-| 7 | Doctor screens | Schedule and medical record form |
-| 8 | Admin screens | User and role management |
-| 9 | Tests | Widget and basic integration tests |
+| 1 | Cấu trúc Flutter | Có thư mục feature rõ ràng |
+| 2 | Auth UI | Login, register |
+| 3 | API Client | Gửi request kèm token |
+| 4 | Role Navigation | Login xong vào đúng dashboard |
+| 5 | Patient UI | Đặt lịch, xem lịch |
+| 6 | Staff UI | Quản lý bệnh nhân, lịch hẹn, dịch vụ |
+| 7 | Doctor UI | Xem lịch, tạo hồ sơ điều trị |
+| 8 | Admin UI | Quản lý users và roles |
+| 9 | Testing | Kiểm tra web và mobile |
 
-### Shared Responsibilities
+## Công Việc Cần Làm Chung
 
-Both developers should agree on:
+Hai người cần cùng thống nhất:
 
-- API endpoint names.
-- JSON request and response formats.
-- Appointment status values.
-- Role permission rules.
-- Error response format.
-- Database naming conventions.
-- Definition of done for each feature.
+- Tên endpoint.
+- Request body.
+- Response body.
+- Format lỗi.
+- Danh sách role.
+- Trạng thái lịch hẹn.
+- Quy tắc bệnh nhân hủy lịch.
+- Quy tắc bác sĩ tạo hồ sơ điều trị.
+- Quy tắc trùng lịch.
 
-### Suggested 4-Week Plan
+## Kế Hoạch 4 Tuần Đề Xuất
 
-| Week | Backend Developer | Flutter Developer |
+| Tuần | Backend + Database | Flutter Frontend |
 | --- | --- | --- |
-| Week 1 | Database schema, auth, RBAC | App shell, routing, theme, login UI |
-| Week 2 | Users, patients, services APIs | Auth integration, patient and service screens |
-| Week 3 | Appointment APIs, schedule rules | Booking flow, staff appointment calendar |
-| Week 4 | Medical records, tests, API polish | Doctor screens, admin screens, final testing |
+| Tuần 1 | Tạo database, auth, RBAC | App shell, routing, theme, login UI |
+| Tuần 2 | Users, patients, services API | Login thật, màn hình services, patients |
+| Tuần 3 | Appointments API, kiểm tra trùng lịch | Booking flow, staff appointment screen |
+| Tuần 4 | Medical records, test, sửa lỗi | Doctor screen, admin screen, test cuối |
 
-## Testing Guide
+## Kiểm Thử Backend
 
-### Backend Testing
-
-Recommended tools:
+Nên dùng:
 
 - `pytest`
-- FastAPI `TestClient`
+- `TestClient` của FastAPI
 
-Example test:
+Ví dụ test health check:
 
 ```python
 from fastapi.testclient import TestClient
@@ -1194,138 +1472,169 @@ def test_health_check():
     assert response.json() == {"status": "ok"}
 ```
 
-Important backend test cases:
+Các case backend cần test:
 
-- Patient can register.
-- User can login.
-- Staff can create services.
-- Patient cannot create services.
-- Patient can book appointment for self.
-- Patient cannot book appointment for another patient.
-- Doctor can create medical record for assigned appointment.
-- Doctor cannot create medical record for another doctor's appointment.
+- Patient đăng ký được.
+- User đăng nhập được.
+- Staff tạo dịch vụ được.
+- Patient không tạo dịch vụ được.
+- Patient đặt lịch cho chính mình được.
+- Patient không đặt lịch cho người khác.
+- Staff xác nhận lịch được.
+- Doctor xem lịch của mình được.
+- Doctor tạo hồ sơ điều trị cho lịch được giao.
+- Doctor không tạo hồ sơ cho lịch của bác sĩ khác.
 
-### Frontend Testing
+## Kiểm Thử Flutter
 
-Recommended Flutter checks:
+Chạy:
 
 ```bash
+cd flutter_application_1
 flutter analyze
 flutter test
 ```
 
-Important frontend test cases:
+Các case frontend cần test:
 
-- Login form validates empty fields.
-- Patient booking form requires service, doctor, date, and time.
-- Staff service form validates price.
-- Doctor medical record form requires diagnosis and treatment.
-- UI shows correct navigation items for each role.
+- Form login báo lỗi khi bỏ trống email hoặc password.
+- Đăng nhập thành công chuyển đúng dashboard theo role.
+- Patient đặt lịch phải chọn đủ dịch vụ, bác sĩ, ngày, giờ.
+- Staff nhập giá dịch vụ phải là số hợp lệ.
+- Doctor tạo hồ sơ điều trị phải có chẩn đoán và điều trị.
+- Giao diện hiển thị đúng trên web và mobile.
 
-## Deployment Notes
+## Build Và Deploy
 
-### Backend Deployment
+## Deploy Backend
 
-The FastAPI backend can be deployed to:
+FastAPI backend có thể deploy lên:
 
-- Render
-- Railway
-- Fly.io
-- Azure App Service
-- AWS Elastic Beanstalk
-- Docker-based VPS
+- Render.
+- Railway.
+- Fly.io.
+- Azure App Service.
+- AWS.
+- VPS dùng Docker.
 
-Production command example:
+Lệnh chạy production cơ bản:
 
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-For production, use a process manager or deployment platform that restarts the server automatically.
+Khi deploy thật nên dùng:
 
-### Frontend Deployment
+- Biến môi trường thay vì file `.env`.
+- HTTPS.
+- CORS giới hạn domain frontend thật.
+- Logging.
+- Backup database.
 
-Flutter web build:
+## Build Flutter Web
 
 ```bash
 cd flutter_application_1
 flutter build web
 ```
 
-The generated web files are located in:
+File build nằm ở:
 
 ```text
 flutter_application_1/build/web
 ```
 
-These files can be deployed to:
+Có thể deploy Flutter Web lên:
 
-- Firebase Hosting
-- Netlify
-- Vercel
-- Supabase Storage
-- Any static web server
+- Firebase Hosting.
+- Netlify.
+- Vercel.
+- Supabase Storage.
+- Static hosting bất kỳ.
 
-### Mobile Build
-
-Android release build:
+## Build Android
 
 ```bash
 cd flutter_application_1
 flutter build apk --release
 ```
 
-iOS release builds require macOS and Xcode:
+File APK nằm trong thư mục build của Flutter.
+
+## Build iOS
+
+Cần macOS và Xcode:
 
 ```bash
 flutter build ios --release
 ```
 
-## Security Notes
+## Ghi Chú Bảo Mật
 
-- Store passwords securely using Supabase Auth or strong password hashing.
-- Never store plain-text passwords.
-- Never expose the Supabase service role key in Flutter.
-- Validate every request on the backend.
-- Enforce RBAC on every protected endpoint.
-- Use HTTPS in production.
-- Keep audit logs for sensitive actions such as role changes and medical record updates.
-- Use database constraints to prevent invalid statuses and broken references.
+Vì hệ thống có dữ liệu bệnh nhân và hồ sơ điều trị, cần chú ý:
 
-## Beginner Implementation Order
+- Không lưu password dạng plain text.
+- Không expose service role key.
+- Không để patient xem dữ liệu của patient khác.
+- Không để staff tạo hoặc sửa hồ sơ điều trị chuyên môn.
+- Không để doctor xem toàn bộ dữ liệu nếu không cần.
+- Mọi endpoint quan trọng phải kiểm tra token và role.
+- Nên bật HTTPS khi deploy.
+- Nên có audit log cho thao tác đổi role, hủy lịch, sửa giá, tạo bệnh án.
+- Nên backup database định kỳ.
 
-For a beginner-friendly build process, implement the system in this order:
+## Thứ Tự Làm Dự Án Cho Người Mới
 
-1. Supabase tables.
-2. FastAPI health check.
-3. Backend environment configuration.
-4. Auth register and login.
-5. Flutter login screen.
-6. Role-based home navigation.
-7. Services API and screens.
-8. Patients API and screens.
-9. Appointment booking API.
-10. Patient booking screen.
-11. Staff appointment management.
-12. Doctor schedule screen.
-13. Medical record API and screen.
-14. Admin user management.
-15. Tests and deployment.
+Nếu mới bắt đầu, nên làm theo thứ tự này:
 
-## Definition of Done
+1. Tạo Supabase project.
+2. Tạo các bảng database.
+3. Tạo FastAPI health check.
+4. Kết nối backend với Supabase.
+5. Làm đăng ký và đăng nhập.
+6. Làm kiểm tra token.
+7. Làm phân quyền role.
+8. Làm màn hình login Flutter.
+9. Làm dashboard theo role.
+10. Làm API dịch vụ.
+11. Làm màn hình danh sách dịch vụ.
+12. Làm API bệnh nhân.
+13. Làm màn hình quản lý bệnh nhân.
+14. Làm API đặt lịch.
+15. Làm màn hình đặt lịch.
+16. Làm màn hình staff quản lý lịch hẹn.
+17. Làm màn hình doctor xem lịch.
+18. Làm API hồ sơ điều trị.
+19. Làm màn hình doctor tạo hồ sơ điều trị.
+20. Làm admin quản lý user.
+21. Test toàn bộ luồng.
+22. Build và deploy.
 
-A feature is complete when:
+## Definition Of Done
 
-- The database supports the required data.
-- The backend endpoint validates input.
-- The backend endpoint checks permissions.
-- The API is documented with request and response examples.
-- The Flutter screen works on web and mobile.
-- Loading and error states are handled.
-- At least one basic test covers the feature.
+Một chức năng được xem là hoàn thành khi:
 
-## License
+- Database có bảng hoặc cột cần thiết.
+- Backend có endpoint hoạt động.
+- Backend validate dữ liệu đầu vào.
+- Backend kiểm tra token.
+- Backend kiểm tra role.
+- API có response rõ ràng.
+- Flutter gọi được API.
+- Flutter có loading state.
+- Flutter có error state.
+- Người dùng đúng role dùng được.
+- Người dùng sai role bị chặn.
+- Có test cơ bản hoặc đã test thủ công bằng Swagger/curl.
 
-This project is intended for educational and internal clinic management use. Add a license file before public release.
-#   p h a n m e m q u a n l i n h a k h o a  
- 
+## Kết Luận
+
+Dự án này nên được xây dựng theo hướng rõ ràng, dễ mở rộng và dễ bảo trì:
+
+- Flutter chỉ tập trung vào giao diện và trải nghiệm người dùng.
+- FastAPI xử lý nghiệp vụ và phân quyền.
+- Supabase PostgreSQL lưu dữ liệu có cấu trúc.
+- RBAC phải được kiểm tra ở backend.
+- API contract phải thống nhất trước khi frontend gọi.
+
+Nếu làm đúng cấu trúc từ đầu, nhóm 2 người có thể phát triển hệ thống theo từng module mà không bị rối khi dự án lớn dần.
