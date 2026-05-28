@@ -1,9 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from db import SessionLocal
-from models import User
-from schemas import UserOut, UserUpdate, UserCreate
+from models.user import User
+from schemas.user import UserOut, UserUpdate, UserCreate
 from auth import get_password_hash
+from schemas.service import ServiceCreate, ServiceUpdate, ServiceResponse
+from schemas.service_price_history import ServicePriceHistoryResponse
+from services import service_management_service, pricing_service
+from dependencies import get_db, get_current_admin
 
 router = APIRouter()
 
@@ -22,31 +26,45 @@ def list_users(q: Optional[str] = None):
         db.close()
 
 
-
 @router.post('/users', response_model=UserOut, status_code=201)
 def create_user(payload: UserCreate):
     db = SessionLocal()
-    try:
-        existing = db.query(User).filter(User.email == payload.email).first()
-        if existing:
-            raise HTTPException(status_code=400, detail='Email already registered')
 
-        hashed = get_password_hash(payload.password)
+    try:
+        # check existing email
+        existing = db.query(User).filter(
+            User.email == payload.email
+        ).first()
+
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail='Email already registered'
+            )
+
+        # hash password
+        hashed = get_password_hash(
+            payload.password
+        )
+
+        # create user
         user = User(
             email=payload.email,
-            full_name=payload.full_name or '',
+            full_name=payload.full_name or "",
             password=hashed,
             phone=payload.phone,
-            role=payload.role or 'user',
-            status=True,
+            role=payload.role or "user",
+            status=True
         )
+
         db.add(user)
         db.commit()
         db.refresh(user)
+
         return user
+
     finally:
         db.close()
-
 
 @router.get('/stats')
 def stats():
@@ -104,3 +122,29 @@ def delete_user(user_id: int):
         return
     finally:
         db.close()
+
+
+# === Service Management APIs ===
+@router.get("/services", response_model=List[ServiceResponse], dependencies=[Depends(get_current_admin)])
+def list_services(search: str = None, db=Depends(get_db)):
+    return service_management_service.get_services(db, search)
+
+@router.post("/services", response_model=ServiceResponse, dependencies=[Depends(get_current_admin)])
+def create_service(service: ServiceCreate, db=Depends(get_db)):
+    return service_management_service.create_service(db, service)
+
+@router.put("/services/{service_id}", response_model=ServiceResponse, dependencies=[Depends(get_current_admin)])
+def update_service(service_id: int, service: ServiceUpdate, db=Depends(get_db)):
+    return service_management_service.update_service(db, service_id, service)
+
+@router.delete("/services/{service_id}", response_model=ServiceResponse, dependencies=[Depends(get_current_admin)])
+def delete_service(service_id: int, db=Depends(get_db)):
+    return service_management_service.delete_service(db, service_id)
+
+@router.put("/services/{service_id}/price", response_model=ServiceResponse, dependencies=[Depends(get_current_admin)])
+def update_price(service_id: int, new_price: float, db=Depends(get_db), current_admin=Depends(get_current_admin)):
+    return pricing_service.update_service_price(db, service_id, new_price, current_admin.id)
+
+@router.get("/services/{service_id}/price-history", response_model=List[ServicePriceHistoryResponse], dependencies=[Depends(get_current_admin)])
+def get_price_history(service_id: int, db=Depends(get_db)):
+    return pricing_service.get_price_history(db, service_id)

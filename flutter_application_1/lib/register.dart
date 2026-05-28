@@ -14,15 +14,17 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   bool _loading = false;
 
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     final res = await Api.register(
-      _emailCtrl.text.trim(),
-      _passwordCtrl.text,
       _nameCtrl.text.trim(),
+      _emailCtrl.text.trim(),
+      _phoneCtrl.text.trim(),
+      _passwordCtrl.text,
     );
     setState(() => _loading = false);
     if (res.statusCode == 201) {
@@ -63,6 +65,14 @@ class _RegisterPageState extends State<RegisterPage> {
                 keyboardType: TextInputType.emailAddress,
                 validator: (v) => (v == null || !v.contains('@'))
                     ? 'Email không hợp lệ'
+                    : null,
+              ),
+              TextFormField(
+                controller: _phoneCtrl,
+                decoration: const InputDecoration(labelText: 'Số điện thoại'),
+                keyboardType: TextInputType.phone,
+                validator: (v) => (v == null || v.length < 10)
+                    ? 'Số điện thoại không hợp lệ'
                     : null,
               ),
               TextFormField(

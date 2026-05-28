@@ -18,7 +18,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
       backgroundColor: Colors.grey.shade100,
       body: Row(
         children: [
-          buildSidebar(),
+          _buildSidebar(),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -30,7 +30,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
     );
   }
 
-  Widget buildSidebar() {
+  Widget _buildSidebar() {
     return Container(
       width: 230,
       color: Colors.white,
@@ -46,15 +46,15 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
             ),
           ),
           const SizedBox(height: 40),
-          menuItem(Icons.people, "Nhân viên"),
-          menuItem(Icons.person, "Bệnh nhân", selected: true),
-          menuItem(Icons.calendar_month, "Lịch làm việc"),
+          _menuItem(Icons.people, "Nhân viên"),
+          _menuItem(Icons.person, "Bệnh nhân", selected: true),
+          _menuItem(Icons.calendar_month, "Lịch làm việc"),
         ],
       ),
     );
   }
 
-  Widget menuItem(IconData icon, String title, {bool selected = false}) {
+  Widget _menuItem(IconData icon, String title, {bool selected = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Container(
@@ -81,126 +81,252 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
   }
 }
 
-class PatientManagementContent extends StatelessWidget {
+class PatientManagementContent extends StatefulWidget {
   const PatientManagementContent({super.key});
 
   @override
+  State<PatientManagementContent> createState() =>
+      _PatientManagementContentState();
+}
+
+class _PatientManagementContentState extends State<PatientManagementContent> {
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  final List<Map<String, dynamic>> _patients = [
+    {
+      "code": "0001",
+      "name": "Nguyễn Thành Long",
+      "email": "longwork@gmail.com",
+      "phone": "0123456789",
+      "status": true,
+    },
+    {
+      "code": "0002",
+      "name": "Lê Đức Vũ",
+      "email": "leduccvu@gmail.com",
+      "phone": "0988888888",
+      "status": true,
+    },
+    {
+      "code": "0003",
+      "name": "Nguyễn Thu Hiền",
+      "email": "hien@gmail.com",
+      "phone": "0999999999",
+      "status": false,
+    },
+  ];
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Widget _statusPill(bool active) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: active
+            ? Colors.green.withOpacity(0.12)
+            : Colors.red.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            active ? Icons.check_circle : Icons.cancel,
+            color: active ? Colors.green : Colors.red,
+            size: 16,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            active ? 'Hoạt động' : 'Đang tắt',
+            style: TextStyle(color: active ? Colors.green : Colors.red),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _contactColumn(Map<String, dynamic> p) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.email_outlined, size: 14, color: Colors.black45),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                p['email'] ?? '',
+                style: const TextStyle(color: Colors.black54),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            const Icon(Icons.phone, size: 14, color: Colors.black45),
+            const SizedBox(width: 6),
+            Text(p['phone'] ?? ''),
+          ],
+        ),
+      ],
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> patients = [
-      {
-        "code": "0001",
-        "name": "Nguyen Thanh Long",
-        "email": "longwork@gmail.com",
-        "phone": "0123456789",
-        "status": true,
-      },
-      {
-        "code": "0002",
-        "name": "Le Duc Vu",
-        "email": "leduccvu@gmail.com",
-        "phone": "0988888888",
-        "status": true,
-      },
-      {
-        "code": "0003",
-        "name": "Nguyen Thu Hien",
-        "email": "hien@gmail.com",
-        "phone": "0999999999",
-        "status": false,
-      },
-    ];
-
-    final searchController = TextEditingController();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
           "Quản lí bệnh nhân",
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
           "Quản lí tài khoản bệnh nhân",
           style: TextStyle(color: Colors.grey.shade600),
         ),
-        const SizedBox(height: 20),
-        Container(
-          height: 50,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: TextField(
-            controller: searchController,
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              prefixIcon: Icon(Icons.search),
-              hintText: "Nhập tên...",
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
+
+        // Card container with header and table
         Expanded(
           child: Container(
+            width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
             ),
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  child: const Row(
+                // Top search/actions area
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 12,
+                  ),
+                  child: Row(
                     children: [
-                      Expanded(flex: 1, child: Text("Mã")),
-                      Expanded(flex: 2, child: Text("Tên")),
-                      Expanded(flex: 3, child: Text("Liên hệ")),
-                      Expanded(flex: 2, child: Text("Trạng thái")),
-                      Expanded(flex: 2, child: Text("Hoạt động")),
+                      Expanded(
+                        child: Container(
+                          height: 44,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.search, color: Colors.black45),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextField(
+                                  controller: _searchCtrl,
+                                  decoration: const InputDecoration.collapsed(
+                                    hintText: 'Tìm theo tên, email...',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        onPressed: () {},
+                        icon: const Icon(Icons.add),
+                        label: const Text('Thêm'),
+                      ),
                     ],
                   ),
                 ),
+
+                // Table header (grey)
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  child: const Row(
+                    children: [
+                      Expanded(
+                        flex: 1,
+                        child: Text(
+                          'Mã',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          'Tên khách hàng',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 4,
+                        child: Text(
+                          'Liên hệ',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          'Trạng thái',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          'Hoạt động',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Rows
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: patients.length,
+                  child: ListView.separated(
+                    separatorBuilder: (_, __) => const Divider(height: 0),
+                    itemCount: _patients.length,
                     itemBuilder: (context, index) {
-                      final p = patients[index];
-                      return Container(
-                        padding: const EdgeInsets.all(18),
+                      final p = _patients[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 14,
+                        ),
                         child: Row(
                           children: [
-                            Expanded(flex: 1, child: Text(p["code"])),
-                            Expanded(flex: 2, child: Text(p["name"])),
-                            Expanded(
-                              flex: 3,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [Text(p["email"]), Text(p["phone"])],
-                              ),
-                            ),
+                            Expanded(flex: 1, child: Text(p['code'] ?? '')),
+                            Expanded(flex: 3, child: Text(p['name'] ?? '')),
+                            Expanded(flex: 4, child: _contactColumn(p)),
                             Expanded(
                               flex: 2,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: p["status"]
-                                      ? Colors.green
-                                      : Colors.red,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  p["status"] ? "Hoạt động" : "Đang tắt",
-                                  style: const TextStyle(color: Colors.white),
-                                ),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: _statusPill(p['status'] == true),
                               ),
                             ),
                             Expanded(
                               flex: 2,
                               child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   IconButton(
                                     onPressed: () {},

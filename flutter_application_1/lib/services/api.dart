@@ -12,35 +12,52 @@ class Api {
   }
 
   static Future<http.Response> register(
+    String username,
     String email,
+    String phone,
     String password,
-    String fullName,
   ) async {
     final url = Uri.parse('$baseUrl/auth/register');
+
     final res = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
+        'username': username,
         'email': email,
+        'phone': phone,
         'password': password,
-        'full_name': fullName,
       }),
     );
+
     return res;
   }
 
   // overload with phone
-  static Future<http.Response> registerWithPhone(String email, String password, String fullName, String? phone) async {
+  static Future<http.Response> registerWithPhone(
+    String email,
+    String password,
+    String username,
+    String? phone,
+  ) async {
     final url = Uri.parse('$baseUrl/auth/register');
-    final body = {'email': email, 'password': password, 'full_name': fullName};
-    if (phone != null && phone.isNotEmpty) body['phone'] = phone;
+
+    final body = {
+      'username': username,
+      'email': email,
+      'password': password,
+      'phone': phone ?? '',
+    };
+
     final res = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(body),
     );
+
     return res;
   }
+
   static Future<http.Response> login(String email, String password) async {
     final url = Uri.parse('$baseUrl/auth/login');
     final res = await http.post(
@@ -65,7 +82,9 @@ class Api {
 
   static Future<http.Response> getAdminUsersWithQuery([String? q]) async {
     final uri = Uri.parse('$baseUrl/admin/users');
-    final url = q != null && q.isNotEmpty ? uri.replace(queryParameters: {'q': q}) : uri;
+    final url = q != null && q.isNotEmpty
+        ? uri.replace(queryParameters: {'q': q})
+        : uri;
     final res = await http.get(url);
     return res;
   }
@@ -80,7 +99,10 @@ class Api {
     return res;
   }
 
-  static Future<http.Response> updateUser(int id, Map<String, dynamic> body) async {
+  static Future<http.Response> updateUser(
+    int id,
+    Map<String, dynamic> body,
+  ) async {
     final url = Uri.parse('$baseUrl/admin/users/$id');
     final res = await http.patch(
       url,

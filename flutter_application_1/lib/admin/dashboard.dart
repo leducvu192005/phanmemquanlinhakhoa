@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/admin/pricing_screen.dart';
+import 'package:flutter_application_1/admin/service_management_screen.dart';
 
 import '../services/api.dart';
 import 'patient_management_screen.dart';
@@ -261,22 +263,27 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               }),
                             ),
                             _SidebarItem(
-                              icon: Icons.calendar_today,
-                              label: 'Lịch làm việc',
+                              icon: Icons.medical_services,
+                              label: 'Dịch vụ',
                               wide: isWide,
                               selected: _selectedIndex == 2,
-                              onTap: () => setState(() {
-                                _selectedIndex = 2;
-                              }),
+                              onTap: () {
+                                setState(() {
+                                  _selectedIndex = 2;
+                                });
+                              },
                             ),
+
                             _SidebarItem(
-                              icon: Icons.folder_shared,
-                              label: 'Hồ sơ',
+                              icon: Icons.attach_money,
+                              label: 'Bảng giá',
                               wide: isWide,
                               selected: _selectedIndex == 3,
-                              onTap: () => setState(() {
-                                _selectedIndex = 3;
-                              }),
+                              onTap: () {
+                                setState(() {
+                                  _selectedIndex = 3;
+                                });
+                              },
                             ),
                           ],
                         ),
@@ -306,8 +313,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       : _selectedIndex == 1
                                       ? 'Quản lí bệnh nhân'
                                       : _selectedIndex == 2
-                                      ? 'Lịch làm việc'
-                                      : 'Hồ sơ',
+                                      ? 'Quản lí dịch vụ'
+                                      : 'Quản lí bảng giá',
                                   style: const TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
@@ -604,21 +611,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         ] else if (_selectedIndex == 1) ...[
                           const SizedBox(height: 0),
                           Expanded(child: PatientManagementContent()),
-                        ] else ...[
-                          const SizedBox(height: 20),
-                          Expanded(
-                            child: Center(
-                              child: Text(
-                                _selectedIndex == 2
-                                    ? 'Lịch làm việc (tạm)'
-                                    : 'Hồ sơ (tạm)',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ),
-                          ),
+                        ] else if (_selectedIndex == 2) ...[
+                          const SizedBox(height: 10),
+                          Expanded(child: ServiceManagementScreen()),
+                        ] else if (_selectedIndex == 3) ...[
+                          const SizedBox(height: 10),
+                          Expanded(child: PricingScreen()),
                         ],
                       ],
                     ),

@@ -27,7 +27,7 @@ class DentalApp extends StatelessWidget {
         '/patient': (_) => const PatientDashboard(),
         '/login': (_) => const LoginPage(),
       },
-      home: const PatientDashboard(),
+      home: const LoginPage(),
     );
   }
 }
