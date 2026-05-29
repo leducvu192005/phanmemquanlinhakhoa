@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'services/api.dart';
 import 'dart:convert';
+import 'package:flutter_application_1/admin/layout_admin.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -44,17 +45,27 @@ class _LoginPageState extends State<LoginPage>
 
   Future<void> _doLogin() async {
     if (!_loginForm.currentState!.validate()) return;
+
     setState(() => _loading = true);
+
     final res = await Api.login(_emailCtrl.text.trim(), _passwordCtrl.text);
+
     setState(() => _loading = false);
+
     if (res.statusCode == 200) {
       final body = jsonDecode(res.body);
+
       final token = body['access_token'];
       final role = body['role'] ?? 'user';
+      print("TOKEN LOGIN: $token");
+      print("ROLE LOGIN: $role");
       await _storage.write(key: 'jwt', value: token);
       await _storage.write(key: 'role', value: role);
+
       if (role == 'admin') {
-        Navigator.of(context).pushReplacementNamed('/admin');
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AdminLayout()),
+        );
       } else if (role == 'doctor') {
         Navigator.of(context).pushReplacementNamed('/doctor');
       } else {
@@ -62,10 +73,12 @@ class _LoginPageState extends State<LoginPage>
       }
     } else {
       String msg = 'Lỗi: ${res.statusCode}';
+
       try {
         final body = jsonDecode(res.body);
         msg = body['detail'] ?? body['message'] ?? msg;
       } catch (_) {}
+
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     }
   }
@@ -93,7 +106,9 @@ class _LoginPageState extends State<LoginPage>
         await _storage.write(key: 'jwt', value: token);
         await _storage.write(key: 'role', value: role);
         if (role == 'admin') {
-          Navigator.of(context).pushReplacementNamed('/admin');
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const AdminLayout()),
+          );
         } else if (role == 'doctor') {
           Navigator.of(context).pushReplacementNamed('/doctor');
         } else {

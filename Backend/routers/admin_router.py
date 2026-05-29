@@ -8,7 +8,9 @@ from schemas.service import ServiceCreate, ServiceUpdate, ServiceResponse
 from schemas.service_price_history import ServicePriceHistoryResponse
 from services import service_management_service, pricing_service
 from dependencies import get_db, get_current_admin
-
+from models.patient import Patient
+from schemas.patient import PatientOut
+from schemas.patient import PatientOut, PatientCreate, PatientUpdate
 router = APIRouter()
 
 
@@ -148,3 +150,65 @@ def update_price(service_id: int, new_price: float, db=Depends(get_db), current_
 @router.get("/services/{service_id}/price-history", response_model=List[ServicePriceHistoryResponse], dependencies=[Depends(get_current_admin)])
 def get_price_history(service_id: int, db=Depends(get_db)):
     return pricing_service.get_price_history(db, service_id)
+# lấy dữ liệu patient để hiển thị trong admin panel
+@router.get(
+    "/patients",
+    response_model=List[PatientOut]
+)
+def get_patients(db=Depends(get_db)):
+    return db.query(Patient).all()
+@router.get("/patients", response_model=List[PatientOut])
+def get_patients(q: Optional[str] = None, db=Depends(get_db)):
+    query = db.query(Patient)
+
+    if q:
+        like = f"%{q}%"
+        query = query.filter(
+            (Patient.full_name.ilike(like)) |
+            (Patient.email.ilike(like)) |
+            (Patient.patient_code.ilike(like))
+        )
+
+    return query.order_by(Patient.id.desc()).all()
+@router.get("/patients/{patient_id}", response_model=PatientOut)
+def get_patient_detail(patient_id: int, db=Depends(get_db)):
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    return patient
+@router.post("/patients", response_model=PatientOut)
+def create_patient(payload: PatientCreate, db=Depends(get_db)):
+    patient = Patient(**payload.dict())
+
+    db.add(patient)
+    db.commit()
+    db.refresh(patient)
+
+    return patient
+@router.put("/patients/{patient_id}", response_model=PatientOut)
+def update_patient(patient_id: int, payload: PatientUpdate, db=Depends(get_db)):
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    for key, value in payload.dict(exclude_unset=True).items():
+        setattr(patient, key, value)
+
+    db.commit()
+    db.refresh(patient)
+
+    return patient
+@router.delete("/patients/{patient_id}")
+def delete_patient(patient_id: int, db=Depends(get_db)):
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    db.delete(patient)
+    db.commit()
+
+    return {"message": "Deleted successfully"}

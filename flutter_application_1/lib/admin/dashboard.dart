@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/admin/pricing_screen.dart';
-import 'package:flutter_application_1/admin/service_management_screen.dart';
 
 import '../services/api.dart';
-import 'patient_management_screen.dart';
 import 'dart:convert';
 
 class AdminDashboard extends StatefulWidget {
@@ -18,7 +15,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   String? _error;
   List<dynamic> _users = [];
   Map<String, dynamic> _stats = {};
-  int _selectedIndex = 0;
+
   final _searchCtrl = TextEditingController();
 
   @override
@@ -86,11 +83,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     try {
       final res = await Api.deleteUser(id);
+
       if (!mounted) return;
+
       if (res.statusCode == 204 || res.statusCode == 200) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Xóa thành công')));
+
         await _loadData();
       } else {
         ScaffoldMessenger.of(
@@ -99,6 +99,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       }
     } catch (e) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
@@ -109,6 +110,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final nameCtrl = TextEditingController(text: u['full_name'] ?? '');
     final phoneCtrl = TextEditingController(text: u['phone'] ?? '');
     final roleCtrl = TextEditingController(text: u['role'] ?? '');
+
     bool status = u['status'] == true;
 
     final ok = await showDialog<bool>(
@@ -125,19 +127,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     controller: nameCtrl,
                     decoration: const InputDecoration(labelText: 'Họ và tên'),
                   ),
+
                   TextField(
                     controller: phoneCtrl,
                     decoration: const InputDecoration(
                       labelText: 'Số điện thoại',
                     ),
                   ),
+
                   TextField(
                     controller: roleCtrl,
                     decoration: const InputDecoration(labelText: 'Role'),
                   ),
+
                   Row(
                     children: [
                       const Text('Hoạt động'),
+
                       Checkbox(
                         value: status,
                         onChanged: (v) {
@@ -157,6 +163,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Hủy'),
           ),
+
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Lưu'),
@@ -168,6 +175,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     if (ok != true) return;
 
     final body = <String, dynamic>{};
+
     body['full_name'] = nameCtrl.text.trim();
     body['phone'] = phoneCtrl.text.trim();
     body['role'] = roleCtrl.text.trim();
@@ -175,24 +183,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     try {
       final res = await Api.updateUser(u['id'], body);
+
       if (!mounted) return;
+
       if (res.statusCode == 200) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Cập nhật thành công')));
+
         await _loadData();
       } else {
         String msg = 'Lỗi: ${res.statusCode}';
+
         try {
           final b = jsonDecode(res.body);
           msg = b['detail'] ?? b['message'] ?? msg;
         } catch (_) {}
+
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(msg)));
       }
     } catch (e) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
@@ -201,465 +215,292 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final bool isWide = constraints.maxWidth > 900;
-            return Row(
-              children: [
-                // Sidebar
-                Container(
-                  width: isWide ? 240 : 72,
-                  color: Colors.white,
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: isWide
-                            ? Row(
-                                children: [
-                                  Icon(
-                                    Icons.medical_services,
-                                    color: Colors.redAccent,
-                                    size: 28,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'Admin Panel',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : Center(
-                                child: Icon(
-                                  Icons.menu,
-                                  color: Colors.redAccent,
-                                ),
-                              ),
-                      ),
-                      const Divider(),
-                      Expanded(
-                        child: ListView(
-                          children: [
-                            _SidebarItem(
-                              icon: Icons.people,
-                              label: 'Nhân viên',
-                              wide: isWide,
-                              selected: _selectedIndex == 0,
-                              onTap: () => setState(() {
-                                _selectedIndex = 0;
-                              }),
-                            ),
-                            _SidebarItem(
-                              icon: Icons.person,
-                              label: 'Bệnh nhân',
-                              wide: isWide,
-                              selected: _selectedIndex == 1,
-                              onTap: () => setState(() {
-                                _selectedIndex = 1;
-                              }),
-                            ),
-                            _SidebarItem(
-                              icon: Icons.medical_services,
-                              label: 'Dịch vụ',
-                              wide: isWide,
-                              selected: _selectedIndex == 2,
-                              onTap: () {
-                                setState(() {
-                                  _selectedIndex = 2;
-                                });
-                              },
-                            ),
-
-                            _SidebarItem(
-                              icon: Icons.attach_money,
-                              label: 'Bảng giá',
-                              wide: isWide,
-                              selected: _selectedIndex == 3,
-                              onTap: () {
-                                setState(() {
-                                  _selectedIndex = 3;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+    return Container(
+      color: const Color(0xFFF7F9FC),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // HEADER
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'Quản lí nhân viên',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
+
+                  SizedBox(height: 6),
+
+                  Text(
+                    'Quản lí tài khoản nhân viên',
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                ],
+              ),
+
+              IconButton(onPressed: () {}, icon: const Icon(Icons.settings)),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // STATS
+          if (_loading)
+            const Center(child: CircularProgressIndicator())
+          else if (_error != null)
+            Text('Lỗi: $_error')
+          else
+            Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              children: [
+                _StatCard(
+                  title: 'Số lượng nhân viên',
+                  value: '${_stats['total'] ?? 0}',
                 ),
 
-                // Main content
-                Expanded(
-                  child: Container(
-                    color: const Color(0xFFF7F9FC),
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _selectedIndex == 0
-                                      ? 'Quản lí nhân viên'
-                                      : _selectedIndex == 1
-                                      ? 'Quản lí bệnh nhân'
-                                      : _selectedIndex == 2
-                                      ? 'Quản lí dịch vụ'
-                                      : 'Quản lí bảng giá',
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  _selectedIndex == 0
-                                      ? 'Quản lí tài khoản nhân viên'
-                                      : _selectedIndex == 1
-                                      ? 'Quản lí tài khoản bệnh nhân'
-                                      : '',
-                                  style: const TextStyle(color: Colors.black54),
-                                ),
-                              ],
-                            ),
-                            IconButton(
-                              onPressed: () {},
-                              icon: const Icon(Icons.settings),
-                            ),
-                          ],
-                        ),
+                _StatCard(
+                  title: 'Đang hoạt động',
+                  value: '${_stats['active'] ?? 0}',
+                  valueColor: Colors.green,
+                ),
 
-                        const SizedBox(height: 20),
+                _StatCard(
+                  title: 'Bác sĩ',
+                  value: '${_stats['doctors'] ?? 0}',
+                  valueColor: Colors.blue,
+                ),
 
-                        if (_selectedIndex == 0) ...[
-                          // Stat cards
-                          if (_loading)
-                            const Center(child: CircularProgressIndicator())
-                          else if (_error != null)
-                            Text('Lỗi: ' + (_error ?? ''))
-                          else
-                            Wrap(
-                              spacing: 16,
-                              runSpacing: 12,
-                              children: [
-                                _StatCard(
-                                  title: 'Số lượng nhân viên',
-                                  value: '${_stats['total'] ?? 0}',
-                                ),
-                                _StatCard(
-                                  title: 'Đang hoạt động',
-                                  value: '${_stats['active'] ?? 0}',
-                                  valueColor: Colors.green,
-                                ),
-                                _StatCard(
-                                  title: 'Bác sĩ',
-                                  value: '${_stats['doctors'] ?? 0}',
-                                  valueColor: Colors.blue,
-                                ),
-                                _StatCard(
-                                  title: 'Nhân viên văn phòng',
-                                  value: '${_stats['receptionists'] ?? 0}',
-                                  valueColor: Colors.purple,
-                                ),
-                              ],
-                            ),
-
-                          const SizedBox(height: 20),
-
-                          // Search + actions
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(8),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: Colors.black12,
-                                        blurRadius: 4,
-                                      ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    controller: _searchCtrl,
-                                    decoration: const InputDecoration(
-                                      icon: Icon(Icons.search),
-                                      hintText: 'Nhập tên, email....',
-                                      border: InputBorder.none,
-                                    ),
-                                    onSubmitted: (v) => _loadData(q: v.trim()),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              ElevatedButton.icon(
-                                onPressed: () async {
-                                  final result = await showDialog<bool>(
-                                    context: context,
-                                    builder: (_) {
-                                      final emailCtrl = TextEditingController();
-                                      final nameCtrl = TextEditingController();
-                                      final phoneCtrl = TextEditingController();
-                                      final roleCtrl = TextEditingController();
-                                      final passCtrl = TextEditingController();
-                                      bool active = true;
-                                      return StatefulBuilder(
-                                        builder: (c, setStateDialog) => AlertDialog(
-                                          title: const Text('Thêm người dùng'),
-                                          content: SingleChildScrollView(
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                TextField(
-                                                  controller: emailCtrl,
-                                                  decoration:
-                                                      const InputDecoration(
-                                                        labelText: 'Email',
-                                                      ),
-                                                ),
-                                                TextField(
-                                                  controller: nameCtrl,
-                                                  decoration:
-                                                      const InputDecoration(
-                                                        labelText: 'Họ và tên',
-                                                      ),
-                                                ),
-                                                TextField(
-                                                  controller: phoneCtrl,
-                                                  decoration:
-                                                      const InputDecoration(
-                                                        labelText:
-                                                            'Số điện thoại',
-                                                      ),
-                                                ),
-                                                TextField(
-                                                  controller: roleCtrl,
-                                                  decoration:
-                                                      const InputDecoration(
-                                                        labelText: 'Role',
-                                                      ),
-                                                ),
-                                                TextField(
-                                                  controller: passCtrl,
-                                                  decoration:
-                                                      const InputDecoration(
-                                                        labelText: 'Mật khẩu',
-                                                      ),
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    const Text('Hoạt động'),
-                                                    Checkbox(
-                                                      value: active,
-                                                      onChanged: (v) {
-                                                        active = v ?? false;
-                                                        setStateDialog(() {});
-                                                      },
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(c).pop(false),
-                                              child: const Text('Hủy'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () async {
-                                                final body = {
-                                                  'email': emailCtrl.text
-                                                      .trim(),
-                                                  'full_name': nameCtrl.text
-                                                      .trim(),
-                                                  'phone': phoneCtrl.text
-                                                      .trim(),
-                                                  'role': roleCtrl.text.trim(),
-                                                  'password': passCtrl.text,
-                                                };
-                                                try {
-                                                  final res =
-                                                      await Api.createUser(
-                                                        body,
-                                                      );
-                                                  if (res.statusCode == 201)
-                                                    Navigator.of(c).pop(true);
-                                                  else {
-                                                    String msg =
-                                                        'Lỗi: ${res.statusCode}';
-                                                    try {
-                                                      final b = jsonDecode(
-                                                        res.body,
-                                                      );
-                                                      msg =
-                                                          b['detail'] ??
-                                                          b['message'] ??
-                                                          msg;
-                                                    } catch (_) {}
-                                                    ScaffoldMessenger.of(
-                                                      context,
-                                                    ).showSnackBar(
-                                                      SnackBar(
-                                                        content: Text(msg),
-                                                      ),
-                                                    );
-                                                  }
-                                                } catch (e) {
-                                                  ScaffoldMessenger.of(
-                                                    context,
-                                                  ).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text('Lỗi: $e'),
-                                                    ),
-                                                  );
-                                                }
-                                              },
-                                              child: const Text('Tạo'),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  );
-                                  if (result == true) await _loadData();
-                                },
-                                icon: const Icon(Icons.add),
-                                label: const Text('Thêm'),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // User list
-                          Expanded(
-                            child: Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 6,
-                                  ),
-                                ],
-                              ),
-                              child: SingleChildScrollView(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  children: [
-                                    if (_loading)
-                                      const Center(
-                                        child: CircularProgressIndicator(),
-                                      )
-                                    else if (_error != null)
-                                      Padding(
-                                        padding: const EdgeInsets.all(12.0),
-                                        child: Text('Lỗi: ' + _error!),
-                                      )
-                                    else if (_users.isEmpty)
-                                      const Padding(
-                                        padding: EdgeInsets.all(12.0),
-                                        child: Text('Không có người dùng'),
-                                      )
-                                    else
-                                      for (var u in _users) ...[
-                                        _UserRow(
-                                          avatarText: (u['full_name'] ?? '')
-                                              .toString()
-                                              .split(' ')
-                                              .map(
-                                                (s) => s.isNotEmpty ? s[0] : '',
-                                              )
-                                              .take(2)
-                                              .join(),
-                                          name:
-                                              u['full_name'] ??
-                                              u['email'] ??
-                                              '',
-                                          email: u['email'] ?? '',
-                                          phone: u['phone'] ?? '',
-                                          role: u['role'] ?? '',
-                                          active: u['status'] == true,
-                                          onEdit: () => _showEditDialog(u),
-                                          onDelete: () =>
-                                              _confirmDelete(u['id']),
-                                        ),
-                                        const Divider(),
-                                      ],
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ] else if (_selectedIndex == 1) ...[
-                          const SizedBox(height: 0),
-                          Expanded(child: PatientManagementContent()),
-                        ] else if (_selectedIndex == 2) ...[
-                          const SizedBox(height: 10),
-                          Expanded(child: ServiceManagementScreen()),
-                        ] else if (_selectedIndex == 3) ...[
-                          const SizedBox(height: 10),
-                          Expanded(child: PricingScreen()),
-                        ],
-                      ],
-                    ),
-                  ),
+                _StatCard(
+                  title: 'Nhân viên văn phòng',
+                  value: '${_stats['receptionists'] ?? 0}',
+                  valueColor: Colors.purple,
                 ),
               ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
+            ),
 
-class _SidebarItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool wide;
-  final bool selected;
-  final VoidCallback? onTap;
+          const SizedBox(height: 20),
 
-  const _SidebarItem({
-    required this.icon,
-    required this.label,
-    required this.wide,
-    this.selected = false,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: selected ? Colors.redAccent : Colors.black54),
-      title: wide
-          ? Text(
-              label,
-              style: TextStyle(
-                color: selected ? Colors.redAccent : Colors.black87,
+          // SEARCH
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black12, blurRadius: 4),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    decoration: const InputDecoration(
+                      icon: Icon(Icons.search),
+                      hintText: 'Nhập tên, email....',
+                      border: InputBorder.none,
+                    ),
+                    onSubmitted: (v) => _loadData(q: v.trim()),
+                  ),
+                ),
               ),
-            )
-          : null,
-      selected: selected,
-      onTap: onTap,
+
+              const SizedBox(width: 12),
+
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final result = await showDialog<bool>(
+                    context: context,
+                    builder: (_) {
+                      final emailCtrl = TextEditingController();
+                      final nameCtrl = TextEditingController();
+                      final phoneCtrl = TextEditingController();
+                      final roleCtrl = TextEditingController();
+                      final passCtrl = TextEditingController();
+
+                      bool active = true;
+
+                      return StatefulBuilder(
+                        builder: (c, setStateDialog) => AlertDialog(
+                          title: const Text('Thêm người dùng'),
+                          content: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TextField(
+                                  controller: emailCtrl,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Email',
+                                  ),
+                                ),
+
+                                TextField(
+                                  controller: nameCtrl,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Họ và tên',
+                                  ),
+                                ),
+
+                                TextField(
+                                  controller: phoneCtrl,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Số điện thoại',
+                                  ),
+                                ),
+
+                                TextField(
+                                  controller: roleCtrl,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Role',
+                                  ),
+                                ),
+
+                                TextField(
+                                  controller: passCtrl,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Mật khẩu',
+                                  ),
+                                ),
+
+                                Row(
+                                  children: [
+                                    const Text('Hoạt động'),
+
+                                    Checkbox(
+                                      value: active,
+                                      onChanged: (v) {
+                                        active = v ?? false;
+                                        setStateDialog(() {});
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(c).pop(false),
+                              child: const Text('Hủy'),
+                            ),
+
+                            TextButton(
+                              onPressed: () async {
+                                final body = {
+                                  'email': emailCtrl.text.trim(),
+                                  'full_name': nameCtrl.text.trim(),
+                                  'phone': phoneCtrl.text.trim(),
+                                  'role': roleCtrl.text.trim(),
+                                  'password': passCtrl.text,
+                                };
+
+                                try {
+                                  final res = await Api.createUser(body);
+
+                                  if (res.statusCode == 201) {
+                                    Navigator.of(c).pop(true);
+                                  } else {
+                                    String msg = 'Lỗi: ${res.statusCode}';
+
+                                    try {
+                                      final b = jsonDecode(res.body);
+
+                                      msg = b['detail'] ?? b['message'] ?? msg;
+                                    } catch (_) {}
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(msg)),
+                                    );
+                                  }
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Lỗi: $e')),
+                                  );
+                                }
+                              },
+                              child: const Text('Tạo'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+
+                  if (result == true) {
+                    await _loadData();
+                  }
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Thêm'),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // USER LIST
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black12, blurRadius: 6),
+                ],
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    if (_loading)
+                      const Center(child: CircularProgressIndicator())
+                    else if (_error != null)
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Text('Lỗi: $_error'),
+                      )
+                    else if (_users.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(12.0),
+                        child: Text('Không có người dùng'),
+                      )
+                    else
+                      for (var u in _users) ...[
+                        _UserRow(
+                          avatarText: (u['full_name'] ?? '')
+                              .toString()
+                              .split(' ')
+                              .map((s) => s.isNotEmpty ? s[0] : '')
+                              .take(2)
+                              .join(),
+
+                          name: u['full_name'] ?? u['email'] ?? '',
+
+                          email: u['email'] ?? '',
+                          phone: u['phone'] ?? '',
+                          role: u['role'] ?? '',
+                          active: u['status'] == true,
+
+                          onEdit: () => _showEditDialog(u),
+
+                          onDelete: () => _confirmDelete(u['id']),
+                        ),
+
+                        const Divider(),
+                      ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -685,7 +526,9 @@ class _StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: const TextStyle(color: Colors.black54)),
+
           const SizedBox(height: 8),
+
           Text(
             value,
             style: TextStyle(
@@ -728,35 +571,45 @@ class _UserRow extends StatelessWidget {
       child: Row(
         children: [
           CircleAvatar(child: Text(avatarText)),
+
           const SizedBox(width: 12),
+
           Expanded(
             flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+
                 const SizedBox(height: 4),
+
                 Row(
                   children: [
                     Icon(Icons.email, size: 14, color: Colors.black45),
+
                     const SizedBox(width: 6),
-                    Text(email, style: TextStyle(color: Colors.black54)),
+
+                    Text(email, style: const TextStyle(color: Colors.black54)),
                   ],
                 ),
               ],
             ),
           ),
+
           Expanded(
             flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(phone),
+
                 const SizedBox(height: 4),
+
                 Text(role, style: const TextStyle(color: Colors.black54)),
               ],
             ),
           ),
+
           Expanded(
             flex: 1,
             child: Align(
@@ -779,10 +632,12 @@ class _UserRow extends StatelessWidget {
               ),
             ),
           ),
+
           IconButton(
             onPressed: onEdit,
             icon: const Icon(Icons.edit, color: Colors.blue),
           ),
+
           IconButton(
             onPressed: onDelete,
             icon: const Icon(Icons.delete, color: Colors.redAccent),
