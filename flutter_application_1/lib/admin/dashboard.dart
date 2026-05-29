@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-
-import '../services/api.dart';
-import 'dart:convert';
+import '../models/doctor_model.dart';
+import '../services/doctor_service.dart';
 
 class AdminDashboard extends StatefulWidget {
-  const AdminDashboard({Key? key}) : super(key: key);
-
+  const AdminDashboard({super.key});
   @override
   State<AdminDashboard> createState() => _AdminDashboardState();
 }
@@ -13,8 +11,8 @@ class AdminDashboard extends StatefulWidget {
 class _AdminDashboardState extends State<AdminDashboard> {
   bool _loading = true;
   String? _error;
-  List<dynamic> _users = [];
-  Map<String, dynamic> _stats = {};
+
+  List<Doctor> _doctors = [];
 
   final _searchCtrl = TextEditingController();
 
@@ -31,20 +29,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
     });
 
     try {
-      final usersRes = await Api.getAdminUsersWithQuery(q);
-      final statsRes = await Api.getAdminStats();
+      final doctors = await DoctorService().getDoctors(query: q);
 
-      if (usersRes.statusCode == 200) {
-        _users = jsonDecode(usersRes.body) as List<dynamic>;
-      } else {
-        throw Exception('Failed to load users: ${usersRes.statusCode}');
-      }
-
-      if (statsRes.statusCode == 200) {
-        _stats = jsonDecode(statsRes.body) as Map<String, dynamic>;
-      } else {
-        throw Exception('Failed to load stats: ${statsRes.statusCode}');
-      }
+      setState(() {
+        _doctors = doctors;
+      });
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -60,12 +49,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
     super.dispose();
   }
 
-  Future<void> _confirmDelete(int id) async {
+  Future<void> _confirmDelete(String id) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Xác nhận xóa'),
-        content: const Text('Bạn có chắc muốn xóa người dùng này không?'),
+        content: const Text('Bạn có chắc muốn xóa bác sĩ này không?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -82,21 +71,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
     if (ok != true) return;
 
     try {
-      final res = await Api.deleteUser(id);
+      await DoctorService().deleteDoctor(id);
 
       if (!mounted) return;
 
-      if (res.statusCode == 204 || res.statusCode == 200) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Xóa thành công')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Xóa thành công')));
 
-        await _loadData();
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Lỗi xóa: ${res.statusCode}')));
-      }
+      await _loadData();
     } catch (e) {
       if (!mounted) return;
 
@@ -106,17 +89,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
-  Future<void> _showEditDialog(Map<String, dynamic> u) async {
-    final nameCtrl = TextEditingController(text: u['full_name'] ?? '');
-    final phoneCtrl = TextEditingController(text: u['phone'] ?? '');
-    final roleCtrl = TextEditingController(text: u['role'] ?? '');
+  Future<void> _showEditDialog(Doctor doctor) async {
+    final nameCtrl = TextEditingController(text: doctor.fullName);
 
-    bool status = u['status'] == true;
+    final phoneCtrl = TextEditingController(text: doctor.phone);
+
+    final specialtyCtrl = TextEditingController(text: doctor.specialty);
+
+    bool status = doctor.status;
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Sửa người dùng'),
+        title: const Text('Sửa bác sĩ'),
         content: StatefulBuilder(
           builder: (context, setStateDialog) {
             return SingleChildScrollView(
@@ -136,8 +121,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ),
 
                   TextField(
-                    controller: roleCtrl,
-                    decoration: const InputDecoration(labelText: 'Role'),
+                    controller: specialtyCtrl,
+                    decoration: const InputDecoration(labelText: 'Chuyên khoa'),
                   ),
 
                   Row(
@@ -174,36 +159,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     if (ok != true) return;
 
-    final body = <String, dynamic>{};
-
-    body['full_name'] = nameCtrl.text.trim();
-    body['phone'] = phoneCtrl.text.trim();
-    body['role'] = roleCtrl.text.trim();
-    body['status'] = status;
+    final body = {
+      "full_name": nameCtrl.text.trim(),
+      "phone": phoneCtrl.text.trim(),
+      "specialty": specialtyCtrl.text.trim(),
+      "status": status,
+    };
 
     try {
-      final res = await Api.updateUser(u['id'], body);
+      await DoctorService().updateDoctor(doctor.id, body);
 
       if (!mounted) return;
 
-      if (res.statusCode == 200) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Cập nhật thành công')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Cập nhật thành công')));
 
-        await _loadData();
-      } else {
-        String msg = 'Lỗi: ${res.statusCode}';
-
-        try {
-          final b = jsonDecode(res.body);
-          msg = b['detail'] ?? b['message'] ?? msg;
-        } catch (_) {}
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(msg)));
-      }
+      await _loadData();
     } catch (e) {
       if (!mounted) return;
 
@@ -221,7 +193,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // HEADER
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -229,14 +200,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
                   Text(
-                    'Quản lí nhân viên',
+                    'Quản lí bác sĩ',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
 
                   SizedBox(height: 6),
 
                   Text(
-                    'Quản lí tài khoản nhân viên',
+                    'Quản lí thông tin bác sĩ',
                     style: TextStyle(color: Colors.black54),
                   ),
                 ],
@@ -248,44 +219,22 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
           const SizedBox(height: 20),
 
-          // STATS
-          if (_loading)
-            const Center(child: CircularProgressIndicator())
-          else if (_error != null)
-            Text('Lỗi: $_error')
-          else
-            Wrap(
-              spacing: 16,
-              runSpacing: 12,
-              children: [
-                _StatCard(
-                  title: 'Số lượng nhân viên',
-                  value: '${_stats['total'] ?? 0}',
-                ),
+          Wrap(
+            spacing: 16,
+            runSpacing: 12,
+            children: [
+              _StatCard(title: 'Tổng bác sĩ', value: '${_doctors.length}'),
 
-                _StatCard(
-                  title: 'Đang hoạt động',
-                  value: '${_stats['active'] ?? 0}',
-                  valueColor: Colors.green,
-                ),
-
-                _StatCard(
-                  title: 'Bác sĩ',
-                  value: '${_stats['doctors'] ?? 0}',
-                  valueColor: Colors.blue,
-                ),
-
-                _StatCard(
-                  title: 'Nhân viên văn phòng',
-                  value: '${_stats['receptionists'] ?? 0}',
-                  valueColor: Colors.purple,
-                ),
-              ],
-            ),
+              _StatCard(
+                title: 'Đang hoạt động',
+                value: '${_doctors.where((e) => e.status).length}',
+                valueColor: Colors.green,
+              ),
+            ],
+          ),
 
           const SizedBox(height: 20),
 
-          // SEARCH
           Row(
             children: [
               Expanded(
@@ -302,7 +251,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     controller: _searchCtrl,
                     decoration: const InputDecoration(
                       icon: Icon(Icons.search),
-                      hintText: 'Nhập tên, email....',
+                      hintText: 'Tìm bác sĩ...',
                       border: InputBorder.none,
                     ),
                     onSubmitted: (v) => _loadData(q: v.trim()),
@@ -313,128 +262,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               const SizedBox(width: 12),
 
               ElevatedButton.icon(
-                onPressed: () async {
-                  final result = await showDialog<bool>(
-                    context: context,
-                    builder: (_) {
-                      final emailCtrl = TextEditingController();
-                      final nameCtrl = TextEditingController();
-                      final phoneCtrl = TextEditingController();
-                      final roleCtrl = TextEditingController();
-                      final passCtrl = TextEditingController();
-
-                      bool active = true;
-
-                      return StatefulBuilder(
-                        builder: (c, setStateDialog) => AlertDialog(
-                          title: const Text('Thêm người dùng'),
-                          content: SingleChildScrollView(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                TextField(
-                                  controller: emailCtrl,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Email',
-                                  ),
-                                ),
-
-                                TextField(
-                                  controller: nameCtrl,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Họ và tên',
-                                  ),
-                                ),
-
-                                TextField(
-                                  controller: phoneCtrl,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Số điện thoại',
-                                  ),
-                                ),
-
-                                TextField(
-                                  controller: roleCtrl,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Role',
-                                  ),
-                                ),
-
-                                TextField(
-                                  controller: passCtrl,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Mật khẩu',
-                                  ),
-                                ),
-
-                                Row(
-                                  children: [
-                                    const Text('Hoạt động'),
-
-                                    Checkbox(
-                                      value: active,
-                                      onChanged: (v) {
-                                        active = v ?? false;
-                                        setStateDialog(() {});
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(c).pop(false),
-                              child: const Text('Hủy'),
-                            ),
-
-                            TextButton(
-                              onPressed: () async {
-                                final body = {
-                                  'email': emailCtrl.text.trim(),
-                                  'full_name': nameCtrl.text.trim(),
-                                  'phone': phoneCtrl.text.trim(),
-                                  'role': roleCtrl.text.trim(),
-                                  'password': passCtrl.text,
-                                };
-
-                                try {
-                                  final res = await Api.createUser(body);
-
-                                  if (res.statusCode == 201) {
-                                    Navigator.of(c).pop(true);
-                                  } else {
-                                    String msg = 'Lỗi: ${res.statusCode}';
-
-                                    try {
-                                      final b = jsonDecode(res.body);
-
-                                      msg = b['detail'] ?? b['message'] ?? msg;
-                                    } catch (_) {}
-
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(msg)),
-                                    );
-                                  }
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Lỗi: $e')),
-                                  );
-                                }
-                              },
-                              child: const Text('Tạo'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-
-                  if (result == true) {
-                    await _loadData();
-                  }
-                },
+                onPressed: () async {},
                 icon: const Icon(Icons.add),
                 label: const Text('Thêm'),
               ),
@@ -443,7 +271,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
           const SizedBox(height: 16),
 
-          // USER LIST
           Expanded(
             child: Container(
               width: double.infinity,
@@ -465,31 +292,31 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         padding: const EdgeInsets.all(12.0),
                         child: Text('Lỗi: $_error'),
                       )
-                    else if (_users.isEmpty)
+                    else if (_doctors.isEmpty)
                       const Padding(
                         padding: EdgeInsets.all(12.0),
-                        child: Text('Không có người dùng'),
+                        child: Text('Không có bác sĩ'),
                       )
                     else
-                      for (var u in _users) ...[
+                      for (var doctor in _doctors) ...[
                         _UserRow(
-                          avatarText: (u['full_name'] ?? '')
-                              .toString()
+                          avatarText: doctor.fullName
                               .split(' ')
-                              .map((s) => s.isNotEmpty ? s[0] : '')
+                              .map((e) => e[0])
                               .take(2)
                               .join(),
 
-                          name: u['full_name'] ?? u['email'] ?? '',
+                          name: doctor.fullName,
 
-                          email: u['email'] ?? '',
-                          phone: u['phone'] ?? '',
-                          role: u['role'] ?? '',
-                          active: u['status'] == true,
+                          email: doctor.email,
 
-                          onEdit: () => _showEditDialog(u),
+                          phone: doctor.phone,
 
-                          onDelete: () => _confirmDelete(u['id']),
+                          active: doctor.status,
+
+                          onEdit: () => _showEditDialog(doctor),
+
+                          onDelete: () => _confirmDelete(doctor.id),
                         ),
 
                         const Divider(),
@@ -548,8 +375,8 @@ class _UserRow extends StatelessWidget {
   final String name;
   final String email;
   final String phone;
-  final String role;
   final bool active;
+
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
@@ -558,7 +385,6 @@ class _UserRow extends StatelessWidget {
     required this.name,
     required this.email,
     required this.phone,
-    required this.role,
     required this.active,
     this.onEdit,
     this.onDelete,
@@ -585,7 +411,7 @@ class _UserRow extends StatelessWidget {
 
                 Row(
                   children: [
-                    Icon(Icons.email, size: 14, color: Colors.black45),
+                    const Icon(Icons.email, size: 14, color: Colors.black45),
 
                     const SizedBox(width: 6),
 
@@ -600,13 +426,7 @@ class _UserRow extends StatelessWidget {
             flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(phone),
-
-                const SizedBox(height: 4),
-
-                Text(role, style: const TextStyle(color: Colors.black54)),
-              ],
+              children: [Text(phone), const SizedBox(height: 4)],
             ),
           ),
 

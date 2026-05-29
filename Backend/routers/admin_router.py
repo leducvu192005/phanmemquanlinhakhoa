@@ -125,38 +125,38 @@ def delete_user(user_id: int):
     finally:
         db.close()
 
-
 # === Service Management APIs ===
-@router.get("/services", response_model=List[ServiceResponse], dependencies=[Depends(get_current_admin)])
+
+@router.get("/services", response_model=List[ServiceResponse])
 def list_services(search: str = None, db=Depends(get_db)):
     return service_management_service.get_services(db, search)
 
-@router.post("/services", response_model=ServiceResponse, dependencies=[Depends(get_current_admin)])
+
+@router.post("/services", response_model=ServiceResponse)
 def create_service(service: ServiceCreate, db=Depends(get_db)):
     return service_management_service.create_service(db, service)
 
-@router.put("/services/{service_id}", response_model=ServiceResponse, dependencies=[Depends(get_current_admin)])
+
+@router.put("/services/{service_id}", response_model=ServiceResponse)
 def update_service(service_id: int, service: ServiceUpdate, db=Depends(get_db)):
     return service_management_service.update_service(db, service_id, service)
 
-@router.delete("/services/{service_id}", response_model=ServiceResponse, dependencies=[Depends(get_current_admin)])
+
+@router.delete("/services/{service_id}", response_model=ServiceResponse)
 def delete_service(service_id: int, db=Depends(get_db)):
     return service_management_service.delete_service(db, service_id)
 
-@router.put("/services/{service_id}/price", response_model=ServiceResponse, dependencies=[Depends(get_current_admin)])
-def update_price(service_id: int, new_price: float, db=Depends(get_db), current_admin=Depends(get_current_admin)):
-    return pricing_service.update_service_price(db, service_id, new_price, current_admin.id)
 
-@router.get("/services/{service_id}/price-history", response_model=List[ServicePriceHistoryResponse], dependencies=[Depends(get_current_admin)])
+@router.put("/services/{service_id}/price", response_model=ServiceResponse)
+def update_price(service_id: int, new_price: float, db=Depends(get_db)):
+    return pricing_service.update_service_price(db, service_id, new_price, None)
+
+
+@router.get("/services/{service_id}/price-history", response_model=List[ServicePriceHistoryResponse])
 def get_price_history(service_id: int, db=Depends(get_db)):
     return pricing_service.get_price_history(db, service_id)
 # lấy dữ liệu patient để hiển thị trong admin panel
-@router.get(
-    "/patients",
-    response_model=List[PatientOut]
-)
-def get_patients(db=Depends(get_db)):
-    return db.query(Patient).all()
+
 @router.get("/patients", response_model=List[PatientOut])
 def get_patients(q: Optional[str] = None, db=Depends(get_db)):
     query = db.query(Patient)
@@ -165,19 +165,14 @@ def get_patients(q: Optional[str] = None, db=Depends(get_db)):
         like = f"%{q}%"
         query = query.filter(
             (Patient.full_name.ilike(like)) |
-            (Patient.email.ilike(like)) |
-            (Patient.patient_code.ilike(like))
+            (Patient.phone.ilike(like)) |  
+            (Patient.patient_code.ilike(like)) |
+            (Patient.email.ilike(like))
         )
 
     return query.order_by(Patient.id.desc()).all()
-@router.get("/patients/{patient_id}", response_model=PatientOut)
-def get_patient_detail(patient_id: int, db=Depends(get_db)):
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
 
-    if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
 
-    return patient
 @router.post("/patients", response_model=PatientOut)
 def create_patient(payload: PatientCreate, db=Depends(get_db)):
     patient = Patient(**payload.dict())

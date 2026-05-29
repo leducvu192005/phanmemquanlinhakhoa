@@ -10,14 +10,7 @@ class ServiceApi {
 
   static const _storage = FlutterSecureStorage();
   static Future<Map<String, String>> _headers() async {
-    final token = await _storage.read(key: 'jwt');
-
-    print("JWT STORED: $token");
-
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
+    return {'Content-Type': 'application/json'};
   }
 
   static Future<List<Service>> getServices({String? search}) async {

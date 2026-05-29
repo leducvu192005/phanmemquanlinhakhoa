@@ -6,7 +6,7 @@ from db import Base, engine
 from routers.auth import router as auth_router
 from routers.admin_router import router as admin_router
 from routers.patients_router import router as patients_router
-
+from routers.doctor_router import router as doctor_router
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -49,6 +49,9 @@ app.include_router(
     prefix="/admin/patients",  
     tags=["Patients"]
 )
+
+# Doctor routes
+app.include_router(doctor_router)
 
 # ======================
 # HEALTH CHECK

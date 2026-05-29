@@ -19,14 +19,9 @@ from auth import (
 from dependencies import get_current_user
 from db import get_db
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["Authentication"],
-)
-
 ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 
-
+router = APIRouter()
 # =========================
 # REGISTER
 # =========================

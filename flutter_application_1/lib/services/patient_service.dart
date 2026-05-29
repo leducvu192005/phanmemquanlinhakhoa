@@ -10,22 +10,18 @@ class PatientService {
   // GET ALL + SEARCH
   // =========================
   Future<List<Patient>> getPatients({String? query}) async {
-    final uri = Uri.parse(
-      query == null || query.isEmpty ? baseUrl : "$baseUrl?q=$query",
+    final uri = Uri.parse(baseUrl).replace(
+      queryParameters: query == null || query.isEmpty ? null : {"q": query},
     );
 
     final response = await http.get(uri);
 
-    print(response.statusCode);
-    print(response.body);
-
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
-
       return (data as List).map((item) => Patient.fromJson(item)).toList();
-    } else {
-      throw Exception("Failed to load patients");
     }
+
+    throw Exception("Error ${response.statusCode}: ${response.body}");
   }
 
   // =========================

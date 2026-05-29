@@ -1,5 +1,7 @@
-from sqlalchemy import Column, Integer, String, Date, Text, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Date, Text, ForeignKey, Boolean, DateTime
+from datetime import datetime
 from db import Base
+
 
 class Patient(Base):
     __tablename__ = "patients"
@@ -29,6 +31,12 @@ class Patient(Base):
 
     emergency_contact_phone = Column(String)
 
+    last_visit = Column(DateTime, nullable=True)
+    notes = Column(Text, nullable=True)
+
     status = Column(Boolean, default=True)
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

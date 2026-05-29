@@ -63,7 +63,7 @@ class _AdminLayoutState extends State<AdminLayout> {
                     children: [
                       _SidebarItem(
                         icon: Icons.people,
-                        label: 'Nhân viên',
+                        label: 'Bác sĩ',
                         wide: isWide,
                         selected: selectedIndex == 0,
                         onTap: () {
