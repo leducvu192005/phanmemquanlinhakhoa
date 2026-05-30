@@ -59,4 +59,44 @@ class Patient {
       status: json['status'] ?? true,
     );
   }
+  Patient copyWith({
+    int? id,
+    String? patientCode,
+    String? fullName,
+    String? gender,
+    String? dateOfBirth,
+    String? phone,
+    String? email,
+    String? address,
+    String? avatar,
+    String? bloodType,
+    String? allergies,
+    String? medicalHistory,
+    String? emergencyContactName,
+    String? emergencyContactPhone,
+    bool? status,
+    DateTime? lastVisit,
+    String? notes,
+  }) {
+    return Patient(
+      id: id ?? this.id,
+      patientCode: patientCode ?? this.patientCode,
+      fullName: fullName ?? this.fullName,
+      gender: gender ?? this.gender,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      address: address ?? this.address,
+      avatar: avatar ?? this.avatar,
+      bloodType: bloodType ?? this.bloodType,
+      allergies: allergies ?? this.allergies,
+      medicalHistory: medicalHistory ?? this.medicalHistory,
+      emergencyContactName: emergencyContactName ?? this.emergencyContactName,
+      emergencyContactPhone:
+          emergencyContactPhone ?? this.emergencyContactPhone,
+      status: status ?? this.status,
+      lastVisit: lastVisit ?? this.lastVisit,
+      notes: notes ?? this.notes,
+    );
+  }
 }

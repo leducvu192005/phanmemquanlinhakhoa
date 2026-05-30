@@ -1,21 +1,27 @@
 from pydantic import BaseModel
 from typing import Optional
 from uuid import UUID
+from datetime import date
+
 from datetime import datetime
-
-
 # =========================
 # BASE
 # =========================
 class DoctorBase(BaseModel):
+    doctor_code: Optional[str] = None
+
     full_name: str
     email: str
     phone: Optional[str] = None
 
-    specialization: Optional[str] = None
+    gender: Optional[str] = None
+    
+    date_of_birth: Optional[date] = None
+    specialty: Optional[str] = None   # ✅ FIX: đúng DB
     qualification: Optional[str] = None
     experience_years: Optional[int] = None
 
+    address: Optional[str] = None
     avatar: Optional[str] = None
     bio: Optional[str] = None
 
@@ -33,14 +39,20 @@ class DoctorCreate(DoctorBase):
 # UPDATE
 # =========================
 class DoctorUpdate(BaseModel):
+    doctor_code: Optional[str] = None
+
     full_name: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
 
-    specialization: Optional[str] = None
+    gender: Optional[str] = None
+    date_of_birth: Optional[date] = None
+
+    specialty: Optional[str] = None   # ✅ FIX
     qualification: Optional[str] = None
     experience_years: Optional[int] = None
 
+    address: Optional[str] = None
     avatar: Optional[str] = None
     bio: Optional[str] = None
 
@@ -52,7 +64,8 @@ class DoctorUpdate(BaseModel):
 # =========================
 class DoctorOut(DoctorBase):
     id: UUID
-    created_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None   
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

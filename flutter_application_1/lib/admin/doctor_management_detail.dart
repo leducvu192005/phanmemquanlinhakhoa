@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
-import '../../models/patient_model.dart';
-import '/services/patient_service.dart';
+import '../models/doctor_model.dart';
+import '../services/doctor_service.dart';
 
-class PatientDetailScreen extends StatefulWidget {
-  final Patient patient;
+class DoctorDetailScreen extends StatefulWidget {
+  final Doctor doctor;
 
-  const PatientDetailScreen({super.key, required this.patient});
+  const DoctorDetailScreen({super.key, required this.doctor});
 
   @override
-  State<PatientDetailScreen> createState() => _PatientDetailScreenState();
+  State<DoctorDetailScreen> createState() => _DoctorDetailScreenState();
 }
 
-class _PatientDetailScreenState extends State<PatientDetailScreen> {
-  late Patient _currentPatient;
-  final _patientService = PatientService();
+class _AdminDashboardState {}
+
+class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
+  late Doctor _currentDoctor;
 
   @override
   void initState() {
     super.initState();
-    _currentPatient = widget.patient;
+    _currentDoctor = widget.doctor;
   }
 
   Future<void> _handleDelete() async {
@@ -33,7 +34,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
           ],
         ),
         content: Text(
-          'Bạn có chắc chắn muốn xóa bệnh nhân ${_currentPatient.fullName} khỏi hệ thống? Thao tác này không thể hoàn tác.',
+          'Bạn có chắc chắn muốn xóa bác sĩ ${_currentDoctor.fullName} khỏi hệ thống? Thao tác này không thể hoàn tác.',
         ),
         actions: [
           TextButton(
@@ -56,12 +57,12 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     if (ok != true) return;
 
     try {
-      await _patientService.deletePatient(_currentPatient.id);
+      await DoctorService().deleteDoctor(_currentDoctor.id);
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Đã xóa bệnh nhân thành công'),
+          content: Text('Đã xóa bác sĩ thành công'),
           backgroundColor: Colors.green,
         ),
       );
@@ -78,35 +79,28 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   }
 
   Future<void> _handleEdit() async {
-    final codeCtrl = TextEditingController(text: _currentPatient.patientCode);
-    final nameCtrl = TextEditingController(text: _currentPatient.fullName);
-    final genderCtrl = TextEditingController(
-      text: _currentPatient.gender ?? '',
-    );
+    final codeCtrl = TextEditingController(text: _currentDoctor.doctorCode);
+    final nameCtrl = TextEditingController(text: _currentDoctor.fullName);
+    final genderCtrl = TextEditingController(text: _currentDoctor.gender ?? '');
     final dobCtrl = TextEditingController(
-      text: _currentPatient.dateOfBirth ?? '',
+      text: _currentDoctor.dateOfBirth ?? '',
     );
-    final phoneCtrl = TextEditingController(text: _currentPatient.phone);
-    final emailCtrl = TextEditingController(text: _currentPatient.email);
+    final phoneCtrl = TextEditingController(text: _currentDoctor.phone);
+    final emailCtrl = TextEditingController(text: _currentDoctor.email);
+    final specialtyCtrl = TextEditingController(
+      text: _currentDoctor.specialty ?? '',
+    );
+    final qualCtrl = TextEditingController(
+      text: _currentDoctor.qualification ?? '',
+    );
+    final expCtrl = TextEditingController(
+      text: _currentDoctor.experienceYears?.toString() ?? '',
+    );
     final addressCtrl = TextEditingController(
-      text: _currentPatient.address ?? '',
+      text: _currentDoctor.address ?? '',
     );
-    final bloodCtrl = TextEditingController(
-      text: _currentPatient.bloodType ?? '',
-    );
-    final allergiesCtrl = TextEditingController(
-      text: _currentPatient.allergies ?? '',
-    );
-    final historyCtrl = TextEditingController(
-      text: _currentPatient.medicalHistory ?? '',
-    );
-    final contactNameCtrl = TextEditingController(
-      text: _currentPatient.emergencyContactName ?? '',
-    );
-    final contactPhoneCtrl = TextEditingController(
-      text: _currentPatient.emergencyContactPhone ?? '',
-    );
-    bool status = _currentPatient.status;
+    final bioCtrl = TextEditingController(text: _currentDoctor.bio ?? '');
+    bool status = _currentDoctor.status;
 
     final ok = await showDialog<bool>(
       context: context,
@@ -117,168 +111,166 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
         ),
         child: AlertDialog(
           title: const Text(
-            'Chỉnh sửa hồ sơ bệnh nhân',
+            'Chỉnh sửa hồ sơ bác sĩ',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          content: SizedBox(
-            width: 650,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 8),
-                  Row(
+          content: StatefulBuilder(
+            builder: (context, setStateDialog) {
+              return SizedBox(
+                width: 600,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: TextField(
-                          controller: codeCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Mã bệnh nhân',
-                            border: OutlineInputBorder(),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: codeCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Mã bác sĩ',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
                           ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: nameCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Họ và tên',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: genderCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Giới tính',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: dobCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Ngày sinh (YYYY-MM-DD)',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: phoneCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Số điện thoại',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: emailCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: specialtyCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Chuyên khoa',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: qualCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Trình độ',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: expCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Số năm kinh nghiệm',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: addressCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Địa chỉ',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: bioCtrl,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                          labelText: 'Mô tả / Tiểu sử',
+                          border: OutlineInputBorder(),
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: nameCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Họ và tên',
-                            border: OutlineInputBorder(),
-                          ),
+                      const SizedBox(height: 8),
+                      SwitchListTile(
+                        title: const Text(
+                          'Trạng thái hoạt động',
+                          style: TextStyle(fontSize: 14),
                         ),
+                        value: status,
+                        activeColor: const Color(0xFF2563EB),
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (v) {
+                          status = v;
+                          setStateDialog(() {});
+                        },
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: genderCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Giới tính',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: dobCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Ngày sinh (YYYY-MM-DD)',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: phoneCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Số điện thoại',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: emailCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: addressCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Địa chỉ cư trú',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: bloodCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Nhóm máu',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: allergiesCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Dị ứng đặc biệt',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: historyCtrl,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Tiểu sử bệnh án',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: contactNameCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Người liên hệ khẩn cấp',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: contactPhoneCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'SĐT liên hệ khẩn cấp',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  SwitchListTile(
-                    title: const Text(
-                      'Trạng thái hoạt động',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    value: status,
-                    activeColor: const Color(0xFF2563EB),
-                    contentPadding: EdgeInsets.zero,
-                    onChanged: (v) {
-                      status = v;
-                    },
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
           actions: [
             TextButton(
@@ -302,36 +294,29 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     if (ok != true) return;
 
     final body = {
-      "patient_code": codeCtrl.text.trim(),
+      "doctor_code": codeCtrl.text.trim(),
       "full_name": nameCtrl.text.trim(),
       "gender": genderCtrl.text.trim().isEmpty ? null : genderCtrl.text.trim(),
       "date_of_birth": dobCtrl.text.trim().isEmpty ? null : dobCtrl.text.trim(),
       "phone": phoneCtrl.text.trim(),
       "email": emailCtrl.text.trim(),
+      "specialty": specialtyCtrl.text.trim().isEmpty
+          ? null
+          : specialtyCtrl.text.trim(),
+      "qualification": qualCtrl.text.trim().isEmpty
+          ? null
+          : qualCtrl.text.trim(),
+      "experience_years": int.tryParse(expCtrl.text.trim()),
       "address": addressCtrl.text.trim().isEmpty
           ? null
           : addressCtrl.text.trim(),
-      "blood_type": bloodCtrl.text.trim().isEmpty
-          ? null
-          : bloodCtrl.text.trim(),
-      "allergies": allergiesCtrl.text.trim().isEmpty
-          ? null
-          : allergiesCtrl.text.trim(),
-      "medical_history": historyCtrl.text.trim().isEmpty
-          ? null
-          : historyCtrl.text.trim(),
-      "emergency_contact_name": contactNameCtrl.text.trim().isEmpty
-          ? null
-          : contactNameCtrl.text.trim(),
-      "emergency_contact_phone": contactPhoneCtrl.text.trim().isEmpty
-          ? null
-          : contactPhoneCtrl.text.trim(),
+      "bio": bioCtrl.text.trim().isEmpty ? null : bioCtrl.text.trim(),
       "status": status,
-      "avatar": _currentPatient.avatar,
+      "avatar": _currentDoctor.avatar,
     };
 
     try {
-      await _patientService.updatePatient(_currentPatient.id, body);
+      await DoctorService().updateDoctor(_currentDoctor.id, body);
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -342,19 +327,18 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       );
 
       setState(() {
-        _currentPatient = _currentPatient.copyWith(
-          patientCode: body["patient_code"] as String,
+        _currentDoctor = _currentDoctor.copyWith(
+          doctorCode: body["doctor_code"] as String,
           fullName: body["full_name"] as String,
           gender: body["gender"] as String?,
           dateOfBirth: body["date_of_birth"] as String?,
           phone: body["phone"] as String,
           email: body["email"] as String,
+          specialty: body["specialty"] as String?,
+          qualification: body["qualification"] as String?,
+          experienceYears: body["experience_years"] as int?,
           address: body["address"] as String?,
-          bloodType: body["blood_type"] as String?,
-          allergies: body["allergies"] as String?,
-          medicalHistory: body["medical_history"] as String?,
-          emergencyContactName: body["emergency_contact_name"] as String?,
-          emergencyContactPhone: body["emergency_contact_phone"] as String?,
+          bio: body["bio"] as String?,
           status: body["status"] as bool,
         );
       });
@@ -386,7 +370,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Quản lý bệnh nhân',
+              'Quản lý bác sĩ',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -395,7 +379,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             ),
             SizedBox(height: 2),
             Text(
-              'Quản lý hồ sơ y tế và thông tin chi tiết bệnh nhân',
+              'Quản lý tài khoản và thông tin chi tiết bác sĩ',
               style: TextStyle(fontSize: 13, color: Color(0xFF60A5FA)),
             ),
           ],
@@ -452,19 +436,17 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: const Color(0xFFBFDBFE)),
                             image:
-                                (_currentPatient.avatar != null &&
-                                    _currentPatient.avatar!.isNotEmpty)
+                                (_currentDoctor.avatar != null &&
+                                    _currentDoctor.avatar!.isNotEmpty)
                                 ? DecorationImage(
-                                    image: NetworkImage(
-                                      _currentPatient.avatar!,
-                                    ),
+                                    image: NetworkImage(_currentDoctor.avatar!),
                                     fit: BoxFit.cover,
                                   )
                                 : null,
                           ),
                           child:
-                              (_currentPatient.avatar == null ||
-                                  _currentPatient.avatar!.isEmpty)
+                              (_currentDoctor.avatar == null ||
+                                  _currentDoctor.avatar!.isEmpty)
                               ? const Center(
                                   child: Icon(
                                     Icons.person_outline_rounded,
@@ -509,42 +491,54 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildInfoText(
-                              'Mã bệnh nhân: ',
-                              _currentPatient.patientCode,
+                              'Mã bác sĩ: ',
+                              _currentDoctor.doctorCode,
                             ),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
                             _buildInfoText(
                               'Họ và tên: ',
-                              _currentPatient.fullName,
+                              _currentDoctor.fullName,
                             ),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
                             _buildInfoText(
                               'Giới tính: ',
-                              _currentPatient.gender ?? 'Chưa cập nhật',
+                              _currentDoctor.gender ?? 'Chưa cập nhật',
                             ),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
                             _buildInfoText(
                               'Ngày sinh: ',
-                              _currentPatient.dateOfBirth ?? 'Chưa cập nhật',
+                              _currentDoctor.dateOfBirth ?? 'Chưa cập nhật',
                             ),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
                             _buildInfoText(
                               'Số điện thoại: ',
-                              _currentPatient.phone,
+                              _currentDoctor.phone,
                             ),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
-                            _buildInfoText('Email: ', _currentPatient.email),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
+                            _buildInfoText('Email: ', _currentDoctor.email),
+                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
                             _buildInfoText(
-                              'Địa chỉ cư trú: ',
-                              _currentPatient.address ?? 'Chưa cập nhật',
+                              'Chuyên khoa: ',
+                              _currentDoctor.specialty ?? 'Chưa cập nhật',
                             ),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
                             _buildInfoText(
-                              'Nhóm máu: ',
-                              _currentPatient.bloodType ?? 'Chưa cập nhật',
+                              'Trình độ: ',
+                              _currentDoctor.qualification ?? 'Chưa cập nhật',
                             ),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
+                            _buildInfoText(
+                              'Kinh nghiệm: ',
+                              _currentDoctor.experienceYears != null
+                                  ? '${_currentDoctor.experienceYears} năm'
+                                  : 'Chưa cập nhật',
+                            ),
+                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
+                            _buildInfoText(
+                              'Địa chỉ: ',
+                              _currentDoctor.address ?? 'Chưa cập nhật',
+                            ),
+                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
                             Row(
                               children: [
                                 const Text(
@@ -561,17 +555,17 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: _currentPatient.status
+                                    color: _currentDoctor.status
                                         ? const Color(0xFFDCFCE7)
                                         : const Color(0xFFFEE2E2),
                                     borderRadius: BorderRadius.circular(100),
                                   ),
                                   child: Text(
-                                    _currentPatient.status
+                                    _currentDoctor.status
                                         ? 'Đang hoạt động'
                                         : 'Tạm dừng',
                                     style: TextStyle(
-                                      color: _currentPatient.status
+                                      color: _currentDoctor.status
                                           ? const Color(0xFF16A34A)
                                           : const Color(0xFF991B1B),
                                       fontSize: 13,
@@ -599,7 +593,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Dị ứng đặc biệt',
+                        'Mô tả bác sĩ / Tiểu sử',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
@@ -608,97 +602,13 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        _currentPatient.allergies != null &&
-                                _currentPatient.allergies!.isNotEmpty
-                            ? _currentPatient.allergies!
-                            : 'Không ghi nhận thông tin dị ứng.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color:
-                              _currentPatient.allergies != null &&
-                                  _currentPatient.allergies!.isNotEmpty
-                              ? const Color(0xFFB91C1C)
-                              : const Color(0xFF475569),
-                          height: 1.6,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFDBEAFE)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Tiểu sử bệnh án',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E3A8A),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        _currentPatient.medicalHistory != null &&
-                                _currentPatient.medicalHistory!.isNotEmpty
-                            ? _currentPatient.medicalHistory!
-                            : 'Chưa có dữ liệu tiểu sử bệnh án.',
+                        _currentDoctor.bio ??
+                            'Không có thông tin mô tả chi tiết.',
                         style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF475569),
                           height: 1.6,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFDBEAFE)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Thông tin liên hệ khẩn cấp',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E3A8A),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildEmergencyContactTile(
-                              Icons.account_box_outlined,
-                              'Người liên hệ khẩn cấp: ',
-                              _currentPatient.emergencyContactName ??
-                                  'Chưa cập nhật',
-                            ),
-                          ),
-                          const SizedBox(width: 24),
-                          Expanded(
-                            child: _buildEmergencyContactTile(
-                              Icons.phone_forwarded_outlined,
-                              'Số điện thoại liên hệ: ',
-                              _currentPatient.emergencyContactPhone ??
-                                  'Chưa cập nhật',
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
@@ -711,7 +621,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                       onPressed: _handleDelete,
                       icon: const Icon(Icons.delete_outline_rounded, size: 18),
                       label: const Text(
-                        'Xóa bệnh nhân',
+                        'Xóa bác sĩ',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                       style: OutlinedButton.styleFrom(
@@ -775,30 +685,6 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildEmergencyContactTile(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: const Color(0xFF3B82F6)),
-        const SizedBox(width: 8),
-        RichText(
-          text: TextSpan(
-            style: const TextStyle(fontSize: 14, color: Color(0xFF475569)),
-            children: [
-              TextSpan(text: label),
-              TextSpan(
-                text: value,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E3A8A),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

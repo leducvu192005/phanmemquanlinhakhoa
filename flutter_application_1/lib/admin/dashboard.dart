@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/doctor_model.dart';
 import '../services/doctor_service.dart';
+import 'doctor_management_detail.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -11,9 +12,8 @@ class AdminDashboard extends StatefulWidget {
 class _AdminDashboardState extends State<AdminDashboard> {
   bool _loading = true;
   String? _error;
-
-  List<Doctor> _doctors = [];
-
+  List<Doctor> _allDoctors = [];
+  List<Doctor> _filteredDoctors = [];
   final _searchCtrl = TextEditingController();
 
   @override
@@ -22,18 +22,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
     _loadData();
   }
 
-  Future<void> _loadData({String? q}) async {
+  Future<void> _loadData() async {
     setState(() {
       _loading = true;
       _error = null;
     });
 
     try {
-      final doctors = await DoctorService().getDoctors(query: q);
-
+      final doctors = await DoctorService().getDoctors();
       setState(() {
-        _doctors = doctors;
+        _allDoctors = doctors;
+        _filteredDoctors = doctors;
       });
+      if (_searchCtrl.text.trim().isNotEmpty) {
+        _applyFilter(_searchCtrl.text.trim());
+      }
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -43,290 +46,405 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
+  void _applyFilter(String q) {
+    final query = q.toLowerCase();
+    setState(() {
+      _filteredDoctors = _allDoctors.where((doctor) {
+        final nameMatch = doctor.fullName.toLowerCase().contains(query);
+        final phoneMatch = doctor.phone.toLowerCase().contains(query);
+        final specialtyMatch = (doctor.specialty ?? '').toLowerCase().contains(
+          query,
+        );
+        return nameMatch || phoneMatch || specialtyMatch;
+      }).toList();
+    });
+  }
+
   @override
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _confirmDelete(String id) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Xác nhận xóa'),
-        content: const Text('Bạn có chắc muốn xóa bác sĩ này không?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Hủy'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Xóa'),
-          ),
-        ],
-      ),
-    );
-
-    if (ok != true) return;
-
-    try {
-      await DoctorService().deleteDoctor(id);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Xóa thành công')));
-
-      await _loadData();
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
-    }
-  }
-
-  Future<void> _showEditDialog(Doctor doctor) async {
-    final nameCtrl = TextEditingController(text: doctor.fullName);
-
-    final phoneCtrl = TextEditingController(text: doctor.phone);
-
-    final specialtyCtrl = TextEditingController(text: doctor.specialty);
-
-    bool status = doctor.status;
-
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Sửa bác sĩ'),
-        content: StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameCtrl,
-                    decoration: const InputDecoration(labelText: 'Họ và tên'),
-                  ),
-
-                  TextField(
-                    controller: phoneCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Số điện thoại',
-                    ),
-                  ),
-
-                  TextField(
-                    controller: specialtyCtrl,
-                    decoration: const InputDecoration(labelText: 'Chuyên khoa'),
-                  ),
-
-                  Row(
-                    children: [
-                      const Text('Hoạt động'),
-
-                      Checkbox(
-                        value: status,
-                        onChanged: (v) {
-                          status = v ?? false;
-                          setStateDialog(() {});
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Hủy'),
-          ),
-
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Lưu'),
-          ),
-        ],
-      ),
-    );
-
-    if (ok != true) return;
-
-    final body = {
-      "full_name": nameCtrl.text.trim(),
-      "phone": phoneCtrl.text.trim(),
-      "specialty": specialtyCtrl.text.trim(),
-      "status": status,
-    };
-
-    try {
-      await DoctorService().updateDoctor(doctor.id, body);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Cập nhật thành công')));
-
-      await _loadData();
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF7F9FC),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'Quản lí bác sĩ',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-
-                  SizedBox(height: 6),
-
-                  Text(
-                    'Quản lí thông tin bác sĩ',
-                    style: TextStyle(color: Colors.black54),
-                  ),
-                ],
-              ),
-
-              IconButton(onPressed: () {}, icon: const Icon(Icons.settings)),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          Wrap(
-            spacing: 16,
-            runSpacing: 12,
-            children: [
-              _StatCard(title: 'Tổng bác sĩ', value: '${_doctors.length}'),
-
-              _StatCard(
-                title: 'Đang hoạt động',
-                value: '${_doctors.where((e) => e.status).length}',
-                valueColor: Colors.green,
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black12, blurRadius: 4),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _searchCtrl,
-                    decoration: const InputDecoration(
-                      icon: Icon(Icons.search),
-                      hintText: 'Tìm bác sĩ...',
-                      border: InputBorder.none,
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Quản lý bác sĩ',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
                     ),
-                    onSubmitted: (v) => _loadData(q: v.trim()),
+                    SizedBox(height: 6),
+                    Text(
+                      'Xem, tìm kiếm và cập nhật hồ sơ thông tin của đội ngũ bác sĩ',
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+            Wrap(
+              spacing: 20,
+              runSpacing: 16,
+              children: [
+                _StatCard(
+                  title: 'Tổng số bác sĩ',
+                  value: '${_allDoctors.length}',
+                  icon: Icons.people_alt_outlined,
+                  iconColor: Colors.blue,
+                  iconBg: Colors.blue.withOpacity(0.1),
+                ),
+                _StatCard(
+                  title: 'Đang hoạt động',
+                  value: '${_allDoctors.where((e) => e.status).length}',
+                  valueColor: Colors.green,
+                  icon: Icons.check_circle_outline,
+                  iconColor: Colors.green,
+                  iconBg: Colors.green.withOpacity(0.1),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: TextField(
+                      controller: _searchCtrl,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Color(0xFF94A3B8),
+                        ),
+                        suffixIcon: _searchCtrl.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () {
+                                  _searchCtrl.clear();
+                                  setState(() {
+                                    _filteredDoctors = _allDoctors;
+                                  });
+                                },
+                              )
+                            : null,
+                        hintText: 'Tìm theo tên, số điện thoại...',
+                        hintStyle: const TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 14,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                        ),
+                      ),
+                      onChanged: (v) => _applyFilter(v.trim()),
+                      onSubmitted: (v) => _applyFilter(v.trim()),
+                    ),
                   ),
                 ),
-              ),
-
-              const SizedBox(width: 12),
-
-              ElevatedButton.icon(
-                onPressed: () async {},
-                icon: const Icon(Icons.add),
-                label: const Text('Thêm'),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black12, blurRadius: 6),
-                ],
-              ),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    if (_loading)
-                      const Center(child: CircularProgressIndicator())
-                    else if (_error != null)
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Text('Lỗi: $_error'),
-                      )
-                    else if (_doctors.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(12.0),
-                        child: Text('Không có bác sĩ'),
-                      )
-                    else
-                      for (var doctor in _doctors) ...[
-                        _UserRow(
-                          avatarText: doctor.fullName
-                              .split(' ')
-                              .map((e) => e[0])
-                              .take(2)
-                              .join(),
-
-                          name: doctor.fullName,
-
-                          email: doctor.email,
-
-                          phone: doctor.phone,
-
-                          active: doctor.status,
-
-                          onEdit: () => _showEditDialog(doctor),
-
-                          onDelete: () => _confirmDelete(doctor.id),
-                        ),
-
-                        const Divider(),
-                      ],
+              ],
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
                   ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Builder(
+                    builder: (context) {
+                      if (_loading) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (_error != null) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                size: 40,
+                                color: Colors.redAccent,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Lỗi: $_error',
+                                style: const TextStyle(color: Colors.redAccent),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      if (_filteredDoctors.isEmpty) {
+                        return const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.folder_open_outlined,
+                                size: 44,
+                                color: Colors.grey,
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'Không tìm thấy dữ liệu bác sĩ',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: Theme(
+                          data: Theme.of(
+                            context,
+                          ).copyWith(dividerColor: const Color(0xFFF1F5F9)),
+                          child: DataTable(
+                            showCheckboxColumn: false,
+                            headingRowColor: MaterialStateProperty.all(
+                              const Color(0xFFF8FAFC),
+                            ),
+                            headingRowHeight: 52,
+                            dataRowMaxHeight: 68,
+                            dataRowMinHeight: 60,
+                            columns: const [
+                              DataColumn(
+                                label: Text(
+                                  'Thông tin bác sĩ',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF475569),
+                                  ),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Chuyên khoa',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF475569),
+                                  ),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Số điện thoại',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF475569),
+                                  ),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Trạng thái',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF475569),
+                                  ),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Mô tả / Tiểu sử',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF475569),
+                                  ),
+                                ),
+                              ),
+                            ],
+                            rows: _filteredDoctors.map((doctor) {
+                              final avatarText = doctor.fullName
+                                  .split(' ')
+                                  .where((e) => e.isNotEmpty)
+                                  .map((e) => e[0])
+                                  .take(2)
+                                  .join()
+                                  .toUpperCase();
+
+                              return DataRow(
+                                onSelectChanged: (selected) async {
+                                  if (selected != null && selected) {
+                                    final refresh = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            DoctorDetailScreen(doctor: doctor),
+                                      ),
+                                    );
+                                    if (refresh == true) {
+                                      _loadData();
+                                    }
+                                  }
+                                },
+                                cells: [
+                                  DataCell(
+                                    Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 18,
+                                          backgroundColor: Theme.of(
+                                            context,
+                                          ).primaryColor.withOpacity(0.1),
+                                          backgroundImage:
+                                              (doctor.avatar != null &&
+                                                  doctor.avatar!.isNotEmpty)
+                                              ? NetworkImage(doctor.avatar!)
+                                              : null,
+                                          child:
+                                              (doctor.avatar == null ||
+                                                  doctor.avatar!.isEmpty)
+                                              ? Text(
+                                                  avatarText,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).primaryColor,
+                                                  ),
+                                                )
+                                              : null,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              doctor.fullName,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              doctor.email,
+                                              style: const TextStyle(
+                                                color: Color(0xFF64748B),
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      (doctor.specialty != null &&
+                                              doctor.specialty!.isNotEmpty)
+                                          ? doctor.specialty!
+                                          : 'Chưa cập nhật',
+                                      style: const TextStyle(
+                                        color: Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      doctor.phone,
+                                      style: const TextStyle(
+                                        color: Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: doctor.status
+                                            ? const Color(0xFFDCFCE7)
+                                            : const Color(0xFFFEE2E2),
+                                        borderRadius: BorderRadius.circular(
+                                          100,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        doctor.status
+                                            ? 'Hoạt động'
+                                            : 'Tạm dừng',
+                                        style: TextStyle(
+                                          color: doctor.status
+                                              ? const Color(0xFF15803D)
+                                              : const Color(0xFFB91C1C),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 250,
+                                      child: Text(
+                                        (doctor.bio != null &&
+                                                doctor.bio!.isNotEmpty)
+                                            ? doctor.bio!
+                                            : 'Chưa có mô tả',
+                                        style: const TextStyle(
+                                          color: Color(0xFF64748B),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 2,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -336,131 +454,62 @@ class _StatCard extends StatelessWidget {
   final String title;
   final String value;
   final Color? valueColor;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBg;
 
-  const _StatCard({required this.title, required this.value, this.valueColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 220,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(color: Colors.black54)),
-
-          const SizedBox(height: 8),
-
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: valueColor ?? Colors.black,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _UserRow extends StatelessWidget {
-  final String avatarText;
-  final String name;
-  final String email;
-  final String phone;
-  final bool active;
-
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
-
-  const _UserRow({
-    required this.avatarText,
-    required this.name,
-    required this.email,
-    required this.phone,
-    required this.active,
-    this.onEdit,
-    this.onDelete,
+  const _StatCard({
+    required this.title,
+    required this.value,
+    this.valueColor,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+    return Container(
+      width: 260,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
       child: Row(
         children: [
-          CircleAvatar(child: Text(avatarText)),
-
-          const SizedBox(width: 12),
-
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: iconColor, size: 24),
+          ),
+          const SizedBox(width: 16),
           Expanded(
-            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
-
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 4),
-
-                Row(
-                  children: [
-                    const Icon(Icons.email, size: 14, color: Colors.black45),
-
-                    const SizedBox(width: 6),
-
-                    Text(email, style: const TextStyle(color: Colors.black54)),
-                  ],
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: valueColor ?? const Color(0xFF0F172A),
+                  ),
                 ),
               ],
             ),
-          ),
-
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [Text(phone), const SizedBox(height: 4)],
-            ),
-          ),
-
-          Expanded(
-            flex: 1,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: active
-                      ? Colors.green.withOpacity(0.12)
-                      : Colors.red.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  active ? 'Hoạt động' : 'Đang tắt',
-                  style: TextStyle(color: active ? Colors.green : Colors.red),
-                ),
-              ),
-            ),
-          ),
-
-          IconButton(
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit, color: Colors.blue),
-          ),
-
-          IconButton(
-            onPressed: onDelete,
-            icon: const Icon(Icons.delete, color: Colors.redAccent),
           ),
         ],
       ),
