@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'dashboard.dart';
 import 'patient_management_screen.dart';
 import 'pricing_screen.dart';
@@ -31,38 +30,54 @@ class _AdminLayoutState extends State<AdminLayout> {
         children: [
           Container(
             width: isWide ? 240 : 72,
-            color: Colors.white,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(2, 0),
+                ),
+              ],
+            ),
             child: Column(
               children: [
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: isWide
                       ? Row(
-                          children: const [
-                            Icon(
-                              Icons.medical_services,
-                              color: Colors.redAccent,
+                          children: [
+                            const Icon(
+                              Icons.healing_outlined,
+                              color: Colors.teal,
                               size: 28,
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
-                              'Admin Panel',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              'Nha Khoa Admin',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.teal[800],
+                              ),
                             ),
                           ],
                         )
                       : const Center(
-                          child: Icon(Icons.menu, color: Colors.redAccent),
+                          child: Icon(
+                            Icons.healing_outlined,
+                            color: Colors.teal,
+                          ),
                         ),
                 ),
-
-                const Divider(),
-
+                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                const SizedBox(height: 8),
                 Expanded(
                   child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _SidebarItem(
-                        icon: Icons.people,
+                        icon: Icons.assignment_ind_outlined,
                         label: 'Bác sĩ',
                         wide: isWide,
                         selected: selectedIndex == 0,
@@ -72,9 +87,8 @@ class _AdminLayoutState extends State<AdminLayout> {
                           });
                         },
                       ),
-
                       _SidebarItem(
-                        icon: Icons.person,
+                        icon: Icons.people_outline,
                         label: 'Bệnh nhân',
                         wide: isWide,
                         selected: selectedIndex == 1,
@@ -84,9 +98,8 @@ class _AdminLayoutState extends State<AdminLayout> {
                           });
                         },
                       ),
-
                       _SidebarItem(
-                        icon: Icons.medical_services,
+                        icon: Icons.medical_services_outlined,
                         label: 'Dịch vụ',
                         wide: isWide,
                         selected: selectedIndex == 2,
@@ -96,9 +109,8 @@ class _AdminLayoutState extends State<AdminLayout> {
                           });
                         },
                       ),
-
                       _SidebarItem(
-                        icon: Icons.attach_money,
+                        icon: Icons.monetization_on_outlined,
                         label: 'Bảng giá',
                         wide: isWide,
                         selected: selectedIndex == 3,
@@ -114,8 +126,6 @@ class _AdminLayoutState extends State<AdminLayout> {
               ],
             ),
           ),
-
-          // PAGE
           Expanded(child: pages[selectedIndex]),
         ],
       ),
@@ -140,18 +150,28 @@ class _SidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: selected ? Colors.redAccent : Colors.black54),
-      title: wide
-          ? Text(
-              label,
-              style: TextStyle(
-                color: selected ? Colors.redAccent : Colors.black87,
-              ),
-            )
-          : null,
-      selected: selected,
-      onTap: onTap,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        tileColor: selected ? Colors.teal[50] : Colors.transparent,
+        leading: Icon(
+          icon,
+          color: selected ? Colors.teal : const Color(0xFF64748B),
+          size: 22,
+        ),
+        title: wide
+            ? Text(
+                label,
+                style: TextStyle(
+                  color: selected ? Colors.teal[800] : const Color(0xFF334155),
+                  fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                  fontSize: 14,
+                ),
+              )
+            : null,
+        onTap: onTap,
+      ),
     );
   }
 }

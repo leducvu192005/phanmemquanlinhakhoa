@@ -69,105 +69,115 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.teal,
+        title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Quản lý bác sĩ',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      'Xem, tìm kiếm và cập nhật hồ sơ thông tin của đội ngũ bác sĩ',
-                      style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
-                    ),
-                  ],
-                ),
-              ],
+            Text(
+              'Quản Lý Bác Sĩ',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: Colors.white,
+              ),
             ),
-            const SizedBox(height: 28),
-            Wrap(
-              spacing: 20,
-              runSpacing: 16,
+            Text(
+              'Xem, tìm kiếm và cập nhật hồ sơ thông tin của đội ngũ bác sĩ',
+              style: TextStyle(fontSize: 12, color: Color(0xFFB2DFDB)),
+            ),
+          ],
+        ),
+      ),
+      body: Column(
+        children: [
+          Container(
+            color: Colors.teal,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Tìm nhanh theo tên, số điện thoại, chuyên khoa...',
+                  hintStyle: TextStyle(color: Colors.grey[400]),
+                  border: InputBorder.none,
+                  icon: const Icon(Icons.search, color: Colors.teal),
+                  suffixIcon: _searchCtrl.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(
+                            Icons.clear,
+                            size: 18,
+                            color: Colors.teal,
+                          ),
+                          onPressed: () {
+                            _searchCtrl.clear();
+                            setState(() {
+                              _filteredDoctors = _allDoctors;
+                            });
+                          },
+                        )
+                      : null,
+                ),
+                onChanged: (v) => _applyFilter(v.trim()),
+                onSubmitted: (v) => _applyFilter(v.trim()),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
               children: [
                 _StatCard(
                   title: 'Tổng số bác sĩ',
                   value: '${_allDoctors.length}',
                   icon: Icons.people_alt_outlined,
-                  iconColor: Colors.blue,
-                  iconBg: Colors.blue.withOpacity(0.1),
+                  iconColor: Colors.teal,
+                  iconBg: Colors.teal[50]!,
                 ),
+                const SizedBox(width: 16),
                 _StatCard(
                   title: 'Đang hoạt động',
                   value: '${_allDoctors.where((e) => e.status).length}',
-                  valueColor: Colors.green,
+                  valueColor: Colors.teal[700],
                   icon: Icons.check_circle_outline,
-                  iconColor: Colors.green,
-                  iconBg: Colors.green.withOpacity(0.1),
+                  iconColor: Colors.teal[700]!,
+                  iconBg: Colors.teal[50]!,
                 ),
               ],
             ),
-            const SizedBox(height: 28),
-            Row(
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: TextField(
-                      controller: _searchCtrl,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: Color(0xFF94A3B8),
-                        ),
-                        suffixIcon: _searchCtrl.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, size: 18),
-                                onPressed: () {
-                                  _searchCtrl.clear();
-                                  setState(() {
-                                    _filteredDoctors = _allDoctors;
-                                  });
-                                },
-                              )
-                            : null,
-                        hintText: 'Tìm theo tên, số điện thoại...',
-                        hintStyle: const TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 14,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14,
-                        ),
-                      ),
-                      onChanged: (v) => _applyFilter(v.trim()),
-                      onSubmitted: (v) => _applyFilter(v.trim()),
-                    ),
+                Text(
+                  'Kết quả: ${_filteredDoctors.length} bác sĩ',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Expanded(
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -187,7 +197,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   child: Builder(
                     builder: (context) {
                       if (_loading) {
-                        return const Center(child: CircularProgressIndicator());
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.teal,
+                            ),
+                          ),
+                        );
                       }
                       if (_error != null) {
                         return Center(
@@ -209,17 +225,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         );
                       }
                       if (_filteredDoctors.isEmpty) {
-                        return const Center(
+                        return Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Icons.folder_open_outlined,
-                                size: 44,
-                                color: Colors.grey,
+                                Icons.badge_outlined,
+                                size: 64,
+                                color: Colors.grey[300],
                               ),
-                              SizedBox(height: 12),
-                              Text(
+                              const SizedBox(height: 12),
+                              const Text(
                                 'Không tìm thấy dữ liệu bác sĩ',
                                 style: TextStyle(color: Colors.grey),
                               ),
@@ -237,18 +253,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           child: DataTable(
                             showCheckboxColumn: false,
                             headingRowColor: MaterialStateProperty.all(
-                              const Color(0xFFF8FAFC),
+                              Colors.teal[50]?.withOpacity(0.5),
                             ),
                             headingRowHeight: 52,
                             dataRowMaxHeight: 68,
                             dataRowMinHeight: 60,
-                            columns: const [
+                            columns: [
                               DataColumn(
                                 label: Text(
                                   'Thông tin bác sĩ',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF475569),
+                                    color: Colors.teal[800],
                                   ),
                                 ),
                               ),
@@ -257,7 +273,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   'Chuyên khoa',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF475569),
+                                    color: Colors.teal[800],
                                   ),
                                 ),
                               ),
@@ -266,7 +282,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   'Số điện thoại',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF475569),
+                                    color: Colors.teal[800],
                                   ),
                                 ),
                               ),
@@ -275,7 +291,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   'Trạng thái',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF475569),
+                                    color: Colors.teal[800],
                                   ),
                                 ),
                               ),
@@ -284,7 +300,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   'Mô tả / Tiểu sử',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF475569),
+                                    color: Colors.teal[800],
                                   ),
                                 ),
                               ),
@@ -319,9 +335,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       children: [
                                         CircleAvatar(
                                           radius: 18,
-                                          backgroundColor: Theme.of(
-                                            context,
-                                          ).primaryColor.withOpacity(0.1),
+                                          backgroundColor: Colors.teal[50],
                                           backgroundImage:
                                               (doctor.avatar != null &&
                                                   doctor.avatar!.isNotEmpty)
@@ -332,12 +346,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                                   doctor.avatar!.isEmpty)
                                               ? Text(
                                                   avatarText,
-                                                  style: TextStyle(
+                                                  style: const TextStyle(
                                                     fontSize: 13,
                                                     fontWeight: FontWeight.bold,
-                                                    color: Theme.of(
-                                                      context,
-                                                    ).primaryColor,
+                                                    color: Colors.teal,
                                                   ),
                                                 )
                                               : null,
@@ -351,17 +363,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                           children: [
                                             Text(
                                               doctor.fullName,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                color: Color(0xFF1E293B),
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                                color: Colors.grey[800],
                                               ),
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
                                               doctor.email,
                                               style: const TextStyle(
-                                                color: Color(0xFF64748B),
-                                                fontSize: 13,
+                                                color: Colors.grey,
+                                                fontSize: 12,
                                               ),
                                             ),
                                           ],
@@ -375,17 +388,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                               doctor.specialty!.isNotEmpty)
                                           ? doctor.specialty!
                                           : 'Chưa cập nhật',
-                                      style: const TextStyle(
-                                        color: Color(0xFF334155),
-                                      ),
+                                      style: TextStyle(color: Colors.grey[800]),
                                     ),
                                   ),
                                   DataCell(
                                     Text(
                                       doctor.phone,
-                                      style: const TextStyle(
-                                        color: Color(0xFF334155),
-                                      ),
+                                      style: TextStyle(color: Colors.grey[800]),
                                     ),
                                   ),
                                   DataCell(
@@ -396,8 +405,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: doctor.status
-                                            ? const Color(0xFFDCFCE7)
-                                            : const Color(0xFFFEE2E2),
+                                            ? const Color(0xFFE6F4EA)
+                                            : const Color(0xFFFCE8E6),
                                         borderRadius: BorderRadius.circular(
                                           100,
                                         ),
@@ -408,8 +417,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                             : 'Tạm dừng',
                                         style: TextStyle(
                                           color: doctor.status
-                                              ? const Color(0xFF15803D)
-                                              : const Color(0xFFB91C1C),
+                                              ? const Color(0xFF137333)
+                                              : const Color(0xFFC5221F),
                                           fontSize: 12,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -425,7 +434,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                             ? doctor.bio!
                                             : 'Chưa có mô tả',
                                         style: const TextStyle(
-                                          color: Color(0xFF64748B),
+                                          color: Colors.grey,
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                         maxLines: 2,
@@ -443,8 +452,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -469,49 +478,47 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 260,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(8),
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 24),
             ),
-            child: Icon(icon, color: iconColor, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Color(0xFF64748B),
-                    fontSize: 14,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(color: Colors.grey, fontSize: 13),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: valueColor ?? const Color(0xFF0F172A),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: valueColor ?? Colors.grey[800],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

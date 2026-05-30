@@ -6,7 +6,7 @@ import '../models/service.dart';
 import '../models/service_price_history.dart';
 
 class ServiceApi {
-  static const String baseUrl = 'http://127.0.0.1:8000/admin';
+  static const String baseUrl = 'http://127.0.0.1:8000';
 
   static const _storage = FlutterSecureStorage();
   static Future<Map<String, String>> _headers() async {
@@ -14,13 +14,14 @@ class ServiceApi {
   }
 
   static Future<List<Service>> getServices({String? search}) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/services${search != null ? '?search=$search' : ''}'),
-      headers: await _headers(),
-    );
+    final url = search != null && search.isNotEmpty
+        ? '$baseUrl/services/search/?keyword=$search'
+        : '$baseUrl/services';
+
+    final response = await http.get(Uri.parse(url), headers: await _headers());
 
     if (response.statusCode == 200) {
-      final List data = json.decode(response.body);
+      final List data = json.decode(utf8.decode(response.bodyBytes));
       return data.map((e) => Service.fromJson(e)).toList();
     }
 
@@ -35,7 +36,7 @@ class ServiceApi {
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return Service.fromJson(json.decode(response.body));
+      return Service.fromJson(json.decode(utf8.decode(response.bodyBytes)));
     }
 
     throw Exception('Failed to create service');
@@ -89,7 +90,7 @@ class ServiceApi {
     );
 
     if (response.statusCode == 200) {
-      final List data = json.decode(response.body);
+      final List data = json.decode(utf8.decode(response.bodyBytes));
 
       return data.map((e) => ServicePriceHistory.fromJson(e)).toList();
     }

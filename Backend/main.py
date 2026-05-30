@@ -7,6 +7,8 @@ from routers.auth import router as auth_router
 from routers.admin_router import router as admin_router
 from routers.patients_router import router as patients_router
 from routers.doctor_router import router as doctor_router
+from routers.service import router as service_router
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -14,48 +16,45 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# ======================
-# CORS CONFIG
-# ======================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ======================
-# ROUTERS
-# ======================
-
-# Auth routes
+# Auth
 app.include_router(
     auth_router,
     prefix="/auth",
     tags=["Auth"]
 )
 
-# Admin routes (users, services, stats,...)
+# Admin
 app.include_router(
     admin_router,
     prefix="/admin",
     tags=["Admin"]
 )
 
-# Patients routes)
+# Patients
 app.include_router(
     patients_router,
-    prefix="/admin/patients",  
+    prefix="/admin/patients",
     tags=["Patients"]
 )
 
-# Doctor routes
-app.include_router(doctor_router)
+# Doctors
+app.include_router(
+    doctor_router
+)
 
-# ======================
-# HEALTH CHECK
-# ======================
+# Services
+app.include_router(
+    service_router
+)
+
 @app.get("/")
 def home():
     return {

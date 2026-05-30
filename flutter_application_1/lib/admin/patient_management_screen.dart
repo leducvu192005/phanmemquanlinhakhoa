@@ -17,9 +17,9 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.grey[50],
       body: Container(
-        color: const Color(0xFFF0F4F8),
+        color: Colors.grey[50],
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Row(
@@ -55,16 +55,14 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFE0E7FF) : Colors.transparent,
+            color: isSelected ? Colors.teal[50] : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             children: [
               Icon(
                 icon,
-                color: isSelected
-                    ? const Color(0xFF4F46E5)
-                    : const Color(0xFF64748B),
+                color: isSelected ? Colors.teal : const Color(0xFF64748B),
                 size: 20,
               ),
               const SizedBox(width: 12),
@@ -72,9 +70,9 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                 title,
                 style: TextStyle(
                   color: isSelected
-                      ? const Color(0xFF4F46E5)
+                      ? Colors.teal[800]
                       : const Color(0xFF334155),
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   fontSize: 14,
                 ),
               ),
@@ -146,7 +144,7 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
+        color: isActive ? const Color(0xFFE6F4EA) : const Color(0xFFFCE8E6),
         borderRadius: BorderRadius.circular(100),
       ),
       child: Row(
@@ -155,17 +153,17 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
           Icon(
             Icons.circle,
             size: 6,
-            color: isActive ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+            color: isActive ? const Color(0xFF137333) : const Color(0xFFC5221F),
           ),
           const SizedBox(width: 6),
           Text(
-            isActive ? "Active" : "Inactive",
+            isActive ? "Hoạt động" : "Tạm dừng",
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: isActive
-                  ? const Color(0xFF15803D)
-                  : const Color(0xFFB91C1C),
+                  ? const Color(0xFF137333)
+                  : const Color(0xFFC5221F),
             ),
           ),
         ],
@@ -216,7 +214,7 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
           border: Border.all(color: const Color(0xFFF1F5F9)),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0F172A).withOpacity(0.02),
+              color: Colors.black.withOpacity(0.02),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -230,12 +228,12 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                 children: [
                   CircleAvatar(
                     radius: 22,
-                    backgroundColor: const Color(0xFF2563EB),
+                    backgroundColor: Colors.teal[50],
                     child: Text(
                       initial,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Colors.teal,
                         fontSize: 14,
                       ),
                     ),
@@ -249,9 +247,9 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                           children: [
                             Text(
                               p.fullName,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF1E293B),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[800],
                                 fontSize: 15,
                               ),
                             ),
@@ -269,7 +267,7 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                         Text(
                           p.patientCode,
                           style: const TextStyle(
-                            color: Color(0xFF94A3B8),
+                            color: Colors.grey,
                             fontSize: 13,
                           ),
                         ),
@@ -289,15 +287,12 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                       const Icon(
                         Icons.mail_outlined,
                         size: 14,
-                        color: Color(0xFF94A3B8),
+                        color: Colors.grey,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         p.email,
-                        style: const TextStyle(
-                          color: Color(0xFF475569),
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: Colors.grey[700], fontSize: 13),
                       ),
                     ],
                   ),
@@ -307,15 +302,12 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                       const Icon(
                         Icons.phone_outlined,
                         size: 14,
-                        color: Color(0xFF94A3B8),
+                        color: Colors.grey,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         p.phone,
-                        style: const TextStyle(
-                          color: Color(0xFF475569),
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: Colors.grey[700], fontSize: 13),
                       ),
                     ],
                   ),
@@ -325,14 +317,14 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                       const Icon(
                         Icons.location_on_outlined,
                         size: 14,
-                        color: Color(0xFF94A3B8),
+                        color: Colors.grey,
                       ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           p.address ?? "Không có địa chỉ",
                           style: const TextStyle(
-                            color: Color(0xFF64748B),
+                            color: Colors.grey,
                             fontSize: 12,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -350,18 +342,12 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                 children: [
                   Text(
                     "Tuổi: ${calculateAge(DateTime.parse(p.dateOfBirth))} tuổi",
-                    style: const TextStyle(
-                      color: Color(0xFF334155),
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.grey[800], fontSize: 13),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     "Giới tính: ${p.gender ?? 'Nam'}",
-                    style: const TextStyle(
-                      color: Color(0xFF334155),
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.grey[800], fontSize: 13),
                   ),
                   const SizedBox(height: 4),
                 ],
@@ -375,7 +361,7 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                   const Text(
                     "Tiền sử / Dị ứng:",
                     style: TextStyle(
-                      color: Color(0xFF94A3B8),
+                      color: Colors.grey,
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                     ),
@@ -384,13 +370,13 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                   if (p.allergies != null && p.allergies!.isNotEmpty)
                     _buildBadge(
                       p.allergies!,
-                      const Color(0xFFFEE2E2),
-                      const Color(0xFFEF4444),
+                      const Color(0xFFFCE8E6),
+                      const Color(0xFFC5221F),
                     )
                   else
                     const Text(
                       "Không có dữ liệu",
-                      style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 12),
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                 ],
               ),
@@ -402,23 +388,28 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                 children: [
                   const Text(
                     "Lần khám cuối",
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                    style: TextStyle(color: Colors.grey, fontSize: 11),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     p.lastVisit != null
                         ? "${p.lastVisit!.day}/${p.lastVisit!.month}/${p.lastVisit!.year}"
                         : "Chưa khám",
-                    style: const TextStyle(
-                      color: Color(0xFF334155),
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.grey[800], fontSize: 13),
                   ),
                   const SizedBox(height: 2),
                 ],
               ),
             ),
-            Row(children: [Text('${p.notes ?? "Không có ghi chú nào"}')]),
+            Row(
+              children: [
+                Text(
+                  p.notes ?? "Không có ghi chú nào",
+                  style: TextStyle(color: Colors.grey[700]),
+                ),
+              ],
+            ),
+            const SizedBox(width: 12),
             Row(children: [_statusPill(p.status)]),
           ],
         ),
@@ -450,7 +441,7 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                 Text(
                   title,
                   style: const TextStyle(
-                    color: Color(0xFF64748B),
+                    color: Colors.grey,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
@@ -460,18 +451,18 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                   children: [
                     Text(
                       value,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: Colors.grey[800],
                       ),
                     ),
                     if (subtext != null) ...[
                       const SizedBox(width: 6),
                       Text(
                         subtext,
-                        style: const TextStyle(
-                          color: Color(0xFF10B981),
+                        style: TextStyle(
+                          color: Color(0xFF137333),
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -503,55 +494,60 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Quản lý bệnh nhân",
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
+            Container(
+              width: 1296,
+              height: 80,
+              decoration: BoxDecoration(color: Colors.teal),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Quản lý bệnh nhân",
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "Quản lý thông tin và hồ sơ bệnh nhân nha khoa",
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Quản lý thông tin và hồ sơ bệnh nhân nha khoa",
+                    style: TextStyle(color: Color(0xFFB2DFDB), fontSize: 14),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 14),
         Row(
           children: [
             _buildKpiCard(
               "Tổng bệnh nhân",
               patients.length.toString(),
               Icons.people_alt_outlined,
-              const Color(0xFF2563EB),
+              Colors.teal,
             ),
             const SizedBox(width: 16),
             _buildKpiCard(
               "Đang hoạt động",
               "4",
               Icons.toggle_on_outlined,
-              const Color(0xFF16A34A),
+              Colors.teal[700]!,
             ),
             const SizedBox(width: 16),
             _buildKpiCard(
               "Mới tháng này",
               "4",
               Icons.person_add_alt_1_outlined,
-              const Color(0xFF7C3AED),
+              Colors.orange,
             ),
             const SizedBox(width: 16),
             _buildKpiCard(
               "Tăng trưởng",
               "+12%",
               Icons.trending_up_rounded,
-              const Color(0xFFEA580C),
+              Colors.deepOrange,
               subtext: "↑",
             ),
           ],
@@ -561,10 +557,9 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
           children: [
             Expanded(
               child: Container(
-                height: 67,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
                 child: TextField(
@@ -575,17 +570,14 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                   decoration: const InputDecoration(
                     prefixIcon: Icon(
                       Icons.search,
-                      color: Color(0xFF94A3B8),
+                      color: Colors.teal,
                       size: 20,
                     ),
                     hintText:
                         "Tìm kiếm bệnh nhân theo tên, số điện thoại, mã...",
-                    hintStyle: TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontSize: 14,
-                    ),
+                    hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
               ),
@@ -596,13 +588,15 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
         Expanded(
           child: isLoading
               ? const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.teal),
+                  ),
                 )
               : patients.isEmpty
               ? const Center(
                   child: Text(
                     "Không tìm thấy bệnh nhân nào",
-                    style: TextStyle(color: Color(0xFF94A3B8)),
+                    style: TextStyle(color: Colors.grey),
                   ),
                 )
               : ListView.builder(
