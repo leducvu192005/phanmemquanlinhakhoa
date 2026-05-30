@@ -112,183 +112,200 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       context: context,
       builder: (_) => Theme(
         data: Theme.of(context).copyWith(
-          primaryColor: const Color(0xFF2563EB),
-          colorScheme: const ColorScheme.light(primary: Color(0xFF2563EB)),
+          primaryColor: Colors.teal,
+          colorScheme: const ColorScheme.light(primary: Colors.teal),
         ),
         child: AlertDialog(
-          title: const Text(
-            'Chỉnh sửa hồ sơ bệnh nhân',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          content: SizedBox(
-            width: 650,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: codeCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Mã bệnh nhân',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: nameCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Họ và tên',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: genderCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Giới tính',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: dobCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Ngày sinh (YYYY-MM-DD)',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: phoneCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Số điện thoại',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: emailCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: addressCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Địa chỉ cư trú',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: bloodCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Nhóm máu',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: allergiesCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Dị ứng đặc biệt',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: historyCtrl,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Tiểu sử bệnh án',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: contactNameCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Người liên hệ khẩn cấp',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: contactPhoneCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'SĐT liên hệ khẩn cấp',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  SwitchListTile(
-                    title: const Text(
-                      'Trạng thái hoạt động',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    value: status,
-                    activeColor: const Color(0xFF2563EB),
-                    contentPadding: EdgeInsets.zero,
-                    onChanged: (v) {
-                      status = v;
-                    },
-                  ),
-                ],
+          title: Row(
+            children: [
+              const Icon(Icons.edit_note, color: Colors.teal),
+              const SizedBox(width: 8),
+              Text(
+                'Chỉnh sửa hồ sơ bệnh nhân',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.teal[800],
+                ),
               ),
-            ),
+            ],
+          ),
+          content: StatefulBuilder(
+            builder: (context, setStateDialog) {
+              return SizedBox(
+                width: 650,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: codeCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Mã bệnh nhân',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: nameCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Họ và tên',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: genderCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Giới tính',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: dobCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Ngày sinh (YYYY-MM-DD)',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: phoneCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Số điện thoại',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: emailCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: addressCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Địa chỉ cư trú',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: bloodCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Nhóm máu',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: allergiesCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Dị ứng đặc biệt',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: historyCtrl,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                          labelText: 'Tiểu sử bệnh án',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: contactNameCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Người liên hệ khẩn cấp',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: contactPhoneCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'SĐT liên hệ khẩn cấp',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      SwitchListTile(
+                        title: const Text(
+                          'Trạng thái hoạt động',
+                          style: TextStyle(fontSize: 14),
+                        ),
+                        value: status,
+                        activeColor: Colors.teal,
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (v) {
+                          status = v;
+                          setStateDialog(() {});
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
+              child: Text('Hủy', style: TextStyle(color: Colors.grey[600])),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
+                backgroundColor: Colors.teal,
                 foregroundColor: Colors.white,
                 elevation: 0,
               ),
@@ -372,12 +389,12 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Color(0xFF2563EB),
+            color: Colors.white,
             size: 20,
           ),
           onPressed: () => Navigator.of(context).pop(true),
@@ -388,24 +405,20 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             Text(
               'Quản lý bệnh nhân',
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1E3A8A),
+                color: Colors.white,
               ),
             ),
             SizedBox(height: 2),
             Text(
               'Quản lý hồ sơ y tế và thông tin chi tiết bệnh nhân',
-              style: TextStyle(fontSize: 13, color: Color(0xFF60A5FA)),
+              style: TextStyle(fontSize: 12, color: Color(0xFFB2DFDB)),
             ),
           ],
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.teal,
         elevation: 0,
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1.0),
-          child: Divider(color: Color(0xFFDBEAFE), height: 1.0, thickness: 1.0),
-        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(40),
@@ -416,10 +429,10 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFDBEAFE)),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF2563EB).withOpacity(0.02),
+                  color: Colors.black.withOpacity(0.02),
                   blurRadius: 15,
                   offset: const Offset(0, 4),
                 ),
@@ -428,13 +441,13 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Center(
+                Center(
                   child: Text(
                     'Thông tin cá nhân',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E3A8A),
+                      color: Colors.teal[800],
                     ),
                   ),
                 ),
@@ -448,9 +461,9 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                           width: 180,
                           height: 230,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
+                            color: Colors.teal[50],
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                            border: Border.all(color: const Color(0xFFB2DFDB)),
                             image:
                                 (_currentPatient.avatar != null &&
                                     _currentPatient.avatar!.isNotEmpty)
@@ -469,7 +482,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                                   child: Icon(
                                     Icons.person_outline_rounded,
                                     size: 64,
-                                    color: Color(0xFF2563EB),
+                                    color: Colors.teal,
                                   ),
                                 )
                               : null,
@@ -478,10 +491,10 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                         ElevatedButton(
                           onPressed: () {},
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFEFF6FF),
-                            foregroundColor: const Color(0xFF2563EB),
+                            backgroundColor: Colors.teal[50],
+                            foregroundColor: Colors.teal[800],
                             elevation: 0,
-                            side: const BorderSide(color: Color(0xFFBFDBFE)),
+                            side: BorderSide(color: Colors.teal[100]!),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24,
                               vertical: 14,
@@ -503,7 +516,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFDBEAFE)),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -512,46 +525,46 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                               'Mã bệnh nhân: ',
                               _currentPatient.patientCode,
                             ),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 18, color: Color(0xFFF1F5F9)),
                             _buildInfoText(
                               'Họ và tên: ',
                               _currentPatient.fullName,
                             ),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 18, color: Color(0xFFF1F5F9)),
                             _buildInfoText(
                               'Giới tính: ',
                               _currentPatient.gender ?? 'Chưa cập nhật',
                             ),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 18, color: Color(0xFFF1F5F9)),
                             _buildInfoText(
                               'Ngày sinh: ',
                               _currentPatient.dateOfBirth ?? 'Chưa cập nhật',
                             ),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 18, color: Color(0xFFF1F5F9)),
                             _buildInfoText(
                               'Số điện thoại: ',
                               _currentPatient.phone,
                             ),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 18, color: Color(0xFFF1F5F9)),
                             _buildInfoText('Email: ', _currentPatient.email),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 18, color: Color(0xFFF1F5F9)),
                             _buildInfoText(
                               'Địa chỉ cư trú: ',
                               _currentPatient.address ?? 'Chưa cập nhật',
                             ),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 18, color: Color(0xFFF1F5F9)),
                             _buildInfoText(
                               'Nhóm máu: ',
                               _currentPatient.bloodType ?? 'Chưa cập nhật',
                             ),
-                            const Divider(height: 18, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 18, color: Color(0xFFF1F5F9)),
                             Row(
                               children: [
-                                const Text(
+                                Text(
                                   'Trạng thái hệ thống: ',
                                   style: TextStyle(
                                     fontSize: 15,
-                                    color: Color(0xFF475569),
+                                    color: Colors.grey[700],
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -562,8 +575,8 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: _currentPatient.status
-                                        ? const Color(0xFFDCFCE7)
-                                        : const Color(0xFFFEE2E2),
+                                        ? const Color(0xFFE6F4EA)
+                                        : const Color(0xFFFCE8E6),
                                     borderRadius: BorderRadius.circular(100),
                                   ),
                                   child: Text(
@@ -572,8 +585,8 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                                         : 'Tạm dừng',
                                     style: TextStyle(
                                       color: _currentPatient.status
-                                          ? const Color(0xFF16A34A)
-                                          : const Color(0xFF991B1B),
+                                          ? const Color(0xFF137333)
+                                          : const Color(0xFFC5221F),
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -593,17 +606,17 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFDBEAFE)),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Dị ứng đặc biệt',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E3A8A),
+                          color: Colors.teal[800],
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -617,8 +630,8 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                           color:
                               _currentPatient.allergies != null &&
                                   _currentPatient.allergies!.isNotEmpty
-                              ? const Color(0xFFB91C1C)
-                              : const Color(0xFF475569),
+                              ? const Color(0xFFC5221F)
+                              : Colors.grey[700],
                           height: 1.6,
                         ),
                       ),
@@ -631,17 +644,17 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFDBEAFE)),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Tiểu sử bệnh án',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E3A8A),
+                          color: Colors.teal[800],
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -650,9 +663,9 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                                 _currentPatient.medicalHistory!.isNotEmpty
                             ? _currentPatient.medicalHistory!
                             : 'Chưa có dữ liệu tiểu sử bệnh án.',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF475569),
+                          color: Colors.grey[700],
                           height: 1.6,
                         ),
                       ),
@@ -665,17 +678,17 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFDBEAFE)),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Thông tin liên hệ khẩn cấp',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E3A8A),
+                          color: Colors.teal[800],
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -735,7 +748,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
+                        backgroundColor: Colors.teal,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(
@@ -760,7 +773,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   Widget _buildInfoText(String label, String value) {
     return RichText(
       text: TextSpan(
-        style: const TextStyle(fontSize: 15, color: Color(0xFF475569)),
+        style: TextStyle(fontSize: 15, color: Colors.grey[700]),
         children: [
           TextSpan(
             text: label,
@@ -768,9 +781,9 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
           ),
           TextSpan(
             text: value,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E3A8A),
+              color: Colors.teal[800],
             ),
           ),
         ],
@@ -781,18 +794,18 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   Widget _buildEmergencyContactTile(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: const Color(0xFF3B82F6)),
+        Icon(icon, size: 20, color: Colors.teal),
         const SizedBox(width: 8),
         RichText(
           text: TextSpan(
-            style: const TextStyle(fontSize: 14, color: Color(0xFF475569)),
+            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
             children: [
               TextSpan(text: label),
               TextSpan(
                 text: value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E3A8A),
+                  color: Colors.teal[800],
                 ),
               ),
             ],

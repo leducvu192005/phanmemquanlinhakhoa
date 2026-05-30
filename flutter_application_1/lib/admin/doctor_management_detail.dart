@@ -11,8 +11,6 @@ class DoctorDetailScreen extends StatefulWidget {
   State<DoctorDetailScreen> createState() => _DoctorDetailScreenState();
 }
 
-class _AdminDashboardState {}
-
 class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
   late Doctor _currentDoctor;
 
@@ -106,13 +104,25 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
       context: context,
       builder: (_) => Theme(
         data: Theme.of(context).copyWith(
-          primaryColor: const Color(0xFF2563EB),
-          colorScheme: const ColorScheme.light(primary: Color(0xFF2563EB)),
+          primaryColor: Colors.teal,
+          colorScheme: const ColorScheme.light(primary: Colors.teal),
         ),
         child: AlertDialog(
-          title: const Text(
-            'Chỉnh sửa hồ sơ bác sĩ',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.edit_note, color: Colors.teal),
+              const SizedBox(width: 8),
+              Text(
+                'Chỉnh sửa hồ sơ bác sĩ',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.teal[800],
+                ),
+              ),
+            ],
           ),
           content: StatefulBuilder(
             builder: (context, setStateDialog) {
@@ -259,7 +269,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                           style: TextStyle(fontSize: 14),
                         ),
                         value: status,
-                        activeColor: const Color(0xFF2563EB),
+                        activeColor: Colors.teal,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (v) {
                           status = v;
@@ -275,12 +285,12 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
+              child: Text('Hủy', style: TextStyle(color: Colors.grey[600])),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
+                backgroundColor: Colors.teal,
                 foregroundColor: Colors.white,
                 elevation: 0,
               ),
@@ -356,12 +366,12 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Color(0xFF2563EB),
+            color: Colors.white,
             size: 20,
           ),
           onPressed: () => Navigator.of(context).pop(true),
@@ -372,24 +382,20 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
             Text(
               'Quản lý bác sĩ',
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1E3A8A),
+                color: Colors.white,
               ),
             ),
             SizedBox(height: 2),
             Text(
               'Quản lý tài khoản và thông tin chi tiết bác sĩ',
-              style: TextStyle(fontSize: 13, color: Color(0xFF60A5FA)),
+              style: TextStyle(fontSize: 12, color: Color(0xFFB2DFDB)),
             ),
           ],
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.teal,
         elevation: 0,
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1.0),
-          child: Divider(color: Color(0xFFDBEAFE), height: 1.0, thickness: 1.0),
-        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(40),
@@ -400,10 +406,10 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFDBEAFE)),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF2563EB).withOpacity(0.02),
+                  color: Colors.black.withOpacity(0.02),
                   blurRadius: 15,
                   offset: const Offset(0, 4),
                 ),
@@ -412,13 +418,13 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Center(
+                Center(
                   child: Text(
                     'Thông tin cá nhân',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E3A8A),
+                      color: Colors.teal[800],
                     ),
                   ),
                 ),
@@ -432,9 +438,9 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                           width: 180,
                           height: 230,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
+                            color: Colors.teal[50],
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                            border: Border.all(color: const Color(0xFFB2DFDB)),
                             image:
                                 (_currentDoctor.avatar != null &&
                                     _currentDoctor.avatar!.isNotEmpty)
@@ -451,7 +457,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                                   child: Icon(
                                     Icons.person_outline_rounded,
                                     size: 64,
-                                    color: Color(0xFF2563EB),
+                                    color: Colors.teal,
                                   ),
                                 )
                               : null,
@@ -460,10 +466,10 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                         ElevatedButton(
                           onPressed: () {},
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFEFF6FF),
-                            foregroundColor: const Color(0xFF2563EB),
+                            backgroundColor: Colors.teal[50],
+                            foregroundColor: Colors.teal[800],
                             elevation: 0,
-                            side: const BorderSide(color: Color(0xFFBFDBFE)),
+                            side: BorderSide(color: Colors.teal[100]!),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24,
                               vertical: 14,
@@ -485,7 +491,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFDBEAFE)),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -494,58 +500,58 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                               'Mã bác sĩ: ',
                               _currentDoctor.doctorCode,
                             ),
-                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFF1F5F9)),
                             _buildInfoText(
                               'Họ và tên: ',
                               _currentDoctor.fullName,
                             ),
-                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFF1F5F9)),
                             _buildInfoText(
                               'Giới tính: ',
                               _currentDoctor.gender ?? 'Chưa cập nhật',
                             ),
-                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFF1F5F9)),
                             _buildInfoText(
                               'Ngày sinh: ',
                               _currentDoctor.dateOfBirth ?? 'Chưa cập nhật',
                             ),
-                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFF1F5F9)),
                             _buildInfoText(
                               'Số điện thoại: ',
                               _currentDoctor.phone,
                             ),
-                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFF1F5F9)),
                             _buildInfoText('Email: ', _currentDoctor.email),
-                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFF1F5F9)),
                             _buildInfoText(
                               'Chuyên khoa: ',
                               _currentDoctor.specialty ?? 'Chưa cập nhật',
                             ),
-                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFF1F5F9)),
                             _buildInfoText(
                               'Trình độ: ',
                               _currentDoctor.qualification ?? 'Chưa cập nhật',
                             ),
-                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFF1F5F9)),
                             _buildInfoText(
                               'Kinh nghiệm: ',
                               _currentDoctor.experienceYears != null
                                   ? '${_currentDoctor.experienceYears} năm'
                                   : 'Chưa cập nhật',
                             ),
-                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFF1F5F9)),
                             _buildInfoText(
                               'Địa chỉ: ',
                               _currentDoctor.address ?? 'Chưa cập nhật',
                             ),
-                            const Divider(height: 20, color: Color(0xFFEBF5FF)),
+                            const Divider(height: 20, color: Color(0xFFF1F5F9)),
                             Row(
                               children: [
-                                const Text(
+                                Text(
                                   'Trạng thái hệ thống: ',
                                   style: TextStyle(
                                     fontSize: 15,
-                                    color: Color(0xFF475569),
+                                    color: Colors.grey[700],
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -556,8 +562,8 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: _currentDoctor.status
-                                        ? const Color(0xFFDCFCE7)
-                                        : const Color(0xFFFEE2E2),
+                                        ? const Color(0xFFE6F4EA)
+                                        : const Color(0xFFFCE8E6),
                                     borderRadius: BorderRadius.circular(100),
                                   ),
                                   child: Text(
@@ -566,8 +572,8 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                                         : 'Tạm dừng',
                                     style: TextStyle(
                                       color: _currentDoctor.status
-                                          ? const Color(0xFF16A34A)
-                                          : const Color(0xFF991B1B),
+                                          ? const Color(0xFF137333)
+                                          : const Color(0xFFC5221F),
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -587,26 +593,26 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFDBEAFE)),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Mô tả bác sĩ / Tiểu sử',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E3A8A),
+                          color: Colors.teal[800],
                         ),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         _currentDoctor.bio ??
                             'Không có thông tin mô tả chi tiết.',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF475569),
+                          color: Colors.grey[700],
                           height: 1.6,
                         ),
                       ),
@@ -645,7 +651,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
+                        backgroundColor: Colors.teal,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(
@@ -670,7 +676,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
   Widget _buildInfoText(String label, String value) {
     return RichText(
       text: TextSpan(
-        style: const TextStyle(fontSize: 15, color: Color(0xFF475569)),
+        style: TextStyle(fontSize: 15, color: Colors.grey[700]),
         children: [
           TextSpan(
             text: label,
@@ -678,9 +684,9 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
           ),
           TextSpan(
             text: value,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E3A8A),
+              color: Colors.teal[800],
             ),
           ),
         ],
