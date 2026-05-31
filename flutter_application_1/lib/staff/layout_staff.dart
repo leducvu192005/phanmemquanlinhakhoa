@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/login.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'dashboard.dart';
-import 'patient_management_screen.dart';
-import 'pricing_screen.dart';
-import 'service_management_screen.dart';
+import 'work_shift_management.dart';
+import 'DoctorScheduleManagement.dart';
 
-class AdminLayout extends StatefulWidget {
-  const AdminLayout({super.key});
+class LayoutStaff extends StatefulWidget {
+  const LayoutStaff({super.key});
 
   @override
-  State<AdminLayout> createState() => _AdminLayoutState();
+  State<LayoutStaff> createState() => _LayoutStaffState();
 }
 
-class _AdminLayoutState extends State<AdminLayout> {
+class _LayoutStaffState extends State<LayoutStaff> {
   int selectedIndex = 0;
   final _storage = const FlutterSecureStorage();
   Future<void> _doLogout() async {
@@ -46,10 +44,8 @@ class _AdminLayoutState extends State<AdminLayout> {
     final bool isWide = MediaQuery.of(context).size.width > 900;
 
     final pages = [
-      const AdminDashboard(),
-      PatientManagementContent(),
-      ServiceManagementScreen(),
-      PricingScreen(),
+      const WorkShiftManagementScreen(),
+      const Doctorschedulemanagement(),
     ];
 
     return Scaffold(
@@ -81,7 +77,7 @@ class _AdminLayoutState extends State<AdminLayout> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Nha Khoa Admin',
+                              'Nha Khoa Staff',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -104,8 +100,8 @@ class _AdminLayoutState extends State<AdminLayout> {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _SidebarItem(
-                        icon: Icons.assignment_ind_outlined,
-                        label: 'Bác sĩ',
+                        icon: Icons.schedule_outlined,
+                        label: 'Ca làm việc',
                         wide: isWide,
                         selected: selectedIndex == 0,
                         onTap: () {
@@ -115,8 +111,8 @@ class _AdminLayoutState extends State<AdminLayout> {
                         },
                       ),
                       _SidebarItem(
-                        icon: Icons.people_outline,
-                        label: 'Bệnh nhân',
+                        icon: Icons.event_available_outlined,
+                        label: 'Đăng kí lịch trực',
                         wide: isWide,
                         selected: selectedIndex == 1,
                         onTap: () {

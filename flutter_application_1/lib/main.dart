@@ -4,6 +4,7 @@ import 'admin/dashboard.dart';
 import 'login.dart';
 import 'doctor/dashboard.dart';
 import 'patient/dashboard.dart';
+import 'staff/layout_staff.dart';
 
 void main() {
   runApp(const DentalApp());
@@ -24,6 +25,7 @@ class DentalApp extends StatelessWidget {
       routes: {
         '/admin': (_) => const AdminDashboard(),
         '/doctor': (_) => const DoctorDashboard(),
+        '/staff': (_) => const LayoutStaff(),
         '/patient': (_) => const PatientDashboard(),
         '/login': (_) => const LoginPage(),
       },
@@ -66,6 +68,7 @@ class _AuthGateState extends State<AuthGate> {
     if (_role == null) return const LoginPage();
     if (_role == 'admin') return const AdminDashboard();
     if (_role == 'doctor') return const DoctorDashboard();
+    if (_role == 'staff') return const LayoutStaff();
     return const PatientDashboard();
   }
 }

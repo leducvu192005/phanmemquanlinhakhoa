@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 class Doctor {
-  final String id;
+  final int id;
 
   final String doctorCode;
 
@@ -54,7 +54,7 @@ class Doctor {
 
   factory Doctor.fromJson(Map<String, dynamic> json) {
     return Doctor(
-      id: json['id'].toString(),
+      id: json['id'] is int ? json['id'] : int.parse(json['id'].toString()),
 
       doctorCode: json['doctor_code'] ?? '',
 
