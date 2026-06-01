@@ -123,7 +123,7 @@ class _LayoutStaffState extends State<LayoutStaff> {
                       ),
                       _SidebarItem(
                         icon: Icons.medical_services_outlined,
-                        label: 'Dịch vụ',
+                        label: 'Thiết lập các ngày nghỉ',
                         wide: isWide,
                         selected: selectedIndex == 2,
                         onTap: () {
@@ -134,7 +134,7 @@ class _LayoutStaffState extends State<LayoutStaff> {
                       ),
                       _SidebarItem(
                         icon: Icons.monetization_on_outlined,
-                        label: 'Bảng giá',
+                        label: 'Đăng kí lịch khám và theo dõi lịch khám',
                         wide: isWide,
                         selected: selectedIndex == 3,
                         onTap: () {

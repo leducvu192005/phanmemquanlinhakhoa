@@ -9,7 +9,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.sql import func
 from db import Base
-
+from uuid import UUID
 
 class DoctorWorkSchedule(Base):
     __tablename__ = "doctor_work_schedules"

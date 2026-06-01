@@ -80,7 +80,8 @@ class _DentalAdminDashboardState extends State<DentalAdminDashboard> {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 1.4,
+              // Tăng tỉ lệ này lên giúp các ô lưới dẹt lại, fit vừa vặn với card nhỏ
+              childAspectRatio: 2.1,
               children: [
                 _buildStatCard(
                   title: 'Hẹn hôm nay',
@@ -159,7 +160,7 @@ class _DentalAdminDashboardState extends State<DentalAdminDashboard> {
     );
   }
 
-  // Widget dựng thẻ thống kê nhanh (KPI)
+  // Widget dựng thẻ thống kê nhanh (KPI) - ĐÃ ĐƯỢC THU NHỎ GỌN GÀNG
   Widget _buildStatCard({
     required String title,
     required String value,
@@ -168,40 +169,50 @@ class _DentalAdminDashboardState extends State<DentalAdminDashboard> {
     required String trending,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment:
+            MainAxisAlignment.spaceBetween, // Phân bổ đều không gian dọc
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: Colors.grey[500],
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 11, // Chữ tiêu đề nhỏ gọn
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 4),
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(6),
                 ),
-                child: Icon(icon, color: color, size: 20),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 13, // Icon mini tinh tế
+                ),
               ),
             ],
           ),
@@ -211,15 +222,21 @@ class _DentalAdminDashboardState extends State<DentalAdminDashboard> {
               Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 22,
+                  fontSize: 16, // Số liệu rõ ràng nhưng vừa vặn
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
+                  height: 1.1,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 1),
               Text(
                 trending,
-                style: TextStyle(color: Colors.grey[400], fontSize: 10),
+                style: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 8.5, // Dòng xu hướng nhỏ phía dưới
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -300,7 +317,6 @@ class _DentalAdminDashboardState extends State<DentalAdminDashboard> {
 
   // Widget dựng danh sách hàng đợi / lịch hẹn
   Widget _buildAppointmentList() {
-    // Data mẫu giả lập từ API thực tế
     final appointments = [
       {
         'name': 'Nguyễn Văn A',

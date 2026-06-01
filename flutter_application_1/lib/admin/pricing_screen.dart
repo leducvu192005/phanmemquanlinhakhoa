@@ -35,14 +35,11 @@ class _PricingScreenState extends State<PricingScreen> {
   Future<void> fetchServices() async {
     setState(() => isLoading = true);
     services = await ServiceApi.getServices();
-    // Khi tải xong, khởi tạo danh sách hiển thị ban đầu
     filteredServices = List.from(services);
-    // Reset lại ô tìm kiếm nếu có dữ liệu cũ
     searchController.clear();
     setState(() => isLoading = false);
   }
 
-  // Hàm xử lý logic tìm kiếm (Không phân biệt chữ hoa, chữ thường, dấu)
   void filterServices(String query) {
     setState(() {
       if (query.isEmpty) {
@@ -55,6 +52,306 @@ class _PricingScreenState extends State<PricingScreen> {
         }).toList();
       }
     });
+  }
+
+  // --- FORM THÊM MỚI DỊCH VỤ ĐẦY ĐỦ CÁC TRƯỜNG ---
+  void showAddServiceDialog() {
+    final _formKey = GlobalKey<FormState>();
+
+    // Các Controller quản lý nhập liệu
+    final codeController = TextEditingController();
+    final nameController = TextEditingController();
+    final categoryController = TextEditingController();
+    final descriptionController = TextEditingController();
+    final durationController = TextEditingController();
+    final priceController = TextEditingController();
+    bool statusValue = true; // Mặc định là Hoạt động (true)
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.add_business_rounded,
+                    color: primaryTeal,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Thêm dịch vụ mới',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: 450,
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // 1. Mã dịch vụ & Tên dịch vụ
+                        TextFormField(
+                          controller: codeController,
+                          decoration: _buildInputDecoration(
+                            'Mã dịch vụ *',
+                            Icons.qr_code_rounded,
+                          ),
+                          validator: (val) =>
+                              (val == null || val.trim().isEmpty)
+                              ? 'Vui lòng nhập mã dịch vụ'
+                              : null,
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: nameController,
+                          decoration: _buildInputDecoration(
+                            'Tên dịch vụ *',
+                            Icons.medical_services_rounded,
+                          ),
+                          validator: (val) =>
+                              (val == null || val.trim().isEmpty)
+                              ? 'Vui lòng nhập tên dịch vụ'
+                              : null,
+                        ),
+                        const SizedBox(height: 14),
+
+                        // 2. Danh mục dịch vụ
+                        TextFormField(
+                          controller: categoryController,
+                          decoration: _buildInputDecoration(
+                            'Danh mục (vd: Nhổ răng, Thẩm mỹ) *',
+                            Icons.category_rounded,
+                          ),
+                          validator: (val) =>
+                              (val == null || val.trim().isEmpty)
+                              ? 'Vui lòng nhập danh mục'
+                              : null,
+                        ),
+                        const SizedBox(height: 14),
+
+                        // 3. Thời gian thực hiện & Giá cả
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: durationController,
+                                keyboardType: TextInputType.number,
+                                decoration: _buildInputDecoration(
+                                  'Thời gian (Phút)',
+                                  Icons.hourglass_top_rounded,
+                                ),
+                                validator: (val) {
+                                  if (val != null &&
+                                      val.isNotEmpty &&
+                                      int.tryParse(val) == null) {
+                                    return 'Phải là số nguyên';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: priceController,
+                                keyboardType: TextInputType.number,
+                                decoration: _buildInputDecoration(
+                                  'Giá (VNĐ) *',
+                                  Icons.attach_money_rounded,
+                                ),
+                                validator: (val) {
+                                  if (val == null || val.isEmpty)
+                                    return 'Vui lòng nhập giá';
+                                  if (double.tryParse(val) == null)
+                                    return 'Giá không hợp lệ';
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // 4. Mô tả chi tiết
+                        TextFormField(
+                          controller: descriptionController,
+                          maxLines: 2,
+                          decoration: _buildInputDecoration(
+                            'Mô tả chi tiết',
+                            Icons.description_rounded,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+
+                        // 5. Trạng thái hoạt động (Switch)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey[300]!),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.toggle_on_rounded,
+                                    color: primaryTeal,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'Trạng thái hoạt động',
+                                    style: TextStyle(
+                                      color: Colors.grey[700],
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Switch(
+                                value: statusValue,
+                                activeColor: primaryTeal,
+                                onChanged: (value) {
+                                  setDialogState(() {
+                                    statusValue = value;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Hủy',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryTeal,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                  ),
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      // Hiển thị vòng xoay Loading chờ gọi API
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (_) => Center(
+                          child: CircularProgressIndicator(color: primaryTeal),
+                        ),
+                      );
+
+                      try {
+                        // 1. Khởi tạo Object Service từ Form nhập liệu
+                        final newService = Service(
+                          id: '', // id truyền trống vì backend tự tạo khi POST
+                          serviceCode: codeController.text.trim(),
+                          serviceName: nameController.text.trim(),
+                          category: categoryController.text.trim(),
+                          description: descriptionController.text.trim().isEmpty
+                              ? null
+                              : descriptionController.text.trim(),
+                          duration_minutes: durationController.text.isEmpty
+                              ? null
+                              : int.parse(durationController.text),
+                          price: double.parse(priceController.text),
+                          status: statusValue,
+                          createdAt: DateTime.now(),
+                        );
+
+                        // 2. Chuyển Object sang Map thông qua hàm toJson() và gọi chuẩn API createService
+                        await ServiceApi.createService(newService.toJson());
+
+                        Navigator.pop(context); // Tắt loading spinner
+                        Navigator.pop(context); // Đóng Dialog Form
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Thêm dịch vụ mới thành công!'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                        fetchServices(); // Tải lại danh sách mới
+                      } catch (e) {
+                        Navigator.pop(context); // Tắt loading spinner
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Có lỗi xảy ra: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text(
+                    'Thêm mới',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Hàm tiện ích tạo style đồng bộ cho Input Fields
+  InputDecoration _buildInputDecoration(String labelText, IconData icon) {
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: TextStyle(color: primaryTeal, fontSize: 14),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: primaryTeal, width: 2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.red, width: 1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.red, width: 2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      prefixIcon: Icon(icon, color: primaryTeal, size: 22),
+      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+    );
   }
 
   // Giao diện Dialog chỉnh sửa giá hiện đại
@@ -90,18 +387,9 @@ class _PricingScreenState extends State<PricingScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: priceController,
-              decoration: InputDecoration(
-                labelText: 'Giá mới (VNĐ)',
-                labelStyle: TextStyle(color: primaryTeal),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: primaryTeal, width: 2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                prefixIcon: Icon(Icons.attach_money, color: primaryTeal),
+              decoration: _buildInputDecoration(
+                'Giá mới (VNĐ)',
+                Icons.attach_money_rounded,
               ),
               keyboardType: TextInputType.number,
             ),
@@ -131,7 +419,7 @@ class _PricingScreenState extends State<PricingScreen> {
               final newPrice = double.tryParse(priceController.text) ?? 0;
               await ServiceApi.updatePrice(service.id, newPrice);
               Navigator.pop(context);
-              fetchServices(); // Tải lại dữ liệu mới từ API
+              fetchServices();
             },
             child: const Text(
               'Lưu thay đổi',
@@ -143,7 +431,7 @@ class _PricingScreenState extends State<PricingScreen> {
     );
   }
 
-  // Giao diện Dialog lịch sử giá dạng Timeline
+  // Giao diện Dialog lịch sử giá
   void showPriceHistory(Service service) async {
     showDialog(
       context: context,
@@ -153,7 +441,7 @@ class _PricingScreenState extends State<PricingScreen> {
     );
 
     final history = await ServiceApi.getPriceHistory(service.id);
-    Navigator.pop(context); // Tắt loading
+    Navigator.pop(context);
 
     showDialog(
       context: context,
@@ -274,9 +562,21 @@ class _PricingScreenState extends State<PricingScreen> {
           ),
         ],
       ),
+
+      // NÚT THÊM DỊCH VỤ NỔI BẬT (FLOATING ACTION BUTTON)
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: showAddServiceDialog,
+        backgroundColor: primaryTeal,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text(
+          'Thêm dịch vụ',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+      ),
+
       body: Column(
         children: [
-          // THANH TÌM KIẾM HIỆN ĐẠI (SEARCH BAR)
+          // THANH TÌM KIẾM
           Container(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             color: Colors.white,
@@ -317,7 +617,7 @@ class _PricingScreenState extends State<PricingScreen> {
             ),
           ),
 
-          // DANH SÁCH DỊCH VỤ
+          // DANH SÁCH HIỂN THỊ DỊCH VỤ
           Expanded(
             child: isLoading
                 ? Center(child: CircularProgressIndicator(color: primaryTeal))
@@ -343,7 +643,7 @@ class _PricingScreenState extends State<PricingScreen> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
                     itemCount: filteredServices.length,
                     itemBuilder: (_, i) {
                       final s = filteredServices[i];
@@ -364,39 +664,80 @@ class _PricingScreenState extends State<PricingScreen> {
                             leading: Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: lightTeal,
+                                color: s.status ? lightTeal : Colors.grey[200],
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Icon(
                                 Icons.medical_services_outlined,
-                                color: primaryTeal,
+                                color: s.status
+                                    ? primaryTeal
+                                    : Colors.grey[500],
                               ),
                             ),
-                            title: Text(
-                              s.serviceName,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.black,
-                              ),
+                            title: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    s.serviceName,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: s.status
+                                          ? Colors.black
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                ),
+                                if (!s.status)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Text(
+                                      'Tắt',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                             subtitle: Padding(
                               padding: const EdgeInsets.only(top: 6),
-                              child: Row(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Giá hiện tại: ',
+                                    'Mã: ${s.serviceCode}  |  Mục: ${s.category}',
                                     style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 14,
+                                      color: Colors.grey[500],
+                                      fontSize: 12,
                                     ),
                                   ),
-                                  Text(
-                                    '${s.price} VNĐ',
-                                    style: TextStyle(
-                                      color: darkTeal,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
+                                  const SizedBox(height: 2),
+                                  RichText(
+                                    text: TextSpan(
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 14,
+                                      ),
+                                      children: [
+                                        const TextSpan(text: 'Giá: '),
+                                        TextSpan(
+                                          text: '${s.price} VNĐ',
+                                          style: TextStyle(
+                                            color: darkTeal,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
