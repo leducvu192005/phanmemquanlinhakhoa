@@ -1,9 +1,9 @@
 class ServicePriceHistory {
-  final int id;
-  final int serviceId;
+  final String id;
+  final String serviceId;
   final double oldPrice;
   final double newPrice;
-  final int updatedBy;
+  final String updatedBy;
   final DateTime updatedAt;
 
   ServicePriceHistory({
@@ -17,11 +17,11 @@ class ServicePriceHistory {
 
   factory ServicePriceHistory.fromJson(Map<String, dynamic> json) =>
       ServicePriceHistory(
-        id: json['id'],
-        serviceId: json['service_id'],
+        id: json['id']?.toString() ?? '',
+        serviceId: json['service_id']?.toString() ?? '',
         oldPrice: (json['old_price'] as num).toDouble(),
         newPrice: (json['new_price'] as num).toDouble(),
-        updatedBy: json['updated_by'],
+        updatedBy: json['updated_by']?.toString() ?? '',
         updatedAt: DateTime.parse(json['updated_at']),
       );
 }

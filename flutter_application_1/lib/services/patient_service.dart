@@ -27,7 +27,7 @@ class PatientService {
   // =========================
   // GET DETAIL
   // =========================
-  Future<Patient> getPatientById(int id) async {
+  Future<Patient> getPatientById(String id) async {
     final response = await http.get(Uri.parse("$baseUrl/$id"));
 
     if (response.statusCode == 200) {
@@ -59,7 +59,7 @@ class PatientService {
   // =========================
   // UPDATE
   // =========================
-  Future<Patient> updatePatient(int id, Map<String, dynamic> payload) async {
+  Future<Patient> updatePatient(String id, Map<String, dynamic> payload) async {
     final response = await http.put(
       Uri.parse("$baseUrl/$id"),
       headers: {"Content-Type": "application/json"},
@@ -77,7 +77,7 @@ class PatientService {
   // =========================
   // DELETE
   // =========================
-  Future<void> deletePatient(int id) async {
+  Future<void> deletePatient(String id) async {
     final response = await http.delete(Uri.parse("$baseUrl/$id"));
 
     if (response.statusCode != 200 && response.statusCode != 204) {

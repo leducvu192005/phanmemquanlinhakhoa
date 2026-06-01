@@ -18,7 +18,7 @@ class DoctorWorkSchedule(Base):
 
     doctor_id = Column(
     Integer,
-    ForeignKey("users.id"),
+    ForeignKey("doctors.id"),
     nullable=True
 )
 

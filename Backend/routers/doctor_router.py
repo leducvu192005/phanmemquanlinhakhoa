@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from db import SessionLocal
 from models.doctor import Doctor
-from uuid import UUID
 from schemas.doctor import (
     DoctorCreate,
     DoctorUpdate,
@@ -13,7 +12,6 @@ router = APIRouter(
     prefix="/doctors",
     tags=["Doctors"],
 )
-
 
 # =========================
 # DATABASE
@@ -49,7 +47,7 @@ def get_doctors(
 # =========================
 @router.get("/{doctor_id}", response_model=DoctorOut)
 def get_doctor(
-    doctor_id: UUID,
+    doctor_id: int,
     db: Session = Depends(get_db),
 ):
     doctor = (
@@ -89,7 +87,7 @@ def create_doctor(
 # =========================
 @router.put("/{doctor_id}", response_model=DoctorOut)
 def update_doctor(
-    doctor_id: UUID,
+    doctor_id: int,
     body: DoctorUpdate,
     db: Session = Depends(get_db),
 ):
@@ -121,7 +119,7 @@ def update_doctor(
 # =========================
 @router.delete("/{doctor_id}")
 def delete_doctor(
-    doctor_id: UUID,
+    doctor_id: int,
     db: Session = Depends(get_db),
 ):
     doctor = (

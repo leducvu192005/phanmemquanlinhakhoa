@@ -1,7 +1,6 @@
 from datetime import date, datetime
 from pydantic import BaseModel
 from typing import Optional
-from uuid import UUID
 
 
 # =========================
@@ -46,7 +45,11 @@ class DoctorWorkScheduleUpdate(BaseModel):
 class DoctorWorkScheduleResponse(BaseModel):
     id: int
 
-    doctor_id: Optional[UUID] = None
+    doctor_id: Optional[int] = None
+
+    doctor_name: Optional[str] = None
+
+    doctor_code: Optional[str] = None
 
     work_shift_id: int
 
@@ -74,7 +77,11 @@ class DoctorWorkScheduleResponse(BaseModel):
 class DoctorWorkScheduleDetail(BaseModel):
     id: int
 
-    doctor_id: Optional[UUID] = None
+    doctor_id: Optional[int] = None
+
+    doctor_name: Optional[str] = None
+
+    doctor_code: Optional[str] = None
 
     work_shift_id: int
 

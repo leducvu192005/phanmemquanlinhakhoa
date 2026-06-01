@@ -43,7 +43,7 @@ class ServiceApi {
   }
 
   static Future<Service> updateService(
-    int id,
+    String id,
     Map<String, dynamic> data,
   ) async {
     final response = await http.put(
@@ -59,7 +59,7 @@ class ServiceApi {
     throw Exception('Failed to update service');
   }
 
-  static Future<void> deleteService(int id) async {
+  static Future<void> deleteService(String id) async {
     final response = await http.delete(
       Uri.parse('$baseUrl/services/$id'),
       headers: await _headers(),
@@ -70,7 +70,7 @@ class ServiceApi {
     }
   }
 
-  static Future<Service> updatePrice(int id, double newPrice) async {
+  static Future<Service> updatePrice(String id, double newPrice) async {
     final response = await http.put(
       Uri.parse('$baseUrl/services/$id/price?new_price=$newPrice'),
       headers: await _headers(),
@@ -83,7 +83,7 @@ class ServiceApi {
     throw Exception('Failed to update price');
   }
 
-  static Future<List<ServicePriceHistory>> getPriceHistory(int id) async {
+  static Future<List<ServicePriceHistory>> getPriceHistory(String id) async {
     final response = await http.get(
       Uri.parse('$baseUrl/services/$id/price-history'),
       headers: await _headers(),

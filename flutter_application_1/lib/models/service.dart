@@ -1,5 +1,5 @@
 class Service {
-  final int id;
+  final String id;
   final String serviceCode;
   final String serviceName;
   final String category;
@@ -23,7 +23,7 @@ class Service {
 
   factory Service.fromJson(Map<String, dynamic> json) {
     return Service(
-      id: json['id'],
+      id: json['id']?.toString() ?? '',
       serviceCode: json['service_code'],
       serviceName: json['service_name'],
       category: json['category'],

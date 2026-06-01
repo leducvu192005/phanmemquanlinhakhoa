@@ -1,5 +1,5 @@
 class WorkShift {
-  final int id;
+  final String id;
   final String shiftCode;
   final String shiftName;
   final String startTime;
@@ -19,7 +19,7 @@ class WorkShift {
 
   factory WorkShift.fromJson(Map<String, dynamic> json) {
     return WorkShift(
-      id: json['id'],
+      id: json['id']?.toString() ?? '',
       shiftCode: json['shift_code'],
       shiftName: json['shift_name'],
       startTime: json['start_time'],

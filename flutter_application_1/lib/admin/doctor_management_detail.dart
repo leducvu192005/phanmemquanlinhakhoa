@@ -55,7 +55,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
     if (ok != true) return;
 
     try {
-      await DoctorService().deleteDoctor(_currentDoctor.id as String);
+      await DoctorService().deleteDoctor(_currentDoctor.id);
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -326,7 +326,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
     };
 
     try {
-      await DoctorService().updateDoctor(_currentDoctor.id as String, body);
+      await DoctorService().updateDoctor(_currentDoctor.id, body);
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(

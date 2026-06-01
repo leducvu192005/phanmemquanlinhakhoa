@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 class Doctor {
-  final int id;
+  final String id;
 
   final String doctorCode;
 
@@ -54,7 +54,7 @@ class Doctor {
 
   factory Doctor.fromJson(Map<String, dynamic> json) {
     return Doctor(
-      id: json['id'] is int ? json['id'] : int.parse(json['id'].toString()),
+      id: json['id']?.toString() ?? '',
 
       doctorCode: json['doctor_code'] ?? '',
 
@@ -148,35 +148,20 @@ class Doctor {
   }) {
     return Doctor(
       id: id ?? this.id,
-
       doctorCode: doctorCode ?? this.doctorCode,
-
       fullName: fullName ?? this.fullName,
-
       gender: gender ?? this.gender,
-
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
-
       phone: phone ?? this.phone,
-
       email: email ?? this.email,
-
       avatar: avatar ?? this.avatar,
-
       specialty: specialty ?? this.specialty,
-
       qualification: qualification ?? this.qualification,
-
       experienceYears: experienceYears ?? this.experienceYears,
-
       address: address ?? this.address,
-
       bio: bio ?? this.bio,
-
       status: status ?? this.status,
-
       createdAt: createdAt ?? this.createdAt,
-
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }

@@ -3,9 +3,11 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import and_, or_
 
 from db import SessionLocal
 from models.doctor_work_schedule import DoctorWorkSchedule
+from models.doctor import Doctor
 from schemas.doctor_work_schedule import (
     DoctorWorkScheduleCreate,
     DoctorWorkScheduleUpdate,
@@ -26,6 +28,39 @@ def get_db():
         db.close()
 
 
+def _format_schedule_response(schedule: DoctorWorkSchedule, db: Session) -> DoctorWorkScheduleResponse:
+    """
+    Helper function để format DoctorWorkSchedule thành response
+    với doctor_name, doctor_code từ Doctor table
+    """
+    doctor_name = None
+    doctor_code = None
+
+    if schedule.doctor_id is not None:
+        doctor = db.query(Doctor).filter(
+            Doctor.id == schedule.doctor_id
+        ).first()
+
+        if doctor:
+            doctor_name = doctor.full_name
+            doctor_code = doctor.doctor_code
+
+    return DoctorWorkScheduleResponse(
+        id=schedule.id,
+        doctor_id=schedule.doctor_id,
+        doctor_name=doctor_name,
+        doctor_code=doctor_code,
+        work_shift_id=schedule.work_shift_id,
+        work_date=schedule.work_date,
+        max_patients=schedule.max_patients,
+        current_patients=schedule.current_patients,
+        status=schedule.status,
+        note=schedule.note,
+        created_at=schedule.created_at,
+        updated_at=schedule.updated_at
+    )
+
+
 # ==========================================
 # TẠO LỊCH LÀM VIỆC
 # ==========================================
@@ -38,21 +73,23 @@ def create_schedule(
     db: Session = Depends(get_db)
 ):
 
-    existing = (
-        db.query(DoctorWorkSchedule)
-        .filter(
-            DoctorWorkSchedule.doctor_id == schedule.doctor_id,
-            DoctorWorkSchedule.work_shift_id == schedule.work_shift_id,
-            DoctorWorkSchedule.work_date == schedule.work_date
+    # Chỉ check trùng lặp khi doctor_id không null
+    if schedule.doctor_id is not None:
+        existing = (
+            db.query(DoctorWorkSchedule)
+            .filter(
+                DoctorWorkSchedule.doctor_id == schedule.doctor_id,
+                DoctorWorkSchedule.work_shift_id == schedule.work_shift_id,
+                DoctorWorkSchedule.work_date == schedule.work_date
+            )
+            .first()
         )
-        .first()
-    )
 
-    if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="Lịch làm việc đã tồn tại"
-        )
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail="Lịch làm việc đã tồn tại"
+            )
 
     new_schedule = DoctorWorkSchedule(
         doctor_id=schedule.doctor_id,
@@ -67,7 +104,7 @@ def create_schedule(
     db.commit()
     db.refresh(new_schedule)
 
-    return new_schedule
+    return _format_schedule_response(new_schedule, db)
 
 
 # ==========================================
@@ -90,7 +127,7 @@ def get_all_schedules(
         .all()
     )
 
-    return schedules
+    return [_format_schedule_response(schedule, db) for schedule in schedules]
 
 
 # ==========================================
@@ -119,7 +156,7 @@ def get_schedule_detail(
             detail="Không tìm thấy lịch làm việc"
         )
 
-    return schedule
+    return _format_schedule_response(schedule, db)
 
 
 # ==========================================
@@ -156,7 +193,8 @@ def search_schedules(
             DoctorWorkSchedule.status == status
         )
 
-    return query.all()
+    schedules = query.all()
+    return [_format_schedule_response(schedule, db) for schedule in schedules]
 
 
 # ==========================================
@@ -196,7 +234,7 @@ def update_schedule(
     db.commit()
     db.refresh(schedule)
 
-    return schedule
+    return _format_schedule_response(schedule, db)
 
 
 # ==========================================
@@ -247,7 +285,7 @@ def get_doctor_schedules(
         .all()
     )
 
-    return schedules
+    return [_format_schedule_response(schedule, db) for schedule in schedules]
 
 
 # ==========================================
@@ -266,4 +304,4 @@ def get_open_schedules(
         .all()
     )
 
-    return schedules
+    return [_format_schedule_response(schedule, db) for schedule in schedules]

@@ -100,7 +100,7 @@ class Api {
   }
 
   static Future<http.Response> updateUser(
-    int id,
+    String id,
     Map<String, dynamic> body,
   ) async {
     final url = Uri.parse('$baseUrl/admin/users/$id');
@@ -112,7 +112,7 @@ class Api {
     return res;
   }
 
-  static Future<http.Response> deleteUser(int id) async {
+  static Future<http.Response> deleteUser(String id) async {
     final url = Uri.parse('$baseUrl/admin/users/$id');
     final res = await http.delete(url);
     return res;

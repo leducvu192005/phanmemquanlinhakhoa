@@ -20,7 +20,7 @@ class WorkShiftApi {
   }
 
   // GET DETAIL
-  static Future<WorkShift> getShiftById(int id) async {
+  static Future<WorkShift> getShiftById(String id) async {
     final response = await http.get(Uri.parse('$baseUrl/$id'));
 
     if (response.statusCode == 200) {
@@ -61,7 +61,7 @@ class WorkShiftApi {
 
   // UPDATE
   static Future<WorkShift> updateShift({
-    required int id,
+    required String id,
     required String shiftCode,
     required String shiftName,
     required String startTime,
@@ -90,7 +90,7 @@ class WorkShiftApi {
   }
 
   // DELETE
-  static Future<bool> deleteShift(int id) async {
+  static Future<bool> deleteShift(String id) async {
     final response = await http.delete(Uri.parse('$baseUrl/$id'));
 
     return response.statusCode == 200;

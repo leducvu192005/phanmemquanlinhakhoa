@@ -39,7 +39,7 @@ class DoctorWorkScheduleService {
   // =========================
   // GET BY ID
   // =========================
-  Future<DoctorWorkSchedule> getById(int id) async {
+  Future<DoctorWorkSchedule> getById(String id) async {
     final res = await http.get(Uri.parse("$baseUrl/doctor-work-schedules/$id"));
 
     if (res.statusCode == 200) {
@@ -67,7 +67,7 @@ class DoctorWorkScheduleService {
   // =========================
   // UPDATE
   // =========================
-  Future<void> update(int id, Map<String, dynamic> data) async {
+  Future<void> update(String id, Map<String, dynamic> data) async {
     final res = await http.put(
       Uri.parse("$baseUrl/doctor-work-schedules/$id"),
       headers: {"Content-Type": "application/json"},
@@ -82,7 +82,7 @@ class DoctorWorkScheduleService {
   // =========================
   // DELETE
   // =========================
-  Future<void> delete(int id) async {
+  Future<void> delete(String id) async {
     final res = await http.delete(
       Uri.parse("$baseUrl/doctor-work-schedules/$id"),
     );
@@ -95,7 +95,7 @@ class DoctorWorkScheduleService {
   // =========================
   // REGISTER (bác sĩ đăng ký)
   // =========================
-  Future<void> register(int scheduleId, int doctorId) async {
+  Future<void> register(String scheduleId, String doctorId) async {
     final res = await http.put(
       Uri.parse(
         "$baseUrl/doctor-work-schedules/$scheduleId/register?doctor_id=$doctorId",
@@ -110,7 +110,7 @@ class DoctorWorkScheduleService {
   // =========================
   // GET BY DOCTOR
   // =========================
-  Future<List<DoctorWorkSchedule>> getByDoctor(int doctorId) async {
+  Future<List<DoctorWorkSchedule>> getByDoctor(String doctorId) async {
     final res = await http.get(
       Uri.parse("$baseUrl/doctor-work-schedules/doctor/$doctorId"),
     );

@@ -1,10 +1,9 @@
 class DoctorWorkSchedule {
-  final int id;
+  final String id;
 
-  // UUID string
   final String? doctorId;
 
-  final int workShiftId;
+  final String workShiftId;
 
   final DateTime workDate;
 
@@ -42,31 +41,33 @@ class DoctorWorkSchedule {
 
   factory DoctorWorkSchedule.fromJson(Map<String, dynamic> json) {
     return DoctorWorkSchedule(
-      id: json['id'] ?? 0,
+      id: json['id']?.toString() ?? '',
 
-      // UUID -> String
       doctorId: json['doctor_id']?.toString(),
 
-      workShiftId: json['work_shift_id'] ?? 0,
+      workShiftId: json['work_shift_id']?.toString() ?? '',
 
-      workDate: DateTime.parse(json['work_date']),
+      workDate: DateTime.parse(json['work_date'].toString()),
 
       maxPatients: json['max_patients'] ?? 0,
 
       currentPatients: json['current_patients'] ?? 0,
 
-      status: json['status'] ?? "unknown",
+      status: json['status'] ?? 'unknown',
 
-      note: json['note'],
+      note: json['note']?.toString(),
 
-      // join doctors
-      doctorName: json['doctor_name'],
+      doctorName: json['doctor_name']?.toString(),
 
-      doctorCode: json['doctor_code'],
+      doctorCode: json['doctor_code']?.toString(),
 
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'].toString())
+          : DateTime.now(),
 
-      updatedAt: DateTime.parse(json['updated_at']),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'].toString())
+          : DateTime.now(),
     );
   }
 
@@ -80,5 +81,35 @@ class DoctorWorkSchedule {
       "status": status,
       "note": note,
     };
+  }
+
+  DoctorWorkSchedule copyWith({
+    String? id,
+    String? doctorId,
+    String? workShiftId,
+    DateTime? workDate,
+    int? maxPatients,
+    int? currentPatients,
+    String? status,
+    String? note,
+    String? doctorName,
+    String? doctorCode,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return DoctorWorkSchedule(
+      id: id ?? this.id,
+      doctorId: doctorId ?? this.doctorId,
+      workShiftId: workShiftId ?? this.workShiftId,
+      workDate: workDate ?? this.workDate,
+      maxPatients: maxPatients ?? this.maxPatients,
+      currentPatients: currentPatients ?? this.currentPatients,
+      status: status ?? this.status,
+      note: note ?? this.note,
+      doctorName: doctorName ?? this.doctorName,
+      doctorCode: doctorCode ?? this.doctorCode,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
   }
 }

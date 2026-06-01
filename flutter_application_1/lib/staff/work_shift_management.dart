@@ -44,7 +44,7 @@ class _WorkShiftManagementScreenState extends State<WorkShiftManagementScreen> {
     });
   }
 
-  Future<void> deleteShift(int id) async {
+  Future<void> deleteShift(String id) async {
     try {
       final success = await WorkShiftApi.deleteShift(id);
       if (success) {

@@ -1,5 +1,5 @@
 class Patient {
-  final int id;
+  final String id;
   final String patientCode;
   final String fullName;
   final String gender;
@@ -38,7 +38,7 @@ class Patient {
 
   factory Patient.fromJson(Map<String, dynamic> json) {
     return Patient(
-      id: json['id'],
+      id: json['id']?.toString() ?? '',
       patientCode: json['patient_code'],
       fullName: json['full_name'],
       gender: json['gender'],
@@ -60,7 +60,7 @@ class Patient {
     );
   }
   Patient copyWith({
-    int? id,
+    String? id,
     String? patientCode,
     String? fullName,
     String? gender,

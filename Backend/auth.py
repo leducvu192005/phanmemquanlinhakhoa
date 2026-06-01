@@ -22,7 +22,10 @@ def verify_password(
     hashed_password: str
 ):
     return pwd_context.verify(
-        plain_password[:72],
+    plain_password.encode("utf-8")[:72].decode(
+    "utf-8",    
+    errors="ignore"
+),
         hashed_password
     )
 

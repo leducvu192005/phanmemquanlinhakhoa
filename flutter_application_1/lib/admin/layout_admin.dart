@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/login.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'dashboard.dart';
+import 'dashboard.dart'; // Chứa DentalAdminDashboard
 import 'patient_management_screen.dart';
 import 'pricing_screen.dart';
 import 'service_management_screen.dart';
+import 'doctor_management.dart'; // Chứa AdminDashboard quản lý bác sĩ
 
 class AdminLayout extends StatefulWidget {
   const AdminLayout({super.key});
@@ -14,8 +15,11 @@ class AdminLayout extends StatefulWidget {
 }
 
 class _AdminLayoutState extends State<AdminLayout> {
-  int selectedIndex = 0;
+  int selectedIndex = 0; // Mặc định hiển thị trang đầu tiên (Dashboard)
   final _storage = const FlutterSecureStorage();
+
+  final Color primaryTeal = const Color(0xFF00A896);
+
   Future<void> _doLogout() async {
     try {
       await _storage.deleteAll();
@@ -45,41 +49,48 @@ class _AdminLayoutState extends State<AdminLayout> {
   Widget build(BuildContext context) {
     final bool isWide = MediaQuery.of(context).size.width > 900;
 
+    // Sắp xếp lại thứ tự Pages tương ứng với Sidebar
     final pages = [
-      const AdminDashboard(),
-      PatientManagementContent(),
-      ServiceManagementScreen(),
-      PricingScreen(),
+      DentalAdminDashboard(), // Index 0: Tổng quan Dashboard xịn xò
+      AdminDashboard(), // Index 1: Quản lý Bác sĩ (Danh sách/Thêm)
+      PatientManagementContent(), // Index 2: Quản lý Bệnh nhân
+      ServiceManagementScreen(), // Index 3: Quản lý Dịch vụ
+      PricingScreen(), // Index 4: Cấu hình Bảng giá
     ];
 
     return Scaffold(
       body: Row(
         children: [
+          // SIDEBAR CONTAINER
           Container(
             width: isWide ? 240 : 72,
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 12,
                   offset: const Offset(2, 0),
                 ),
               ],
             ),
             child: Column(
               children: [
+                // LOGO HEADER
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 24.0,
+                    horizontal: 16.0,
+                  ),
                   child: isWide
                       ? Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.healing_outlined,
-                              color: Colors.teal,
+                              color: primaryTeal,
                               size: 28,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Text(
                               'Nha Khoa Admin',
                               style: TextStyle(
@@ -90,69 +101,84 @@ class _AdminLayoutState extends State<AdminLayout> {
                             ),
                           ],
                         )
-                      : const Center(
+                      : Center(
                           child: Icon(
                             Icons.healing_outlined,
-                            color: Colors.teal,
+                            color: primaryTeal,
+                            size: 26,
                           ),
                         ),
                 ),
                 const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
+
+                // DANH SÁCH MENU SIDEBAR
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
                     children: [
+                      // 1. TỔNG QUAN (DENTAL ADMIN DASHBOARD)
+                      _SidebarItem(
+                        icon: Icons.dashboard_customize_outlined,
+                        label: 'Tổng quan',
+                        wide: isWide,
+                        selected: selectedIndex == 0,
+                        onTap: () {
+                          setState(() => selectedIndex = 0);
+                        },
+                      ),
+
+                      // 2. BÁC SĨ (ADMIN DASHBOARD)
                       _SidebarItem(
                         icon: Icons.assignment_ind_outlined,
                         label: 'Bác sĩ',
                         wide: isWide,
-                        selected: selectedIndex == 0,
-                        onTap: () {
-                          setState(() {
-                            selectedIndex = 0;
-                          });
-                        },
-                      ),
-                      _SidebarItem(
-                        icon: Icons.people_outline,
-                        label: 'Bệnh nhân',
-                        wide: isWide,
                         selected: selectedIndex == 1,
                         onTap: () {
-                          setState(() {
-                            selectedIndex = 1;
-                          });
+                          setState(() => selectedIndex = 1);
                         },
                       ),
+
+                      // 3. BỆNH NHÂN
+                      _SidebarItem(
+                        icon: Icons.people_outline_rounded,
+                        label: 'Bệnh nhân',
+                        wide: isWide,
+                        selected: selectedIndex == 2,
+                        onTap: () {
+                          setState(() => selectedIndex = 2);
+                        },
+                      ),
+
+                      // 4. DỊCH VỤ
                       _SidebarItem(
                         icon: Icons.medical_services_outlined,
                         label: 'Dịch vụ',
                         wide: isWide,
-                        selected: selectedIndex == 2,
+                        selected: selectedIndex == 3,
                         onTap: () {
-                          setState(() {
-                            selectedIndex = 2;
-                          });
+                          setState(() => selectedIndex = 3);
                         },
                       ),
+
+                      // 5. BẢNG GIÁ
                       _SidebarItem(
                         icon: Icons.monetization_on_outlined,
                         label: 'Bảng giá',
                         wide: isWide,
-                        selected: selectedIndex == 3,
+                        selected: selectedIndex == 4,
                         onTap: () {
-                          setState(() {
-                            selectedIndex = 3;
-                          });
+                          setState(() => selectedIndex = 4);
                         },
                       ),
                     ],
                   ),
                 ),
+
+                // NÚT ĐĂNG XUẤT NẰM Ở ĐÁY SIDEBAR
                 const Divider(height: 1, color: Color(0xFFF1F5F9)),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(10.0),
                   child: _SidebarItem(
                     icon: Icons.logout_rounded,
                     label: 'Đăng xuất',
@@ -164,7 +190,13 @@ class _AdminLayoutState extends State<AdminLayout> {
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
-                            title: const Text('Xác nhận đăng xuất'),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            title: const Text(
+                              'Xác nhận đăng xuất',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                             content: const Text(
                               'Bạn có chắc chắn muốn đăng xuất khỏi hệ thống quản trị?',
                             ),
@@ -173,17 +205,28 @@ class _AdminLayoutState extends State<AdminLayout> {
                                 onPressed: () => Navigator.of(context).pop(),
                                 child: const Text(
                                   'Hủy',
-                                  style: TextStyle(color: Colors.grey),
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                              TextButton(
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.redAccent[100]
+                                      ?.withOpacity(0.2),
+                                  shadowColor: Colors.transparent,
+                                ),
                                 onPressed: () {
                                   Navigator.of(context).pop();
                                   _doLogout();
                                 },
                                 child: const Text(
                                   'Đăng xuất',
-                                  style: TextStyle(color: Colors.redAccent),
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
@@ -196,7 +239,14 @@ class _AdminLayoutState extends State<AdminLayout> {
               ],
             ),
           ),
-          Expanded(child: pages[selectedIndex]),
+
+          // NỘI DUNG HIỂN THỊ CHÍNH PHÍA BÊN PHẢI
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: pages[selectedIndex],
+            ),
+          ),
         ],
       ),
     );
@@ -222,19 +272,22 @@ class _SidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color primaryTeal = const Color(0xFF00A896);
+
     final Color itemColor = isDestructive
         ? Colors.redAccent
-        : (selected ? Colors.teal : const Color(0xFF64748B));
+        : (selected ? primaryTeal : const Color(0xFF64748B));
 
     final Color textColor = isDestructive
         ? Colors.redAccent
-        : (selected ? Colors.teal[800]! : const Color(0xFF334155));
+        : (selected ? const Color(0xFF0F766E) : const Color(0xFF334155));
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        tileColor: selected ? Colors.teal[50] : Colors.transparent,
+        horizontalTitleGap: wide ? 12 : 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        tileColor: selected ? const Color(0xFFE6F7F6) : Colors.transparent,
         leading: Icon(icon, color: itemColor, size: 22),
         title: wide
             ? Text(

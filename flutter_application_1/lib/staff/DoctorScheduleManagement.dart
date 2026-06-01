@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/work_shift.dart';
@@ -55,7 +54,6 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
   Future<void> _loadWorkShifts() async {
     try {
       final data = await WorkShiftApi.getAllShifts();
-
       setState(() {
         _workShifts = data;
       });
@@ -76,9 +74,11 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
   }
 
   Future<void> _fetchSchedules() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     try {
       final data = await _scheduleService.getAll();
+      if (!mounted) return;
       setState(() {
         if (_selectedDate == null) {
           _schedules = data;
@@ -106,12 +106,11 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
     }
   }
 
-  // HÀM LỌC DANH SÁCH DỰA TRÊN TỪ KHÓA TÌM KIẾM (Tên bác sĩ hoặc Ca khám)
   List<DoctorWorkSchedule> get _filteredSchedules {
     if (_searchQuery.isEmpty) return _schedules;
     return _schedules.where((item) {
       final doctorName = (item.doctorName ?? "").toLowerCase();
-      final shiftId = item.workShiftId.toString();
+      final shiftId = item.workShiftId.toLowerCase();
       final query = _searchQuery.toLowerCase();
       return doctorName.contains(query) || shiftId.contains(query);
     }).toList();
@@ -148,7 +147,10 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
   InputDecoration _buildInputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: darkTeal.withOpacity(0.7), fontSize: 14),
+      labelStyle: TextStyle(
+        color: darkTeal.withValues(alpha: 0.7),
+        fontSize: 14,
+      ),
       prefixIcon: Icon(icon, color: primaryMint, size: 20),
       filled: true,
       fillColor: backgroundColor,
@@ -168,8 +170,9 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
   }
 
   Future<void> _showAddDialog() async {
-    int? selectedDoctorId;
-    int? selectedShiftId;
+    // THỐNG NHẤT KIỂU STRING? THEO MODEL ĐÃ CẬP NHẬT
+    String? selectedDoctorId;
+    String? selectedShiftId;
     final maxPatientsController = TextEditingController();
     DateTime selectedDate = DateTime.now();
 
@@ -177,7 +180,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
       context: context,
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setDialogState) {
+          builder: (dialogContext, setDialogState) {
             return AlertDialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -201,43 +204,65 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      DropdownButtonFormField<int>(
-                        value: selectedDoctorId,
+                      DropdownButtonFormField<String?>(
+                        initialValue: selectedDoctorId,
                         decoration: _buildInputDecoration(
-                          'Chọn bác sĩ nha khoa',
+                          'Chọn bác sĩ nha khoa (tùy chọn)',
                           Icons.person_outline,
                         ),
                         dropdownColor: cardColor,
-                        items: _doctors.map((doctor) {
-                          return DropdownMenuItem<int>(
-                            value: doctor.id,
+                        items: [
+                          DropdownMenuItem<String?>(
+                            value: null,
                             child: Text(
-                              '${doctor.doctorCode} - ${doctor.fullName}',
-                              style: TextStyle(color: darkTeal),
+                              'Chưa phân công bác sĩ',
+                              style: TextStyle(
+                                color: darkTeal,
+                                fontStyle: FontStyle.italic,
+                              ),
                             ),
-                          );
-                        }).toList(),
-                        onChanged: (value) => setDialogState(
-                          () => selectedDoctorId = value as int?,
-                        ),
+                          ),
+                          ..._doctors.map((doctor) {
+                            return DropdownMenuItem<String?>(
+                              value: doctor.id.toString(),
+                              child: Text(
+                                '${doctor.doctorCode} - ${doctor.fullName}',
+                                style: TextStyle(color: darkTeal),
+                              ),
+                            );
+                          }),
+                        ],
+                        onChanged: (value) =>
+                            setDialogState(() => selectedDoctorId = value),
                       ),
                       const SizedBox(height: 16),
-                      DropdownButtonFormField<int>(
-                        value: selectedShiftId,
+                      DropdownButtonFormField<String?>(
+                        initialValue: selectedShiftId,
                         decoration: _buildInputDecoration(
                           'Chọn ca làm việc',
                           Icons.schedule,
                         ),
                         dropdownColor: cardColor,
-                        items: _workShifts.map((shift) {
-                          return DropdownMenuItem<int>(
-                            value: shift.id,
+                        items: [
+                          DropdownMenuItem<String?>(
+                            value: null,
                             child: Text(
-                              '${shift.shiftName} (${shift.startTime} - ${shift.endTime})',
-                              style: TextStyle(color: darkTeal),
+                              'Chọn ca làm việc...',
+                              style: TextStyle(
+                                color: darkTeal.withValues(alpha: 0.5),
+                              ),
                             ),
-                          );
-                        }).toList(),
+                          ),
+                          ..._workShifts.map((shift) {
+                            return DropdownMenuItem<String?>(
+                              value: shift.id.toString(),
+                              child: Text(
+                                '${shift.shiftName} (${shift.startTime} - ${shift.endTime})',
+                                style: TextStyle(color: darkTeal),
+                              ),
+                            );
+                          }),
+                        ],
                         onChanged: (value) {
                           setDialogState(() {
                             selectedShiftId = value;
@@ -257,7 +282,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                       InkWell(
                         onTap: () async {
                           final picked = await showDatePicker(
-                            context: context,
+                            context: dialogContext,
                             initialDate: selectedDate,
                             firstDate: DateTime(2020),
                             lastDate: DateTime(2030),
@@ -310,7 +335,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pop(dialogContext),
                   child: TextStyleWidget(
                     text: 'Huỷ',
                     color: Colors.grey.shade600,
@@ -319,30 +344,38 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                 ElevatedButton(
                   onPressed: () async {
                     try {
-                      if (selectedDoctorId == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Vui lòng chọn bác sĩ')),
+                      if (selectedShiftId == null) {
+                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                          const SnackBar(
+                            content: Text('Vui lòng chọn ca làm việc'),
+                          ),
                         );
                         return;
                       }
 
-                      final body = {
-                        "doctor_id": selectedDoctorId,
-                        "work_shift_id": selectedShiftId,
-                        "work_date": selectedDate.toIso8601String().split(
-                          'T',
-                        )[0],
-                        "max_patients": int.parse(maxPatientsController.text),
-                        "current_patients": 0,
-                        "status": "available",
-                        "note": null,
-                      };
+                      if (maxPatientsController.text.isEmpty) {
+                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                          const SnackBar(
+                            content: Text('Vui lòng nhập số bệnh nhân tối đa'),
+                          ),
+                        );
+                        return;
+                      }
 
-                      debugPrint(jsonEncode(body));
+                      String? doctorName;
+                      String? doctorCode;
+
+                      if (selectedDoctorId != null) {
+                        final doctor = _doctors.firstWhere(
+                          (d) => d.id.toString() == selectedDoctorId,
+                        );
+                        doctorName = doctor.fullName;
+                        doctorCode = doctor.doctorCode;
+                      }
 
                       await _scheduleService.create(
                         DoctorWorkSchedule(
-                          id: 0,
+                          id: '', // Trống hoặc Backend tự sinh
                           doctorId: selectedDoctorId,
                           workShiftId: selectedShiftId!,
                           workDate: selectedDate,
@@ -350,23 +383,18 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                           currentPatients: 0,
                           status: "available",
                           note: null,
-                          doctorName: _doctors
-                              .firstWhere((d) => d.id == selectedDoctorId)
-                              .fullName,
-                          doctorCode: _doctors
-                              .firstWhere((d) => d.id == selectedDoctorId)
-                              .doctorCode,
+                          doctorName: doctorName,
+                          doctorCode: doctorCode,
                           createdAt: DateTime.now(),
                           updatedAt: DateTime.now(),
                         ),
                       );
 
-                      if (!mounted) return;
-
-                      Navigator.pop(context);
-
+                      if (!dialogContext.mounted) return;
+                      Navigator.pop(dialogContext);
                       await _fetchSchedules();
 
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Thêm ca làm việc thành công'),
@@ -374,8 +402,8 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                       );
                     } catch (e) {
                       debugPrint("CREATE ERROR: $e");
-
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      if (!dialogContext.mounted) return;
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
                         SnackBar(
                           content: Text(e.toString()),
                           backgroundColor: Colors.red,
@@ -403,8 +431,9 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
   }
 
   Future<void> _showEditDialog(DoctorWorkSchedule item) async {
+    // THỐNG NHẤT LẤY GIÁ TRỊ STRING? TỪ MODEL
     String? selectedDoctorId = item.doctorId;
-    int? selectedShiftId = item.workShiftId;
+    String? selectedShiftId = item.workShiftId;
 
     final maxPatientsController = TextEditingController(
       text: item.maxPatients.toString(),
@@ -416,7 +445,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
       context: context,
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setDialogState) {
+          builder: (dialogContext, setDialogState) {
             return AlertDialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -439,65 +468,75 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      // =========================
-                      // DOCTOR
-                      // =========================
-                      DropdownButtonFormField<int>(
-                        value: selectedDoctorId,
+                      DropdownButtonFormField<String?>(
+                        initialValue: selectedDoctorId,
                         decoration: _buildInputDecoration(
-                          'Chọn bác sĩ nha khoa',
+                          'Chọn bác sĩ nha khoa (tùy chọn)',
                           Icons.person_outline,
                         ),
                         dropdownColor: cardColor,
-                        items: _doctors.map((doctor) {
-                          return DropdownMenuItem<int>(
-                            value: doctor.id,
+                        items: [
+                          DropdownMenuItem<String?>(
+                            value: null,
                             child: Text(
-                              '${doctor.doctorCode} - ${doctor.fullName}',
-                              style: TextStyle(color: darkTeal),
+                              'Chưa phân công bác sĩ',
+                              style: TextStyle(
+                                color: darkTeal,
+                                fontStyle: FontStyle.italic,
+                              ),
                             ),
-                          );
-                        }).toList(),
+                          ),
+                          ..._doctors.map((doctor) {
+                            return DropdownMenuItem<String?>(
+                              value: doctor.id.toString(),
+                              child: Text(
+                                '${doctor.doctorCode} - ${doctor.fullName}',
+                                style: TextStyle(color: darkTeal),
+                              ),
+                            );
+                          }),
+                        ],
                         onChanged: (value) {
                           setDialogState(() {
-                            selectedDoctorId = value as int?;
+                            selectedDoctorId = value;
                           });
                         },
                       ),
-
                       const SizedBox(height: 16),
-
-                      // =========================
-                      // WORK SHIFT
-                      // =========================
-                      DropdownButtonFormField<int>(
-                        value: selectedShiftId,
+                      DropdownButtonFormField<String?>(
+                        initialValue: selectedShiftId,
                         decoration: _buildInputDecoration(
                           'Chọn ca làm việc',
                           Icons.schedule,
                         ),
                         dropdownColor: cardColor,
-                        items: _workShifts.map((shift) {
-                          return DropdownMenuItem<int>(
-                            value: shift.id,
+                        items: [
+                          DropdownMenuItem<String?>(
+                            value: null,
                             child: Text(
-                              '${shift.shiftName} (${shift.startTime} - ${shift.endTime})',
-                              style: TextStyle(color: darkTeal),
+                              'Chọn ca làm việc...',
+                              style: TextStyle(
+                                color: darkTeal.withValues(alpha: 0.5),
+                              ),
                             ),
-                          );
-                        }).toList(),
+                          ),
+                          ..._workShifts.map((shift) {
+                            return DropdownMenuItem<String?>(
+                              value: shift.id.toString(),
+                              child: Text(
+                                '${shift.shiftName} (${shift.startTime} - ${shift.endTime})',
+                                style: TextStyle(color: darkTeal),
+                              ),
+                            );
+                          }),
+                        ],
                         onChanged: (value) {
                           setDialogState(() {
                             selectedShiftId = value;
                           });
                         },
                       ),
-
                       const SizedBox(height: 16),
-
-                      // =========================
-                      // MAX PATIENTS
-                      // =========================
                       TextField(
                         controller: maxPatientsController,
                         keyboardType: TextInputType.number,
@@ -506,16 +545,11 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                           Icons.people_outline,
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
-                      // =========================
-                      // DATE
-                      // =========================
                       InkWell(
                         onTap: () async {
                           final picked = await showDatePicker(
-                            context: context,
+                            context: dialogContext,
                             initialDate: selectedDate,
                             firstDate: DateTime(2020),
                             lastDate: DateTime(2030),
@@ -569,31 +603,19 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                   ),
                 ),
               ),
-
-              // =========================
-              // ACTIONS
-              // =========================
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pop(dialogContext),
                   child: TextStyleWidget(
                     text: 'Huỷ',
                     color: Colors.grey.shade600,
                   ),
                 ),
-
                 ElevatedButton(
                   onPressed: () async {
                     try {
-                      if (selectedDoctorId == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Vui lòng chọn bác sĩ')),
-                        );
-                        return;
-                      }
-
                       if (selectedShiftId == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        ScaffoldMessenger.of(dialogContext).showSnackBar(
                           const SnackBar(
                             content: Text('Vui lòng chọn ca làm việc'),
                           ),
@@ -610,19 +632,18 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                         "max_patients": int.parse(maxPatientsController.text),
                       });
 
-                      if (!mounted) return;
-
-                      Navigator.pop(context);
-
+                      if (!dialogContext.mounted) return;
+                      Navigator.pop(dialogContext);
                       await _fetchSchedules();
 
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Cập nhật thành công')),
                       );
                     } catch (e) {
                       debugPrint(e.toString());
-
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      if (!dialogContext.mounted) return;
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
                         SnackBar(
                           content: Text(e.toString()),
                           backgroundColor: Colors.red,
@@ -649,10 +670,10 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
     );
   }
 
-  Future<void> _deleteSchedule(int id) async {
+  Future<void> _deleteSchedule(String id) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (_) {
+      builder: (dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -663,11 +684,11 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () => Navigator.pop(dialogContext, false),
               child: TextStyleWidget(text: 'Huỷ', color: Colors.grey),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
+              onPressed: () => Navigator.pop(dialogContext, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
               ),
@@ -684,7 +705,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
     if (confirm == true) {
       try {
         await _scheduleService.delete(id);
-        _fetchSchedules();
+        await _fetchSchedules();
         if (!mounted) return;
         ScaffoldMessenger.of(
           context,
@@ -721,15 +742,13 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                 'Theo dõi, điều phối ca khám và điều trị của các bác sĩ',
                 style: TextStyle(
                   fontSize: 14,
-                  color: darkTeal.withOpacity(0.6),
+                  color: darkTeal.withValues(alpha: 0.6),
                 ),
               ),
               const SizedBox(height: 28),
               _buildTopStatsBar(),
               const SizedBox(height: 28),
-              _buildFilterHeader(
-                context,
-              ), // Thanh chứa bộ lọc ngày, tìm kiếm và nút thêm mới
+              _buildFilterHeader(context),
               const SizedBox(height: 28),
               _isLoading
                   ? Center(child: CircularProgressIndicator(color: primaryMint))
@@ -811,7 +830,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
               Text(
                 title,
                 style: TextStyle(
-                  color: darkTeal.withOpacity(0.5),
+                  color: darkTeal.withValues(alpha: 0.5),
                   fontWeight: FontWeight.w500,
                   fontSize: 13,
                 ),
@@ -840,7 +859,6 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
     );
   }
 
-  // --- THANH BỘ LỌC TÍCH HỢP THANH TÌM KIẾM ---
   Widget _buildFilterHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -851,7 +869,6 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
       ),
       child: Row(
         children: [
-          // 1. CHỌN NGÀY LỌC
           ElevatedButton.icon(
             onPressed: () => _selectDate(context),
             style: ElevatedButton.styleFrom(
@@ -886,10 +903,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
               ),
             ),
           ],
-
           const SizedBox(width: 16),
-
-          // 2. THANH TÌM KIẾM MỚI ĐƯỢC THÊM VÀO
           Expanded(
             child: Container(
               height: 48,
@@ -909,7 +923,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                 decoration: InputDecoration(
                   hintText: 'Tìm kiếm theo tên bác sĩ hoặc ca khám...',
                   hintStyle: TextStyle(
-                    color: darkTeal.withOpacity(0.4),
+                    color: darkTeal.withValues(alpha: 0.4),
                     fontSize: 13,
                   ),
                   prefixIcon: Icon(Icons.search, color: primaryMint, size: 20),
@@ -917,7 +931,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                       ? IconButton(
                           icon: Icon(
                             Icons.clear,
-                            color: darkTeal.withOpacity(0.5),
+                            color: darkTeal.withValues(alpha: 0.5),
                             size: 18,
                           ),
                           onPressed: () {
@@ -934,10 +948,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
               ),
             ),
           ),
-
           const SizedBox(width: 16),
-
-          // 3. NÚT THÊM CA KHÁM
           ElevatedButton.icon(
             onPressed: _showAddDialog,
             style: ElevatedButton.styleFrom(
@@ -964,7 +975,6 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
   }
 
   Widget _buildScheduleGrid() {
-    // SỬ DỤNG DANH SÁCH ĐÃ ĐƯỢC LỌC QUA THANH TÌM KIẾM
     final displaySchedules = _filteredSchedules;
 
     if (displaySchedules.isEmpty) {
@@ -981,12 +991,15 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
             Icon(
               Icons.assignment_late_outlined,
               size: 48,
-              color: darkTeal.withOpacity(0.3),
+              color: darkTeal.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
               'Không tìm thấy lịch làm việc phù hợp',
-              style: TextStyle(color: darkTeal.withOpacity(0.5), fontSize: 15),
+              style: TextStyle(
+                color: darkTeal.withValues(alpha: 0.5),
+                fontSize: 15,
+              ),
             ),
           ],
         ),
@@ -1028,6 +1041,20 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
       progressColor = Colors.orangeAccent;
     }
 
+    // ĐỒNG BỘ SO SÁNH GIỮA HAI KIỂU STRING
+    // Chuyển đổi an toàn để tìm Ca làm việc (WorkShift) phù hợp
+    final currentShift = _workShifts.firstWhere(
+      (s) => s.id.toString() == item.workShiftId.toString(),
+      orElse: () => WorkShift(
+        id: '', // <--- Sửa từ số 0 thành chuỗi trống '' để đúng kiểu String của Model WorkShift
+        shiftCode: '',
+        shiftName: 'Không rõ',
+        startTime: '',
+        endTime: '',
+        maxPatients: 0,
+        status: false,
+      ),
+    );
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -1036,7 +1063,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
         border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: darkTeal.withOpacity(0.02),
+            color: darkTeal.withValues(alpha: 0.02),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -1058,10 +1085,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '${_workShifts.firstWhere(
-                    (s) => s.id == item.workShiftId,
-                    orElse: () => WorkShift(id: 0, shiftCode: '', shiftName: 'Không rõ', startTime: '', endTime: '', maxPatients: 0, status: false),
-                  ).shiftName}',
+                  currentShift.shiftName,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
@@ -1075,7 +1099,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                     onPressed: () => _showEditDialog(item),
                     icon: Icon(
                       Icons.mode_edit_outline,
-                      color: darkTeal.withOpacity(0.6),
+                      color: darkTeal.withValues(alpha: 0.6),
                       size: 18,
                     ),
                     hoverColor: lightMint,
@@ -1087,7 +1111,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                       color: Colors.redAccent,
                       size: 18,
                     ),
-                    hoverColor: Colors.red.shade50,
+                    hoverColor: Color(0xFFFEF2F2),
                   ),
                 ],
               ),
@@ -1099,13 +1123,13 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
               Icon(
                 Icons.calendar_month,
                 size: 16,
-                color: darkTeal.withOpacity(0.4),
+                color: darkTeal.withValues(alpha: 0.4),
               ),
               const SizedBox(width: 6),
               Text(
                 DateFormat('dd/MM/yyyy').format(item.workDate),
                 style: TextStyle(
-                  color: darkTeal.withOpacity(0.6),
+                  color: darkTeal.withValues(alpha: 0.6),
                   fontWeight: FontWeight.w500,
                   fontSize: 13,
                 ),
@@ -1114,20 +1138,22 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
           ),
           const SizedBox(height: 14),
           Text(
-            item.doctorName ?? 'Chưa chỉ định bác sĩ',
+            item.doctorName ?? 'Chưa phân công bác sĩ',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 17,
-              color: darkTeal,
+              color: item.doctorName != null
+                  ? darkTeal
+                  : Colors.orange.shade600,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           Text(
-            item.doctorCode ?? 'BS-NHA-KHOA',
+            item.doctorCode ?? '--',
             style: TextStyle(
-              color: darkTeal.withOpacity(0.4),
+              color: darkTeal.withValues(alpha: 0.4),
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -1140,7 +1166,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                 'Ghế hẹn đã đặt:',
                 style: TextStyle(
                   fontSize: 13,
-                  color: darkTeal.withOpacity(0.6),
+                  color: darkTeal.withValues(alpha: 0.6),
                 ),
               ),
               Text(
