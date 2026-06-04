@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/doctor_work_schedule.dart';
+import 'api.dart';
 
 class DoctorWorkScheduleService {
-  final String baseUrl = "http://127.0.0.1:8000";
+  String get baseUrl => Api.baseUrl;
 
   // =========================
   // GET ALL
@@ -104,6 +105,21 @@ class DoctorWorkScheduleService {
 
     if (res.statusCode != 200) {
       throw Exception("Register failed");
+    }
+  }
+
+  // =========================
+  // UNREGISTER (bác sĩ hủy đăng ký)
+  // =========================
+  Future<void> unregister(String scheduleId) async {
+    final res = await http.put(
+      Uri.parse(
+        "$baseUrl/doctor-work-schedules/$scheduleId/unregister",
+      ),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception("Hủy đăng ký thất bại");
     }
   }
 

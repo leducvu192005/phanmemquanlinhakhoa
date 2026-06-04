@@ -305,3 +305,79 @@ def get_open_schedules(
     )
 
     return [_format_schedule_response(schedule, db) for schedule in schedules]
+
+
+# ==========================================
+# ĐĂNG KÝ TRỰC CA
+# ==========================================
+@router.put(
+    "/{schedule_id}/register",
+    response_model=DoctorWorkScheduleResponse
+)
+def register_doctor_schedule(
+    schedule_id: int,
+    doctor_id: int,
+    db: Session = Depends(get_db)
+):
+    schedule = (
+        db.query(DoctorWorkSchedule)
+        .filter(DoctorWorkSchedule.id == schedule_id)
+        .first()
+    )
+
+    if not schedule:
+        raise HTTPException(
+            status_code=404,
+            detail="Không tìm thấy lịch làm việc"
+        )
+
+    if schedule.doctor_id is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="Ca trực này đã được đăng ký bởi bác sĩ khác"
+        )
+
+    # Đăng ký bác sĩ
+    schedule.doctor_id = doctor_id
+    db.commit()
+    db.refresh(schedule)
+
+    return _format_schedule_response(schedule, db)
+
+
+# ==========================================
+# HỦY ĐĂNG KÝ TRỰC CA
+# ==========================================
+@router.put(
+    "/{schedule_id}/unregister",
+    response_model=DoctorWorkScheduleResponse
+)
+def unregister_doctor_schedule(
+    schedule_id: int,
+    db: Session = Depends(get_db)
+):
+    schedule = (
+        db.query(DoctorWorkSchedule)
+        .filter(DoctorWorkSchedule.id == schedule_id)
+        .first()
+    )
+
+    if not schedule:
+        raise HTTPException(
+            status_code=404,
+            detail="Không tìm thấy lịch làm việc"
+        )
+
+    # Ràng buộc: Không được hủy nếu đã có bệnh nhân đặt lịch
+    if schedule.current_patients and schedule.current_patients > 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Không thể hủy ca trực đã có bệnh nhân đặt hẹn"
+        )
+
+    # Reset doctor_id về null
+    schedule.doctor_id = None
+    db.commit()
+    db.refresh(schedule)
+
+    return _format_schedule_response(schedule, db)

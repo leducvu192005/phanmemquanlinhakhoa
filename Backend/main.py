@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
 
 from db import Base, engine
 from routers.doctor_work_schedule_router import router as doctor_work_schedule
@@ -9,6 +11,8 @@ from routers.patients_router import router as patients_router
 from routers.doctor_router import router as doctor_router
 from routers.service import router as service_router
 from routers.work_shift_router import router as work_shift_router
+from routers.appointment_router import router as appointment_router
+from routers.medical_record_router import router as medical_record_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -17,10 +21,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Tạo thư mục lưu trữ ảnh đại diện nếu chưa có
+os.makedirs("static/avatars", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=False,
+
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -54,6 +63,16 @@ app.include_router(
 # Services
 app.include_router(
     service_router
+)
+
+# Appointments
+app.include_router(
+    appointment_router
+)
+
+# Medical Records
+app.include_router(
+    medical_record_router
 )
 
 app.include_router(work_shift_router)

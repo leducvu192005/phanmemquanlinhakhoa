@@ -8,8 +8,15 @@ class Api {
   // - Android emulator should use 10.0.2.2 to reach host machine
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:8000';
+    if (defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux) {
+      return 'http://localhost:8000';
+    }
     return 'http://10.0.2.2:8000';
   }
+
 
   static Future<http.Response> register(
     String username,

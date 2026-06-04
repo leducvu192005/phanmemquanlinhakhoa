@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'admin/dashboard.dart';
 import 'login.dart';
 import 'doctor/dashboard.dart';
 import 'patient/dashboard.dart';
 import 'staff/layout_staff.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('vi_VN', null);
   runApp(const DentalApp());
 }
 

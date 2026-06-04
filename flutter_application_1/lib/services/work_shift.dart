@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/work_shift.dart';
+import 'api.dart';
 
 class WorkShiftApi {
-  static const String baseUrl = 'http://127.0.0.1:8000/work-shifts';
+  static String get baseUrl => '${Api.baseUrl}/work-shifts';
 
   // GET ALL
   static Future<List<WorkShift>> getAllShifts() async {

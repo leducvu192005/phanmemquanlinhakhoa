@@ -6,17 +6,13 @@ import os
 
 from db import SessionLocal
 from models.user import User
+from models.doctor import Doctor
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/auth/login"
 )
 
-SECRET_KEY = os.getenv(
-    "JWT_SECRET",
-    "change-me"
-)
-
-ALGORITHM = "HS256"
+from auth import SECRET_KEY, ALGORITHM
 
 
 # =========================
@@ -85,3 +81,26 @@ def get_current_admin(
         )
 
     return current_user
+
+
+# =========================
+# CURRENT DOCTOR
+# =========================
+def get_current_doctor(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role != "doctor":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Quyền hạn yêu cầu là Bác sĩ"
+        )
+
+    doctor = db.query(Doctor).filter(Doctor.email == current_user.email).first()
+    if not doctor:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Không tìm thấy thông tin Bác sĩ liên kết với tài khoản này"
+        )
+
+    return doctor

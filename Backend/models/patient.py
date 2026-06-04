@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Date, Text, ForeignKey, Boolean, DateTime
+from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 from db import Base
 
@@ -36,7 +37,7 @@ class Patient(Base):
 
     status = Column(Boolean, default=True)
 
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

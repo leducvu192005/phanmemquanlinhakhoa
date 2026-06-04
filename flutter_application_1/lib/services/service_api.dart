@@ -5,11 +5,14 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/service.dart';
 import '../models/service_price_history.dart';
 
+import 'api.dart';
+
 class ServiceApi {
-  static const String baseUrl = 'http://127.0.0.1:8000';
+  static String get baseUrl => Api.baseUrl;
 
   static const _storage = FlutterSecureStorage();
   static Future<Map<String, String>> _headers() async {
+
     return {'Content-Type': 'application/json'};
   }
 
