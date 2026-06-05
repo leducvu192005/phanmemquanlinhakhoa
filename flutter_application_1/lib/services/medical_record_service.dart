@@ -9,7 +9,6 @@ class MedicalRecordService {
 
   static const _storage = FlutterSecureStorage();
 
-
   static Future<Map<String, String>> _headers() async {
     final token = await _storage.read(key: 'jwt');
     return {
@@ -20,7 +19,9 @@ class MedicalRecordService {
   }
 
   // Tạo bệnh án (hoàn thành ca khám, kê đơn, chỉ định dịch vụ)
-  static Future<MedicalRecord> createMedicalRecord(Map<String, dynamic> data) async {
+  static Future<MedicalRecord> createMedicalRecord(
+    Map<String, dynamic> data,
+  ) async {
     final url = Uri.parse('$baseUrl/medical-records/');
     final response = await http.post(
       url,
@@ -29,7 +30,9 @@ class MedicalRecordService {
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return MedicalRecord.fromJson(json.decode(utf8.decode(response.bodyBytes)));
+      return MedicalRecord.fromJson(
+        json.decode(utf8.decode(response.bodyBytes)),
+      );
     } else {
       String errMsg = 'Lỗi lưu bệnh án';
       try {
@@ -41,7 +44,9 @@ class MedicalRecordService {
   }
 
   // Lấy lịch sử bệnh án khám bệnh của bệnh nhân
-  static Future<List<MedicalRecord>> getPatientMedicalHistory(String patientId) async {
+  static Future<List<MedicalRecord>> getPatientMedicalHistory(
+    String patientId,
+  ) async {
     final url = Uri.parse('$baseUrl/medical-records/patient/$patientId');
     final response = await http.get(url, headers: await _headers());
 
@@ -59,7 +64,9 @@ class MedicalRecordService {
     final response = await http.get(url, headers: await _headers());
 
     if (response.statusCode == 200) {
-      return MedicalRecord.fromJson(json.decode(utf8.decode(response.bodyBytes)));
+      return MedicalRecord.fromJson(
+        json.decode(utf8.decode(response.bodyBytes)),
+      );
     } else {
       throw Exception('Không tìm thấy bệnh án chi tiết');
     }

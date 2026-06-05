@@ -8,8 +8,8 @@ from sqlalchemy import (
     ForeignKey
 )
 from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from db import Base
-from uuid import UUID
 
 class DoctorWorkSchedule(Base):
     __tablename__ = "doctor_work_schedules"
@@ -17,10 +17,11 @@ class DoctorWorkSchedule(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     doctor_id = Column(
-    Integer,
-    ForeignKey("doctors.id"),
-    nullable=True
-)
+        "doctor_uuid",
+        PG_UUID(as_uuid=True),
+        ForeignKey("doctors.id"),
+        nullable=True
+    )
 
     work_shift_id = Column(
         Integer,

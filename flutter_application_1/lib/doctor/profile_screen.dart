@@ -8,7 +8,14 @@ import '../services/doctor_service.dart';
 import '../services/api.dart';
 
 class DoctorProfileScreen extends StatefulWidget {
-  const DoctorProfileScreen({Key? key}) : super(key: key);
+  final bool isEmbedded;
+  final VoidCallback? onProfileUpdated;
+
+  const DoctorProfileScreen({
+    Key? key,
+    this.isEmbedded = false,
+    this.onProfileUpdated,
+  }) : super(key: key);
 
   @override
   State<DoctorProfileScreen> createState() => _DoctorProfileScreenState();
@@ -164,6 +171,9 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
       setState(() {
         _doctor = updatedDoc;
       });
+      if (widget.onProfileUpdated != null) {
+        widget.onProfileUpdated!();
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Cập nhật hồ sơ bác sĩ thành công!'),
@@ -198,10 +208,12 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
     final bool isWide = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hồ sơ Bác sĩ'),
-        backgroundColor: primaryTeal,
-      ),
+      appBar: widget.isEmbedded
+          ? null
+          : AppBar(
+              title: const Text('Hồ sơ Bác sĩ'),
+              backgroundColor: primaryTeal,
+            ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(

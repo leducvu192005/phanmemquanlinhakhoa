@@ -1,5 +1,6 @@
 from datetime import date
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -164,7 +165,7 @@ def get_schedule_detail(
 # ==========================================
 @router.get("/search/")
 def search_schedules(
-    doctor_id: Optional[int] = Query(None),
+    doctor_id: Optional[UUID] = Query(None),
     work_shift_id: Optional[int] = Query(None),
     work_date: Optional[date] = Query(None),
     status: Optional[str] = Query(None),
@@ -273,7 +274,7 @@ def delete_schedule(
 # ==========================================
 @router.get("/doctor/{doctor_id}")
 def get_doctor_schedules(
-    doctor_id: int,
+    doctor_id: UUID,
     db: Session = Depends(get_db)
 ):
 
@@ -316,7 +317,7 @@ def get_open_schedules(
 )
 def register_doctor_schedule(
     schedule_id: int,
-    doctor_id: int,
+    doctor_id: UUID,
     db: Session = Depends(get_db)
 ):
     schedule = (

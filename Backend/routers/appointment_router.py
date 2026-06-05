@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, date, time
 from typing import List, Optional
+from uuid import UUID
 
 from db import get_db
 from models.appointment import Appointment
@@ -54,7 +55,7 @@ def get_doctor_today_appointments(
     response_model=List[AppointmentOut]
 )
 def get_all_appointments(
-    doctor_id: Optional[int] = None,
+    doctor_id: Optional[UUID] = None,
     patient_id: Optional[int] = None,
     appointment_date: Optional[date] = None,
     status_filter: Optional[str] = None,

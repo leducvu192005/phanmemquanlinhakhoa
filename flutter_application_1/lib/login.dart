@@ -41,6 +41,9 @@ class _LoginPageState extends State<LoginPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -81,6 +84,7 @@ class _LoginPageState extends State<LoginPage>
         Navigator.of(context).pushReplacementNamed('/staff');
       }
     } else {
+      if (!mounted) return;
       String msg = 'Lỗi: ${res.statusCode}';
       try {
         final body = jsonDecode(res.body);
@@ -142,6 +146,7 @@ class _LoginPageState extends State<LoginPage>
         _tabController.index = 0;
       }
     } else {
+      if (!mounted) return;
       String msg = 'Lỗi: ${res.statusCode}';
       try {
         final body = jsonDecode(res.body);
@@ -281,20 +286,257 @@ class _LoginPageState extends State<LoginPage>
     ],
   );
 
+  Widget _buildLoginForm() {
+    return Form(
+      key: _loginForm,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextFormField(
+            controller: _emailCtrl,
+            decoration: _buildInputDecoration(
+              label: 'Email của bạn',
+              icon: Icons.email_outlined,
+            ),
+            validator: (v) =>
+                (v == null || !v.contains('@')) ? 'Email không hợp lệ' : null,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _passwordCtrl,
+            obscureText: _obscureLoginPass,
+            decoration: _buildInputDecoration(
+              label: 'Mật khẩu',
+              icon: Icons.lock_outline,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureLoginPass ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.black54,
+                ),
+                onPressed: () =>
+                    setState(() => _obscureLoginPass = !_obscureLoginPass),
+              ),
+            ),
+            validator: (v) => (v == null || v.length < 6)
+                ? 'Mật khẩu phải từ 6 ký tự trở lên'
+                : null,
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: _loading
+                ? Center(child: CircularProgressIndicator(color: primaryColor))
+                : ElevatedButton(
+                    onPressed: _doLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Đăng Nhập',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRegisterForm() {
+    return Form(
+      key: _regForm,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextFormField(
+            controller: _nameCtrl,
+            decoration: _buildInputDecoration(
+              label: 'Họ và tên',
+              icon: Icons.person_outline,
+            ),
+            validator: (v) =>
+                (v == null || v.isEmpty) ? 'Vui lòng nhập họ và tên' : null,
+          ),
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: _regEmailCtrl,
+            decoration: _buildInputDecoration(
+              label: 'Email',
+              icon: Icons.email_outlined,
+            ),
+            validator: (v) =>
+                (v == null || !v.contains('@')) ? 'Email không hợp lệ' : null,
+          ),
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: _phoneCtrl,
+            decoration: _buildInputDecoration(
+              label: 'Số điện thoại',
+              icon: Icons.phone_android_outlined,
+            ),
+            validator: (v) => (v == null || v.length < 10)
+                ? 'Số điện thoại tối thiểu 10 chữ số'
+                : null,
+          ),
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: _regPasswordCtrl,
+            obscureText: _obscureRegPass,
+            decoration: _buildInputDecoration(
+              label: 'Mật khẩu',
+              icon: Icons.lock_outline,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureRegPass ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.black54,
+                ),
+                onPressed: () =>
+                    setState(() => _obscureRegPass = !_obscureRegPass),
+              ),
+            ),
+            validator: (v) =>
+                (v == null || v.length < 6) ? 'Mật khẩu từ 6 ký tự' : null,
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: _loading
+                ? Center(child: CircularProgressIndicator(color: primaryColor))
+                : ElevatedButton(
+                    onPressed: _doRegister,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Tạo tài khoản',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormColumn(bool isWide) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Center(
+          child: Column(
+            children: [
+              Container(
+                width: isWide ? 170 : 110,
+                height: isWide ? 170 : 110,
+                decoration: const BoxDecoration(
+                  color: Colors.transparent,
+                  shape: BoxShape.circle,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    'assets/images/bubble-gum-online-doctor-consultation 2.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.medical_services,
+                        color: primaryColor,
+                        size: isWide ? 32 : 24,
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Nha Khoa Sáng Răng',
+                style: TextStyle(
+                  fontSize: isWide ? 22 : 18,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Hệ thống quản lý phòng khám chuyên nghiệp',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.black45,
+                  fontSize: isWide ? 13 : 11,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          height: 54,
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: TabBar(
+            controller: _tabController,
+            indicator: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            labelColor: primaryColor,
+            unselectedLabelColor: Colors.black45,
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+            tabs: const [
+              Tab(text: 'Đăng Nhập'),
+              Tab(text: 'Đăng Ký'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        _tabController.index == 0 ? _buildLoginForm() : _buildRegisterForm(),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
-      backgroundColor: const Color(
-        0xFFF8FAFC,
-      ), // Nền xám nhạt tinh tế xu hướng hiện đại
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 1100, maxHeight: 700),
+              constraints: BoxConstraints(maxWidth: isWide ? 1100 : 500),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
@@ -307,292 +549,32 @@ class _LoginPageState extends State<LoginPage>
                 ],
               ),
               clipBehavior: Clip.antiAlias,
-              child: Row(
-                children: [
-                  if (isWide) Expanded(flex: 1, child: _leftPanel(context)),
-                  Expanded(
-                    flex: 1,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 24,
-                      ),
-                      child: Column(
+              child: isWide
+                  ? IntrinsicHeight(
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Brand Identity
-                          // Thay thế đoạn hiển thị Brand Identity cũ bằng đoạn này:
-                          Center(
-                            child: Column(
-                              children: [
-                                // LOGO MỚI TỪ ASSETS
-                                Container(
-                                  width:
-                                      170, // Tăng nhẹ kích thước để ảnh minh họa rõ ràng hơn
-                                  height: 170,
-                                  decoration: BoxDecoration(
-                                    color: Colors
-                                        .transparent, // Giữ trong suốt hoặc đổi thành màu bạn thích
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(
-                                      12,
-                                    ), // Bo tròn nhẹ cho ảnh
-                                    child: Image.asset(
-                                      'assets/images/bubble-gum-online-doctor-consultation 2.png',
-                                      fit: Alignment.center == null
-                                          ? BoxFit.cover
-                                          : BoxFit
-                                                .contain, // Giữ trọn vẹn tỷ lệ ảnh minh họa
-                                      errorBuilder: (context, error, stackTrace) {
-                                        // Trường hợp load ảnh lỗi (sai đường dẫn), hiển thị icon dự phòng
-                                        return Icon(
-                                          Icons.medical_services,
-                                          color: primaryColor,
-                                          size: 32,
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(height: 8),
-
-                                Text(
-                                  'Nha Khoa Sáng Răng',
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: primaryColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                const Text(
-                                  'Hệ thống quản lý phòng khám chuyên nghiệp',
-                                  style: TextStyle(
-                                    color: Colors.black45,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          // Custom TabBar Decoration
-                          Container(
-                            height: 66,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: TabBar(
-                              controller: _tabController,
-                              indicator: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              labelColor: primaryColor,
-                              unselectedLabelColor: Colors.black45,
-                              labelStyle: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                              tabs: const [
-                                Tab(text: 'Đăng Nhập'),
-                                Tab(text: 'Đăng Ký'),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          // Form Tab Views
+                          Expanded(flex: 1, child: _leftPanel(context)),
                           Expanded(
-                            child: TabBarView(
-                              controller: _tabController,
-                              children: [
-                                // LOGIN FORM
-                                Form(
-                                  key: _loginForm,
-                                  child: Column(
-                                    children: [
-                                      TextFormField(
-                                        controller: _emailCtrl,
-                                        decoration: _buildInputDecoration(
-                                          label: 'Email của bạn',
-                                          icon: Icons.email_outlined,
-                                        ),
-                                        validator: (v) =>
-                                            (v == null || !v.contains('@'))
-                                            ? 'Email không hợp lệ'
-                                            : null,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      TextFormField(
-                                        controller: _passwordCtrl,
-                                        obscureText: _obscureLoginPass,
-                                        decoration: _buildInputDecoration(
-                                          label: 'Mật khẩu',
-                                          icon: Icons.lock_outline,
-                                          suffixIcon: IconButton(
-                                            icon: Icon(
-                                              _obscureLoginPass
-                                                  ? Icons.visibility_off
-                                                  : Icons.visibility,
-                                              color: Colors.black54,
-                                            ),
-                                            onPressed: () => setState(
-                                              () => _obscureLoginPass =
-                                                  !_obscureLoginPass,
-                                            ),
-                                          ),
-                                        ),
-                                        validator: (v) =>
-                                            (v == null || v.length < 6)
-                                            ? 'Mật khẩu phải từ 6 ký tự trở lên'
-                                            : null,
-                                      ),
-                                      const SizedBox(height: 24),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 50,
-                                        child: _loading
-                                            ? Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      color: primaryColor,
-                                                    ),
-                                              )
-                                            : ElevatedButton(
-                                                onPressed: _doLogin,
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: primaryColor,
-                                                  foregroundColor: Colors.white,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          12,
-                                                        ),
-                                                  ),
-                                                  elevation: 0,
-                                                ),
-                                                child: const Text(
-                                                  'Đăng Nhập',
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // REGISTER FORM
-                                SingleChildScrollView(
-                                  child: Form(
-                                    key: _regForm,
-                                    child: Column(
-                                      children: [
-                                        TextFormField(
-                                          controller: _nameCtrl,
-                                          decoration: _buildInputDecoration(
-                                            label: 'Họ và tên',
-                                            icon: Icons.person_outline,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 14),
-                                        TextFormField(
-                                          controller: _regEmailCtrl,
-                                          decoration: _buildInputDecoration(
-                                            label: 'Email',
-                                            icon: Icons.email_outlined,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 14),
-                                        TextFormField(
-                                          controller: _phoneCtrl,
-                                          decoration: _buildInputDecoration(
-                                            label: 'Số điện thoại',
-                                            icon: Icons.phone_android_outlined,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 14),
-                                        TextFormField(
-                                          controller: _regPasswordCtrl,
-                                          obscureText: _obscureRegPass,
-                                          decoration: _buildInputDecoration(
-                                            label: 'Mật khẩu',
-                                            icon: Icons.lock_outline,
-                                            suffixIcon: IconButton(
-                                              icon: Icon(
-                                                _obscureRegPass
-                                                    ? Icons.visibility_off
-                                                    : Icons.visibility,
-                                                color: Colors.black54,
-                                              ),
-                                              onPressed: () => setState(
-                                                () => _obscureRegPass =
-                                                    !_obscureRegPass,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 24),
-                                        SizedBox(
-                                          width: double.infinity,
-                                          height: 50,
-                                          child: _loading
-                                              ? Center(
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                        color: primaryColor,
-                                                      ),
-                                                )
-                                              : ElevatedButton(
-                                                  onPressed: _doRegister,
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        primaryColor,
-                                                    foregroundColor:
-                                                        Colors.white,
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            12,
-                                                          ),
-                                                    ),
-                                                    elevation: 0,
-                                                  ),
-                                                  child: const Text(
-                                                    'Tạo tài khoản',
-                                                    style: TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            flex: 1,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 24,
+                              ),
+                              child: _buildFormColumn(isWide),
                             ),
                           ),
                         ],
                       ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 32,
+                      ),
+                      child: _buildFormColumn(isWide),
                     ),
-                  ),
-                ],
-              ),
             ),
           ),
         ),

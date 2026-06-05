@@ -7,6 +7,8 @@ from sqlalchemy import (
     Date,
     DateTime
 )
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 
 from sqlalchemy.sql import func
 from db import Base
@@ -15,7 +17,7 @@ from db import Base
 class Doctor(Base):
     __tablename__ = "doctors"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
 
     doctor_code = Column(
         String,

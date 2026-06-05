@@ -14,7 +14,7 @@ class DoctorWorkScheduleService {
     final res = await http.get(Uri.parse("$baseUrl/doctor-work-schedules/"));
 
     if (res.statusCode == 200) {
-      List data = jsonDecode(res.body);
+      List data = jsonDecode(utf8.decode(res.bodyBytes));
       return data.map((e) => DoctorWorkSchedule.fromJson(e)).toList();
     } else {
       throw Exception("Failed to load schedules");
@@ -30,7 +30,7 @@ class DoctorWorkScheduleService {
     );
 
     if (res.statusCode == 200) {
-      List data = jsonDecode(res.body);
+      List data = jsonDecode(utf8.decode(res.bodyBytes));
       return data.map((e) => DoctorWorkSchedule.fromJson(e)).toList();
     } else {
       throw Exception("Failed to load open schedules");
@@ -44,7 +44,7 @@ class DoctorWorkScheduleService {
     final res = await http.get(Uri.parse("$baseUrl/doctor-work-schedules/$id"));
 
     if (res.statusCode == 200) {
-      return DoctorWorkSchedule.fromJson(jsonDecode(res.body));
+      return DoctorWorkSchedule.fromJson(jsonDecode(utf8.decode(res.bodyBytes)));
     } else {
       throw Exception("Not found");
     }
@@ -132,7 +132,7 @@ class DoctorWorkScheduleService {
     );
 
     if (res.statusCode == 200) {
-      List data = jsonDecode(res.body);
+      List data = jsonDecode(utf8.decode(res.bodyBytes));
       return data.map((e) => DoctorWorkSchedule.fromJson(e)).toList();
     } else {
       throw Exception("Failed");

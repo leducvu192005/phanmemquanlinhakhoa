@@ -9,7 +9,12 @@ import '../services/doctor_service.dart';
 import '../services/doctor_work_schedule_service.dart';
 
 class DoctorScheduleRegisterScreen extends StatefulWidget {
-  const DoctorScheduleRegisterScreen({Key? key}) : super(key: key);
+  final bool isEmbedded;
+
+  const DoctorScheduleRegisterScreen({
+    Key? key,
+    this.isEmbedded = false,
+  }) : super(key: key);
 
   @override
   State<DoctorScheduleRegisterScreen> createState() =>
@@ -496,15 +501,17 @@ class _DoctorScheduleRegisterScreenState
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        title: const Text(
-          'Đăng Ký Lịch Trực Ca',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: darkTeal,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
+      appBar: widget.isEmbedded
+          ? null
+          : AppBar(
+              title: const Text(
+                'Đăng Ký Lịch Trực Ca',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              backgroundColor: darkTeal,
+              elevation: 0,
+              iconTheme: const IconThemeData(color: Colors.white),
+            ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: primaryMint))
           : Column(

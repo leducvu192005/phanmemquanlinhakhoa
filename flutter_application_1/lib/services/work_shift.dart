@@ -25,7 +25,7 @@ class WorkShiftApi {
     final response = await http.get(Uri.parse('$baseUrl/$id'));
 
     if (response.statusCode == 200) {
-      return WorkShift.fromJson(jsonDecode(response.body));
+      return WorkShift.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
     }
 
     throw Exception('Shift not found');
@@ -54,7 +54,7 @@ class WorkShiftApi {
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return WorkShift.fromJson(jsonDecode(response.body));
+      return WorkShift.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
     }
 
     throw Exception('Failed to create shift');
@@ -84,7 +84,7 @@ class WorkShiftApi {
     );
 
     if (response.statusCode == 200) {
-      return WorkShift.fromJson(jsonDecode(response.body));
+      return WorkShift.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
     }
 
     throw Exception('Failed to update shift');

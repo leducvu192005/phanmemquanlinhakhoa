@@ -1,12 +1,13 @@
 from datetime import date, datetime
 from pydantic import BaseModel
 from typing import Optional
+from uuid import UUID
 
 # =========================
 # Create
 # =========================
 class DoctorWorkScheduleCreate(BaseModel):
-    doctor_id: Optional[int] = None
+    doctor_id: Optional[UUID] = None
 
     work_shift_id: int
 
@@ -23,7 +24,7 @@ class DoctorWorkScheduleCreate(BaseModel):
 # Update
 # =========================
 class DoctorWorkScheduleUpdate(BaseModel):
-    doctor_id: Optional[int] = None
+    doctor_id: Optional[UUID] = None
 
     work_shift_id: Optional[int] = None
 
@@ -44,7 +45,7 @@ class DoctorWorkScheduleUpdate(BaseModel):
 class DoctorWorkScheduleResponse(BaseModel):
     id: int
 
-    doctor_id: Optional[int] = None
+    doctor_id: Optional[UUID] = None
 
     doctor_name: Optional[str] = None
 
@@ -76,7 +77,7 @@ class DoctorWorkScheduleResponse(BaseModel):
 class DoctorWorkScheduleDetail(BaseModel):
     id: int
 
-    doctor_id: Optional[int] = None
+    doctor_id: Optional[UUID] = None
 
     doctor_name: Optional[str] = None
 
