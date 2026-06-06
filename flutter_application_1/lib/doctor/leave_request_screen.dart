@@ -54,6 +54,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
     'Đã hủy'
   ];
   String _selectedFilter = 'Tất cả';
+  String _searchQuery = '';
 
   // Form Đăng ký nghỉ phép
   final _formKey = GlobalKey<FormState>();
@@ -131,19 +132,33 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
 
   void _applyFilter() {
     setState(() {
-      if (_selectedFilter == 'Tất cả') {
-        _filteredRequests = _allRequests;
-      } else {
+      Iterable<LeaveRequest> list = _allRequests;
+
+      // 1. Filter by status
+      if (_selectedFilter != 'Tất cả') {
         String statusMapped = 'Pending';
         if (_selectedFilter == 'Chờ duyệt') statusMapped = 'Pending';
         if (_selectedFilter == 'Đã duyệt') statusMapped = 'Approved';
         if (_selectedFilter == 'Từ chối') statusMapped = 'Rejected';
         if (_selectedFilter == 'Đã hủy') statusMapped = 'Cancelled';
 
-        _filteredRequests = _allRequests
-            .where((req) => req.status.toLowerCase() == statusMapped.toLowerCase())
-            .toList();
+        list = list.where((req) => req.status.toLowerCase() == statusMapped.toLowerCase());
       }
+
+      // 2. Filter by search query
+      final q = _searchQuery.trim().toLowerCase();
+      if (q.isNotEmpty) {
+        list = list.where((req) {
+          final name = (req.userName ?? '').toLowerCase();
+          final email = (req.userEmail ?? '').toLowerCase();
+          final code = req.requestCode.toLowerCase();
+          final type = req.leaveType.toLowerCase();
+          final r = req.reason.toLowerCase();
+          return name.contains(q) || email.contains(q) || code.contains(q) || type.contains(q) || r.contains(q);
+        });
+      }
+
+      _filteredRequests = list.toList();
     });
   }
 
@@ -433,9 +448,6 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
             ),
       body: Column(
         children: [
-          // Nếu là nhân viên, hiển thị thanh chuyển đổi chế độ xem ở trên cùng
-          if (widget.isStaff) _buildStaffTabToggle(),
-          
           Expanded(
             child: _isLoading
                 ? Center(child: CircularProgressIndicator(color: primaryTeal))
@@ -499,55 +511,6 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
     );
   }
 
-  // --- STAFF TAB TOGGLE ---
-  Widget _buildStaffTabToggle() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ChoiceChip(
-            label: const Text('Phê duyệt yêu cầu'),
-            selected: !_viewingOwn,
-            selectedColor: lightTeal,
-            labelStyle: TextStyle(
-              color: !_viewingOwn ? primaryTeal : Colors.grey.shade600,
-              fontWeight: !_viewingOwn ? FontWeight.bold : FontWeight.normal,
-            ),
-            onSelected: (selected) {
-              if (selected) {
-                setState(() {
-                  _viewingOwn = false;
-                  _selectedFilter = 'Tất cả';
-                });
-                _loadData();
-              }
-            },
-          ),
-          const SizedBox(width: 12),
-          ChoiceChip(
-            label: const Text('Nghỉ phép của tôi'),
-            selected: _viewingOwn,
-            selectedColor: lightTeal,
-            labelStyle: TextStyle(
-              color: _viewingOwn ? primaryTeal : Colors.grey.shade600,
-              fontWeight: _viewingOwn ? FontWeight.bold : FontWeight.normal,
-            ),
-            onSelected: (selected) {
-              if (selected) {
-                setState(() {
-                  _viewingOwn = true;
-                  _selectedFilter = 'Tất cả';
-                });
-                _loadData();
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
 
   // --- STATS HEADER ---
   Widget _buildHeaderStats() {
@@ -629,44 +592,72 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
 
   // --- FILTER SECTION ---
   Widget _buildFilterSection() {
-    return SizedBox(
-      height: 40,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _filterOptions.length,
-        itemBuilder: (context, index) {
-          final opt = _filterOptions[index];
-          final isSelected = _selectedFilter == opt;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: FilterChip(
-              label: Text(opt),
-              selected: isSelected,
-              selectedColor: lightTeal,
-              checkmarkColor: primaryTeal,
-              labelStyle: TextStyle(
-                color: isSelected ? primaryTeal : Colors.grey.shade700,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                fontSize: 13,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: isSelected ? primaryTeal : Colors.grey.shade300,
-                ),
-              ),
-              onSelected: (selected) {
-                if (selected) {
-                  setState(() {
-                    _selectedFilter = opt;
-                    _applyFilter();
-                  });
-                }
-              },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          onChanged: (val) {
+            _searchQuery = val;
+            _applyFilter();
+          },
+          decoration: InputDecoration(
+            hintText: 'Tìm kiếm theo tên nhân viên, loại nghỉ, lý do...',
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+            prefixIcon: Icon(Icons.search, color: primaryTeal, size: 20),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
             ),
-          );
-        },
-      ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primaryTeal, width: 2),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 40,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _filterOptions.length,
+            itemBuilder: (context, index) {
+              final opt = _filterOptions[index];
+              final isSelected = _selectedFilter == opt;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: FilterChip(
+                  label: Text(opt),
+                  selected: isSelected,
+                  selectedColor: lightTeal,
+                  checkmarkColor: primaryTeal,
+                  labelStyle: TextStyle(
+                    color: isSelected ? primaryTeal : Colors.grey.shade700,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: isSelected ? primaryTeal : Colors.grey.shade300,
+                    ),
+                  ),
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() {
+                        _selectedFilter = opt;
+                        _applyFilter();
+                      });
+                    }
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

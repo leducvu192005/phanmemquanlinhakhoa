@@ -6,6 +6,7 @@ import '../models/patient_model.dart';
 
 class PatientService {
   static String get baseUrl => "${Api.baseUrl}/patients";
+  static String get adminBaseUrl => "${Api.baseUrl}/admin/patients";
   static const _storage = FlutterSecureStorage();
 
   static Future<Map<String, String>> _headers() async {
@@ -33,10 +34,30 @@ class PatientService {
   }
 
   // =========================
+  // UPDATE MY PROFILE
+  // =========================
+  static Future<Patient> updateMyProfile(Map<String, dynamic> payload) async {
+    final url = Uri.parse("$baseUrl/me");
+    final response = await http.put(
+      url,
+      headers: await _headers(),
+      body: jsonEncode(payload),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      return Patient.fromJson(data);
+    } else {
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      throw Exception(decoded['detail'] ?? "Không thể cập nhật hồ sơ cá nhân");
+    }
+  }
+
+  // =========================
   // GET ALL + SEARCH
   // =========================
   Future<List<Patient>> getPatients({String? query}) async {
-    final uri = Uri.parse(baseUrl).replace(
+    final uri = Uri.parse(adminBaseUrl).replace(
       queryParameters: query == null || query.isEmpty ? null : {"q": query},
     );
 
@@ -54,7 +75,7 @@ class PatientService {
   // GET DETAIL
   // =========================
   Future<Patient> getPatientById(String id) async {
-    final response = await http.get(Uri.parse("$baseUrl/$id"), headers: await _headers());
+    final response = await http.get(Uri.parse("$adminBaseUrl/$id"), headers: await _headers());
 
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
@@ -69,7 +90,7 @@ class PatientService {
   // =========================
   Future<Patient> createPatient(Map<String, dynamic> payload) async {
     final response = await http.post(
-      Uri.parse(baseUrl),
+      Uri.parse(adminBaseUrl),
       headers: await _headers(),
       body: jsonEncode(payload),
     );
@@ -87,7 +108,7 @@ class PatientService {
   // =========================
   Future<Patient> updatePatient(String id, Map<String, dynamic> payload) async {
     final response = await http.put(
-      Uri.parse("$baseUrl/$id"),
+      Uri.parse("$adminBaseUrl/$id"),
       headers: await _headers(),
       body: jsonEncode(payload),
     );
@@ -104,7 +125,7 @@ class PatientService {
   // DELETE
   // =========================
   Future<void> deletePatient(String id) async {
-    final response = await http.delete(Uri.parse("$baseUrl/$id"), headers: await _headers());
+    final response = await http.delete(Uri.parse("$adminBaseUrl/$id"), headers: await _headers());
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception("Failed to delete patient");

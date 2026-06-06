@@ -37,10 +37,12 @@ class _PatientAppointmentListScreenState
   }
 
   Future<void> _fetchAppointments() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
+    if (!_isLoading || _errorMessage.isNotEmpty) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
+    }
     try {
       final list = await BookingService.getMyBookings();
       setState(() {
@@ -892,7 +894,7 @@ class _PatientAppointmentDetailScreenState
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '$formattedTime, ngày $formattedDate',
+                      '$formattedTime,\nngày $formattedDate',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,

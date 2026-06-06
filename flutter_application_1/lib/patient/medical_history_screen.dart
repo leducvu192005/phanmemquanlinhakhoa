@@ -26,10 +26,12 @@ class _PatientMedicalHistoryScreenState extends State<PatientMedicalHistoryScree
   }
 
   Future<void> _loadHistory() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
+    if (!_isLoading || _errorMessage.isNotEmpty) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
+    }
     try {
       final patient = await PatientService.getMyProfile();
       final history = await MedicalRecordService.getPatientMedicalHistory(patient.id);

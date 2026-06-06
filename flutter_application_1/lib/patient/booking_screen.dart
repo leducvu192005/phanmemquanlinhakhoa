@@ -61,10 +61,12 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
+    if (!_isLoading || _errorMessage.isNotEmpty) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
+    }
     try {
       final patient = await PatientService.getMyProfile();
       final svcs = await ServiceApi.getServices();
@@ -225,14 +227,16 @@ class _BookingScreenState extends State<BookingScreen> {
       // Refresh layout data to get updated patients count
       _loadData();
 
-      // Close bottom sheet
-      Navigator.pop(sheetContext);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !sheetContext.mounted) return;
+        Navigator.pop(sheetContext);
 
-      if (widget.onBookingSuccess != null) {
-        widget.onBookingSuccess!();
-      } else {
-        Navigator.pop(context, true);
-      }
+        if (widget.onBookingSuccess != null) {
+          widget.onBookingSuccess!();
+        } else {
+          Navigator.pop(context, true);
+        }
+      });
       return true;
     } catch (e) {
       if (mounted) {

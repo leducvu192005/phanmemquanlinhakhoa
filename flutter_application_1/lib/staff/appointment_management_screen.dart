@@ -6,6 +6,7 @@ import '../models/service.dart';
 import '../services/booking_service.dart';
 import '../services/doctor_service.dart';
 import '../services/service_api.dart';
+import 'staff_create_booking_screen.dart';
 
 class StaffAppointmentDashboard extends StatefulWidget {
   const StaffAppointmentDashboard({super.key});
@@ -53,6 +54,7 @@ class _StaffAppointmentDashboardState extends State<StaffAppointmentDashboard> {
       await _fetchAppointmentsAndStats();
     } catch (e) {
       print('Staff Dashboard error: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Lỗi tải dữ liệu ban đầu: $e'), backgroundColor: Colors.redAccent),
       );
@@ -81,6 +83,7 @@ class _StaffAppointmentDashboardState extends State<StaffAppointmentDashboard> {
         _stats = summary;
       });
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Lỗi tải danh sách lịch khám: $e'), backgroundColor: Colors.redAccent),
       );
@@ -90,11 +93,13 @@ class _StaffAppointmentDashboardState extends State<StaffAppointmentDashboard> {
   Future<void> _updateStatus(String id, String newStatus) async {
     try {
       await BookingService.updateStatus(id, newStatus);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Cập nhật trạng thái thành công!'), backgroundColor: Colors.green),
       );
       _fetchAppointmentsAndStats();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Lỗi cập nhật: $e'), backgroundColor: Colors.redAccent),
       );
@@ -122,11 +127,13 @@ class _StaffAppointmentDashboardState extends State<StaffAppointmentDashboard> {
 
     try {
       await BookingService.updateStatus(id, 'cancelled');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Đã hủy lịch khám!'), backgroundColor: Colors.green),
       );
       _fetchAppointmentsAndStats();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Lỗi hủy lịch: $e'), backgroundColor: Colors.redAccent),
       );
@@ -149,6 +156,7 @@ class _StaffAppointmentDashboardState extends State<StaffAppointmentDashboard> {
     );
 
     if (selectedDate == null) return;
+    if (!mounted) return;
 
     final selectedTime = await showTimePicker(
       context: context,
@@ -162,11 +170,13 @@ class _StaffAppointmentDashboardState extends State<StaffAppointmentDashboard> {
 
     try {
       await BookingService.updateBooking(id, bookingDate: dateStr, timeSlot: slotStr);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Đổi lịch khám thành công!'), backgroundColor: Colors.green),
       );
       _fetchAppointmentsAndStats();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Lỗi đổi lịch: $e'), backgroundColor: Colors.redAccent),
       );
@@ -210,15 +220,30 @@ class _StaffAppointmentDashboardState extends State<StaffAppointmentDashboard> {
 
     try {
       await BookingService.updateBooking(id, doctorId: chosenDocId!);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Chuyển bác sĩ điều trị thành công!'), backgroundColor: Colors.green),
       );
       _fetchAppointmentsAndStats();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Lỗi chuyển bác sĩ: $e'), backgroundColor: Colors.redAccent),
       );
     }
+  }
+
+  void _openStaffBookingDialog() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => StaffCreateBookingScreen(
+          onSuccess: () {
+            _fetchAppointmentsAndStats();
+          },
+        ),
+      ),
+    );
   }
 
   Color _getStatusColor(String status) {
@@ -272,6 +297,21 @@ class _StaffAppointmentDashboardState extends State<StaffAppointmentDashboard> {
         foregroundColor: Colors.black87,
         elevation: 0,
         actions: [
+          ElevatedButton.icon(
+            onPressed: _openStaffBookingDialog,
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: const Text(
+              'Đăng ký lịch khám',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+          const SizedBox(width: 12),
           IconButton(
             icon: Icon(Icons.refresh, color: primaryColor),
             onPressed: _fetchAppointmentsAndStats,

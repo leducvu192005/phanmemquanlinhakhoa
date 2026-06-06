@@ -5,7 +5,7 @@ from typing import Optional
 from db import get_db
 from models.patient import Patient
 from models.user import User
-from schemas.patient import PatientOut
+from schemas.patient import PatientOut, PatientUpdate
 from dependencies import get_current_user
 
 router = APIRouter(
@@ -41,6 +41,30 @@ def get_my_patient_profile(
         db.add(patient)
         db.commit()
         db.refresh(patient)
+    return patient
+
+@router.put("/me", response_model=PatientOut)
+def update_my_patient_profile(
+    payload: PatientUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    patient = get_current_patient_record(current_user, db)
+    if not patient:
+        raise HTTPException(status_code=404, detail="Hồ sơ bệnh nhân không tồn tại")
+    
+    update_data = payload.dict(exclude_unset=True)
+    
+    # Do not allow modifying patient code, user_id, or status for safety
+    update_data.pop("patient_code", None)
+    update_data.pop("user_id", None)
+    update_data.pop("status", None)
+    
+    for key, value in update_data.items():
+        setattr(patient, key, value)
+        
+    db.commit()
+    db.refresh(patient)
     return patient
 
 @router.get("/", response_model=list[PatientOut])

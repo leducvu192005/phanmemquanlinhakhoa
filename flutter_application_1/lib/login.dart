@@ -42,7 +42,13 @@ class _LoginPageState extends State<LoginPage>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
-      setState(() {});
+      if (!_tabController.indexIsChanging) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {});
+          }
+        });
+      }
     });
   }
 
@@ -71,18 +77,20 @@ class _LoginPageState extends State<LoginPage>
       await _storage.write(key: 'jwt', value: token);
       await _storage.write(key: 'role', value: role);
 
-      if (!mounted) return;
-      if (role == 'admin') {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const AdminLayout()),
-        );
-      } else if (role == 'doctor') {
-        Navigator.of(context).pushReplacementNamed('/doctor');
-      } else if (role == 'staff') {
-        Navigator.of(context).pushReplacementNamed('/staff');
-      } else {
-        Navigator.of(context).pushReplacementNamed('/staff');
-      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (role == 'admin') {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const AdminLayout()),
+          );
+        } else if (role == 'doctor') {
+          Navigator.of(context).pushReplacementNamed('/doctor');
+        } else if (role == 'staff') {
+          Navigator.of(context).pushReplacementNamed('/staff');
+        } else {
+          Navigator.of(context).pushReplacementNamed('/patient');
+        }
+      });
     } else {
       if (!mounted) return;
       String msg = 'Lỗi: ${res.statusCode}';
@@ -123,18 +131,20 @@ class _LoginPageState extends State<LoginPage>
         await _storage.write(key: 'jwt', value: token);
         await _storage.write(key: 'role', value: role);
 
-        if (!mounted) return;
-        if (role == 'admin') {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const AdminLayout()),
-          );
-        } else if (role == 'doctor') {
-          Navigator.of(context).pushReplacementNamed('/doctor');
-        } else if (role == 'staff') {
-          Navigator.of(context).pushReplacementNamed('/staff');
-        } else {
-          Navigator.of(context).pushReplacementNamed('/patient');
-        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          if (role == 'admin') {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const AdminLayout()),
+            );
+          } else if (role == 'doctor') {
+            Navigator.of(context).pushReplacementNamed('/doctor');
+          } else if (role == 'staff') {
+            Navigator.of(context).pushReplacementNamed('/staff');
+          } else {
+            Navigator.of(context).pushReplacementNamed('/patient');
+          }
+        });
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -489,7 +499,8 @@ class _LoginPageState extends State<LoginPage>
         ),
         const SizedBox(height: 14),
         Container(
-          height: 54,
+          height: 60,
+          width: 100,
           decoration: BoxDecoration(
             color: Colors.grey[100],
             borderRadius: BorderRadius.circular(16),

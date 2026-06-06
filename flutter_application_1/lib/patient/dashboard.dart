@@ -11,7 +11,10 @@ import '../services/service_api.dart';
 import 'booking_screen.dart';
 import 'appointment_tracking_screen.dart';
 import 'medical_history_screen.dart';
+import 'service_list_screen.dart';
+import 'clinic_detail_screen.dart';
 import '../login.dart';
+
 
 class PatientDashboard extends StatefulWidget {
   const PatientDashboard({Key? key}) : super(key: key);
@@ -33,15 +36,23 @@ class _PatientDashboardState extends State<PatientDashboard> {
     _screens = [
       PatientHomeContent(
         onTabChange: (idx) {
-          setState(() {
-            _selectedIndex = idx;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _selectedIndex = idx;
+              });
+            }
           });
         },
       ),
       BookingScreen(
         onBookingSuccess: () {
-          setState(() {
-            _selectedIndex = 0; // Quay lại trang chủ sau khi đặt thành công
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _selectedIndex = 0; // Quay lại trang chủ sau khi đặt thành công
+              });
+            }
           });
         },
       ),
@@ -73,8 +84,12 @@ class _PatientDashboardState extends State<PatientDashboard> {
         unselectedItemColor: primaryColor.withOpacity(0.4),
         showUnselectedLabels: true,
         onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            }
           });
         },
         items: [
@@ -130,7 +145,9 @@ class _PatientHomeContentState extends State<PatientHomeContent> {
 
   Future<void> _loadHomeData() async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    if (!_isLoading) {
+      setState(() => _isLoading = true);
+    }
     try {
       final patient = await PatientService.getMyProfile();
       final bookings = await BookingService.getMyBookings();
@@ -177,10 +194,14 @@ class _PatientHomeContentState extends State<PatientHomeContent> {
     const storage = FlutterSecureStorage();
     await storage.deleteAll();
     if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-      (route) => false,
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+          (route) => false,
+        );
+      }
+    });
   }
 
   void _showLogoutDialog() {
@@ -428,51 +449,67 @@ class _PatientHomeContentState extends State<PatientHomeContent> {
 
   Widget _buildUpcomingCard() {
     if (_upcomingBooking == null) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: primaryColor.withOpacity(0.3), width: 1.5),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: bgLight,
-              child: Icon(Icons.calendar_today, color: primaryColor),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Không có lịch khám sắp tới',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.black87,
+      return InkWell(
+        onTap: () {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const PatientAppointmentListScreen(),
+                ),
+              ).then((_) => _loadHomeData());
+            }
+          });
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: primaryColor.withOpacity(0.3), width: 1.5),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: bgLight,
+                child: Icon(Icons.calendar_today, color: primaryColor),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Không có lịch khám sắp tới',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Bạn muốn khám răng? Hãy nhấn đặt lịch khám ngay.',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'Bạn muốn khám răng? Hãy nhấn đặt lịch khám ngay.',
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: primaryColor,
+              IconButton(
+                icon: Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: primaryColor,
+                ),
+                onPressed: () {
+                  widget.onTabChange(1); // Switch to Booking screen
+                },
               ),
-              onPressed: () =>
-                  widget.onTabChange(1), // Switch to Booking screen
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
@@ -488,73 +525,88 @@ class _PatientHomeContentState extends State<PatientHomeContent> {
     final doctor = booking.doctor?.fullName ?? 'Chưa chỉ định';
     final notes = booking.symptoms ?? 'Khám tổng quát';
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: bgLight,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: primaryColor.withOpacity(0.2), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.event_available, color: primaryColor, size: 20),
-                  const SizedBox(width: 6),
-                  const Text(
-                    'Lịch hẹn khám sắp tới',
+    return InkWell(
+      onTap: () {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const PatientAppointmentListScreen(),
+              ),
+            ).then((_) => _loadHomeData());
+          }
+        });
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: bgLight,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: primaryColor.withOpacity(0.2), width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.event_available, color: primaryColor, size: 20),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Lịch hẹn khám sắp tới',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    booking.status.toLowerCase() == 'confirmed'
+                        ? 'Đã duyệt'
+                        : 'Chờ duyệt',
                     style: TextStyle(
+                      color: primaryColor,
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.black87,
+                      fontSize: 11,
                     ),
                   ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  booking.status.toLowerCase() == 'confirmed'
-                      ? 'Đã duyệt'
-                      : 'Chờ duyệt',
-                  style: TextStyle(
-                    color: primaryColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 20),
-          Text(
-            '$timeStr - ngày $dateStr',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-              color: primaryColor,
+              ],
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Bác sĩ: BS. $doctor',
-            style: const TextStyle(fontSize: 13, color: Colors.black54),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Lý do/Triệu chứng: $notes',
-            style: const TextStyle(fontSize: 13, color: Colors.black54),
-          ),
-        ],
+            const Divider(height: 20),
+            Text(
+              '$timeStr - ngày $dateStr',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: primaryColor,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Bác sĩ: BS. $doctor',
+              style: const TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Lý do/Triệu chứng: $notes',
+              style: const TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -580,7 +632,22 @@ class _PatientHomeContentState extends State<PatientHomeContent> {
                 'Xem bảng giá dịch vụ',
                 Icons.medical_services_outlined,
                 const Color(0xFFFFFBEB),
-                onTap: _showServicesBottomSheet,
+                onTap: () {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PatientServiceListScreen(),
+                        ),
+                      ).then((res) {
+                        if (res == true && mounted) {
+                          widget.onTabChange(1); // Chuyển sang đặt lịch khám
+                        }
+                      });
+                    }
+                  });
+                },
               ),
             ),
           ],
@@ -595,12 +662,16 @@ class _PatientHomeContentState extends State<PatientHomeContent> {
                 Icons.access_time,
                 const Color(0xFFEFF6FF),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const PatientAppointmentListScreen(),
-                    ),
-                  ).then((_) => _loadHomeData());
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PatientAppointmentListScreen(),
+                        ),
+                      ).then((_) => _loadHomeData());
+                    }
+                  });
                 },
               ),
             ),
@@ -612,12 +683,16 @@ class _PatientHomeContentState extends State<PatientHomeContent> {
                 Icons.assignment_outlined,
                 bgLight,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const PatientMedicalHistoryScreen(),
-                    ),
-                  );
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PatientMedicalHistoryScreen(),
+                        ),
+                      );
+                    }
+                  });
                 },
               ),
             ),
@@ -939,9 +1014,454 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     const storage = FlutterSecureStorage();
     await storage.deleteAll();
     if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-      (route) => false,
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+          (route) => false,
+        );
+      }
+    });
+  }
+
+  void _showEditProfileBottomSheet() {
+    final formKey = GlobalKey<FormState>();
+    final nameCtrl = TextEditingController(text: _patient?.fullName);
+    final phoneCtrl = TextEditingController(text: _patient?.phone);
+    final emailCtrl = TextEditingController(text: _patient?.email);
+    final addressCtrl = TextEditingController(text: _patient?.address);
+    final bloodTypeCtrl = TextEditingController(text: _patient?.bloodType);
+    String? selectedGender = _patient?.gender;
+    DateTime? selectedDOB = _patient?.dateOfBirth != null ? DateTime.tryParse(_patient!.dateOfBirth!) : null;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            final dobStr = selectedDOB == null ? 'Chưa cập nhật' : DateFormat('dd/MM/yyyy').format(selectedDOB!);
+            bool isSaving = false;
+
+            InputDecoration buildInputDecoration({
+              required String label,
+              required IconData icon,
+            }) {
+              return InputDecoration(
+                labelText: label,
+                prefixIcon: Icon(icon, color: primaryColor.withOpacity(0.7)),
+                labelStyle: const TextStyle(fontSize: 14, color: Colors.black54),
+                floatingLabelStyle: TextStyle(
+                  color: primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+                filled: true,
+                fillColor: Colors.grey[50],
+                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: primaryColor, width: 2),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                ),
+              );
+            }
+
+            return Container(
+              padding: EdgeInsets.only(
+                top: 24,
+                left: 24,
+                right: 24,
+                bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+              ),
+              child: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Chỉnh sửa Hồ sơ',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(sheetContext),
+                          ),
+                        ],
+                      ),
+                      const Divider(),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: nameCtrl,
+                        decoration: buildInputDecoration(label: 'Họ và tên *', icon: Icons.person),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng nhập họ và tên' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: phoneCtrl,
+                        decoration: buildInputDecoration(label: 'Số điện thoại *', icon: Icons.phone),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng nhập số điện thoại' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: emailCtrl,
+                        decoration: buildInputDecoration(label: 'Địa chỉ Email *', icon: Icons.email),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng nhập email' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: selectedGender,
+                        decoration: buildInputDecoration(label: 'Giới tính', icon: Icons.transgender),
+                        dropdownColor: Colors.white,
+                        items: const [
+                          DropdownMenuItem(value: 'Nam', child: Text('Nam')),
+                          DropdownMenuItem(value: 'Nữ', child: Text('Nữ')),
+                          DropdownMenuItem(value: 'Khác', child: Text('Khác')),
+                        ],
+                        onChanged: (val) {
+                          setModalState(() {
+                            selectedGender = val;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDOB ?? DateTime(2000, 1, 1),
+                            firstDate: DateTime(1900),
+                            lastDate: DateTime.now(),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: ColorScheme.light(
+                                    primary: primaryColor,
+                                    onPrimary: Colors.white,
+                                    onSurface: Colors.black87,
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
+                          );
+                          if (picked != null) {
+                            setModalState(() {
+                              selectedDOB = picked;
+                            });
+                          }
+                        },
+                        child: InputDecorator(
+                          decoration: buildInputDecoration(
+                            label: 'Ngày sinh',
+                            icon: Icons.cake_outlined,
+                          ),
+                          child: Text(
+                            dobStr,
+                            style: const TextStyle(fontSize: 14, color: Colors.black87),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: addressCtrl,
+                        decoration: buildInputDecoration(label: 'Địa chỉ nơi ở', icon: Icons.location_on),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: bloodTypeCtrl,
+                        decoration: buildInputDecoration(label: 'Nhóm máu', icon: Icons.bloodtype),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: isSaving ? null : () async {
+                            if (!formKey.currentState!.validate()) return;
+                            setModalState(() {
+                              isSaving = true;
+                            });
+                            
+                            final payload = {
+                              'full_name': nameCtrl.text.trim(),
+                              'phone': phoneCtrl.text.trim(),
+                              'email': emailCtrl.text.trim(),
+                              'date_of_birth': selectedDOB != null ? DateFormat('yyyy-MM-dd').format(selectedDOB!) : null,
+                              'address': addressCtrl.text.trim(),
+                              'blood_type': bloodTypeCtrl.text.trim(),
+                              'gender': selectedGender,
+                            };
+
+                            try {
+                              final updated = await PatientService.updateMyProfile(payload);
+                              if (mounted) {
+                                setState(() {
+                                  _patient = updated;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Cập nhật hồ sơ cá nhân thành công!'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                                Navigator.pop(sheetContext);
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Cập nhật thất bại: $e'),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            } finally {
+                              setModalState(() {
+                                isSaving = false;
+                              });
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: isSaving 
+                            ? const SizedBox(
+                                width: 24, 
+                                height: 24, 
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                              )
+                            : const Text('Lưu thay đổi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showClinicDetailDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Chi tiết Nha Khoa Sáng Răng',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                const SizedBox(height: 12),
+                const Text(
+                  'Sứ mệnh của chúng tôi',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Mang lại nụ cười tự tin và rạng rỡ nhất cho mọi khách hàng bằng việc cung cấp các giải pháp nha khoa toàn diện, chất lượng cao và an toàn tuyệt đối.',
+                  style: TextStyle(fontSize: 12, color: Colors.black54, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Đội ngũ Bác sĩ giàu kinh nghiệm',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  '100% bác sĩ tại Nha Khoa Sáng Răng tốt nghiệp Đại học Y Dược chuyên khoa Răng Hàm Mặt, có chứng chỉ hành nghề và tu nghiệp thường xuyên tại nước ngoài (Mỹ, Pháp, Hàn Quốc).',
+                  style: TextStyle(fontSize: 12, color: Colors.black54, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Trang thiết bị hiện đại bậc nhất',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  '- Máy quét dấu răng 3D iTero Element 5D.\n- Máy chụp phim CT Cone Beam hiện đại chẩn đoán chính xác.\n- Hệ thống vô trùng khép kín chuẩn châu Âu.',
+                  style: TextStyle(fontSize: 12, color: Colors.black54, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Cam kết chất lượng',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Chính sách bảo hành rõ ràng, chi phí minh bạch không phát sinh, dịch vụ chăm sóc khách hàng chu đáo trước, trong và sau quá trình điều trị.',
+                  style: TextStyle(fontSize: 12, color: Colors.black54, height: 1.4),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Đóng', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAboutUsCard() {
+    return InkWell(
+      onTap: () {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ClinicDetailScreen(),
+              ),
+            );
+          }
+        });
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade100),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.info_outline, color: primaryColor, size: 22),
+                const SizedBox(width: 8),
+                const Text(
+                  'Về phòng khám Nha Khoa Sáng Răng',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                ),
+                const Spacer(),
+                Icon(Icons.arrow_forward_ios, color: primaryColor.withOpacity(0.5), size: 14),
+              ],
+            ),
+            const Divider(height: 20),
+            const Text(
+              'Nha Khoa Sáng Răng tự hào là thương hiệu chăm sóc răng miệng uy tín hàng đầu. Chúng tôi luôn cam kết đem lại chất lượng điều trị chuẩn y khoa, không gian dịch vụ an toàn, tận tâm và không ngừng cập nhật trang thiết bị tiên tiến nhất.',
+              style: TextStyle(fontSize: 12, color: Colors.black54, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            _buildAboutDetailRow(Icons.location_on_outlined, '123 Đường Ba Tháng Hai, Quận 10, TP. HCM'),
+            const SizedBox(height: 6),
+            _buildAboutDetailRow(Icons.phone_in_talk_outlined, 'Hotline hỗ trợ: 1900 6789'),
+            const SizedBox(height: 6),
+            _buildAboutDetailRow(Icons.access_time_outlined, 'Giờ làm việc: 08:00 - 20:00 (Tất cả các ngày)'),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ClinicDetailScreen(),
+                        ),
+                      );
+                    }
+                  });
+                },
+                icon: Icon(Icons.explore_outlined, size: 16, color: primaryColor),
+                label: Text(
+                  'Xem chi tiết phòng khám & dịch vụ',
+                  style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: primaryColor.withOpacity(0.5)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAboutDetailRow(IconData icon, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: primaryColor.withOpacity(0.7), size: 16),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+        ),
+      ],
     );
   }
 
@@ -958,6 +1478,13 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.edit_outlined, color: primaryColor),
+            tooltip: 'Chỉnh sửa hồ sơ',
+            onPressed: _showEditProfileBottomSheet,
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
           child: Container(color: primaryColor.withOpacity(0.2), height: 1.0),
@@ -1005,6 +1532,26 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  TextButton.icon(
+                    onPressed: _showEditProfileBottomSheet,
+                    icon: Icon(Icons.edit, color: primaryColor, size: 16),
+                    label: Text(
+                      'Chỉnh sửa thông tin',
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      backgroundColor: primaryColor.withOpacity(0.08),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 24),
 
                   _buildProfileItem(
@@ -1016,6 +1563,11 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                     Icons.email_outlined,
                     'Địa chỉ Email',
                     _patient!.email ?? 'Chưa cập nhật',
+                  ),
+                  _buildProfileItem(
+                    Icons.transgender_outlined,
+                    'Giới tính',
+                    _patient!.gender ?? 'Chưa cập nhật',
                   ),
                   _buildProfileItem(
                     Icons.cake_outlined,
@@ -1037,6 +1589,9 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                     'Nhóm máu',
                     _patient!.bloodType ?? 'Chưa cập nhật',
                   ),
+
+                  const SizedBox(height: 24),
+                  _buildAboutUsCard(),
 
                   const SizedBox(height: 24),
                   SizedBox(
