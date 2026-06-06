@@ -341,12 +341,14 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Tuổi: ${calculateAge(DateTime.parse(p.dateOfBirth))} tuổi",
+                    p.dateOfBirth != null && DateTime.tryParse(p.dateOfBirth!) != null
+                        ? "Tuổi: ${calculateAge(DateTime.tryParse(p.dateOfBirth!)!)} tuổi"
+                        : "Tuổi: Chưa cập nhật",
                     style: TextStyle(color: Colors.grey[800], fontSize: 13),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Giới tính: ${p.gender ?? 'Nam'}",
+                    "Giới tính: ${p.gender ?? 'Chưa cập nhật'}",
                     style: TextStyle(color: Colors.grey[800], fontSize: 13),
                   ),
                   const SizedBox(height: 4),

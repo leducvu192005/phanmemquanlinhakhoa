@@ -2,11 +2,11 @@ class Patient {
   final String id;
   final String patientCode;
   final String fullName;
-  final String gender;
-  final String dateOfBirth;
+  final String? gender;
+  final String? dateOfBirth;
   final String phone;
   final String email;
-  final String address;
+  final String? address;
   final String? avatar;
   final String? bloodType;
   final String? allergies;
@@ -20,11 +20,11 @@ class Patient {
     required this.id,
     required this.patientCode,
     required this.fullName,
-    required this.gender,
-    required this.dateOfBirth,
+    this.gender,
+    this.dateOfBirth,
     required this.phone,
     required this.email,
-    required this.address,
+    this.address,
     this.avatar,
     this.bloodType,
     this.allergies,
@@ -39,12 +39,12 @@ class Patient {
   factory Patient.fromJson(Map<String, dynamic> json) {
     return Patient(
       id: json['id']?.toString() ?? '',
-      patientCode: json['patient_code'],
-      fullName: json['full_name'],
+      patientCode: json['patient_code'] ?? '',
+      fullName: json['full_name'] ?? '',
       gender: json['gender'],
       dateOfBirth: json['date_of_birth'],
-      phone: json['phone'],
-      email: json['email'],
+      phone: json['phone'] ?? '',
+      email: json['email'] ?? '',
       address: json['address'],
       avatar: json['avatar'],
       bloodType: json['blood_type'],

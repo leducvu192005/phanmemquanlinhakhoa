@@ -140,3 +140,21 @@ def get_medical_record_detail(
             detail="Không tìm thấy hồ sơ bệnh án"
         )
     return record
+
+
+# ==========================================
+# LẤY HỒ SƠ BỆNH ÁN THEO LỊCH HẸN (appointment_id)
+# ==========================================
+@router.get(
+    "/appointment/{appointment_id}",
+    response_model=Optional[MedicalRecordOut]
+)
+def get_medical_record_by_appointment(
+    appointment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    record = db.query(MedicalRecord).filter(
+        MedicalRecord.appointment_id == appointment_id
+    ).first()
+    return record

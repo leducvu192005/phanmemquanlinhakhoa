@@ -9,12 +9,12 @@ from typing import Optional
 class PatientBase(BaseModel):
     patient_code: str
     full_name: str
-    gender: str
-    date_of_birth: date
+    gender: Optional[str] = None
+    date_of_birth: Optional[date] = None
 
     phone: str
     email: str
-    address: str
+    address: Optional[str] = None
 
     avatar: Optional[str] = None
     blood_type: Optional[str] = None

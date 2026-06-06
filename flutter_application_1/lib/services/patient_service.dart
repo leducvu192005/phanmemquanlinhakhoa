@@ -1,10 +1,36 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'api.dart';
 import '../models/patient_model.dart';
 
 class PatientService {
-  static const String baseUrl = "http://127.0.0.1:8000/admin/patients";
+  static String get baseUrl => "${Api.baseUrl}/patients";
+  static const _storage = FlutterSecureStorage();
+
+  static Future<Map<String, String>> _headers() async {
+    final token = await _storage.read(key: 'jwt');
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  // =========================
+  // GET MY PROFILE (Patient /me)
+  // =========================
+  static Future<Patient> getMyProfile() async {
+    final url = Uri.parse("$baseUrl/me");
+    final response = await http.get(url, headers: await _headers());
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      return Patient.fromJson(data);
+    } else {
+      throw Exception("Không thể tải hồ sơ bệnh án cá nhân: ${response.statusCode}");
+    }
+  }
 
   // =========================
   // GET ALL + SEARCH
@@ -14,7 +40,7 @@ class PatientService {
       queryParameters: query == null || query.isEmpty ? null : {"q": query},
     );
 
-    final response = await http.get(uri);
+    final response = await http.get(uri, headers: await _headers());
 
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
@@ -28,7 +54,7 @@ class PatientService {
   // GET DETAIL
   // =========================
   Future<Patient> getPatientById(String id) async {
-    final response = await http.get(Uri.parse("$baseUrl/$id"));
+    final response = await http.get(Uri.parse("$baseUrl/$id"), headers: await _headers());
 
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
@@ -44,7 +70,7 @@ class PatientService {
   Future<Patient> createPatient(Map<String, dynamic> payload) async {
     final response = await http.post(
       Uri.parse(baseUrl),
-      headers: {"Content-Type": "application/json"},
+      headers: await _headers(),
       body: jsonEncode(payload),
     );
 
@@ -62,7 +88,7 @@ class PatientService {
   Future<Patient> updatePatient(String id, Map<String, dynamic> payload) async {
     final response = await http.put(
       Uri.parse("$baseUrl/$id"),
-      headers: {"Content-Type": "application/json"},
+      headers: await _headers(),
       body: jsonEncode(payload),
     );
 
@@ -78,7 +104,7 @@ class PatientService {
   // DELETE
   // =========================
   Future<void> deletePatient(String id) async {
-    final response = await http.delete(Uri.parse("$baseUrl/$id"));
+    final response = await http.delete(Uri.parse("$baseUrl/$id"), headers: await _headers());
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception("Failed to delete patient");

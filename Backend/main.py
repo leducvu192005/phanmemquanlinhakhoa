@@ -13,6 +13,8 @@ from routers.service import router as service_router
 from routers.work_shift_router import router as work_shift_router
 from routers.appointment_router import router as appointment_router
 from routers.medical_record_router import router as medical_record_router
+from routers.leave_request_router import router as leave_request_router
+from routers.booking_router import router as booking_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -51,7 +53,7 @@ app.include_router(
 # Patients
 app.include_router(
     patients_router,
-    prefix="/admin/patients",
+    prefix="/patients",
     tags=["Patients"]
 )
 
@@ -77,6 +79,8 @@ app.include_router(
 
 app.include_router(work_shift_router)
 app.include_router(doctor_work_schedule)
+app.include_router(leave_request_router)
+app.include_router(booking_router)
 @app.get("/")
 def home():
     return {

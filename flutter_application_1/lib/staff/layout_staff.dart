@@ -3,6 +3,8 @@ import 'package:flutter_application_1/login.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'work_shift_management.dart';
 import 'DoctorScheduleManagement.dart';
+import '../doctor/leave_request_screen.dart';
+import 'appointment_management_screen.dart';
 
 class LayoutStaff extends StatefulWidget {
   const LayoutStaff({super.key});
@@ -46,6 +48,8 @@ class _LayoutStaffState extends State<LayoutStaff> {
     final pages = [
       const WorkShiftManagementScreen(),
       const Doctorschedulemanagement(),
+      const LeaveRequestScreen(isEmbedded: true, isStaff: true),
+      const StaffAppointmentDashboard(),
     ];
 
     return Scaffold(

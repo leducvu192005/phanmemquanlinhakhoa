@@ -15,6 +15,7 @@ import '../services/doctor_service.dart';
 import '../login.dart';
 import 'profile_screen.dart';
 import 'schedule_register_screen.dart';
+import 'leave_request_screen.dart';
 
 class SidebarItem {
   final IconData icon;
@@ -36,6 +37,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
   final List<SidebarItem> _sidebarItems = const [
     SidebarItem(icon: Icons.assignment_outlined, title: 'Ca khám hôm nay'),
     SidebarItem(icon: Icons.calendar_month_outlined, title: 'Đăng ký lịch trực'),
+    SidebarItem(icon: Icons.event_busy_outlined, title: 'Yêu cầu nghỉ phép'),
     SidebarItem(icon: Icons.person_outline, title: 'Hồ sơ cá nhân'),
   ];
 
@@ -834,6 +836,18 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                   },
                 ),
                 IconButton(
+                  icon: const Icon(Icons.event_busy, color: Colors.white),
+                  tooltip: 'Yêu cầu nghỉ phép',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LeaveRequestScreen(),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
                   icon: const Icon(Icons.person, color: Colors.white),
                   tooltip: 'Hồ sơ cá nhân',
                   onPressed: () {
@@ -873,7 +887,9 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                       ),
                       // Tab 1: Đăng ký lịch trực
                       const DoctorScheduleRegisterScreen(isEmbedded: true),
-                      // Tab 2: Hồ sơ cá nhân
+                      // Tab 2: Yêu cầu nghỉ phép
+                      const LeaveRequestScreen(isEmbedded: true),
+                      // Tab 3: Hồ sơ cá nhân
                       DoctorProfileScreen(
                         isEmbedded: true,
                         onProfileUpdated: _loadDoctorInfo,
@@ -970,8 +986,8 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                         ),
                     children: [
                       _buildProfileItem('Họ và tên', patient.fullName),
-                      _buildProfileItem('Giới tính', patient.gender),
-                      _buildProfileItem('Ngày sinh', dob),
+                      _buildProfileItem('Giới tính', patient.gender ?? 'Chưa cập nhật'),
+                      _buildProfileItem('Ngày sinh', dob ?? 'Chưa cập nhật'),
                       _buildProfileItem('Số điện thoại', patient.phone),
                       _buildProfileItem(
                         'Nhóm máu',
@@ -1936,12 +1952,12 @@ class _MobileExaminationScreenState extends State<MobileExaminationScreen> {
                       Row(
                         children: [
                           Expanded(
-                            child: _buildInfoItem('Giới tính', patient.gender),
+                            child: _buildInfoItem('Giới tính', patient.gender ?? 'Chưa cập nhật'),
                           ),
                           Expanded(
                             child: _buildInfoItem(
                               'Ngày sinh',
-                              patient.dateOfBirth,
+                              patient.dateOfBirth ?? 'Chưa cập nhật',
                             ),
                           ),
                         ],

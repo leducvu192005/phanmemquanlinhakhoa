@@ -71,4 +71,20 @@ class MedicalRecordService {
       throw Exception('Không tìm thấy bệnh án chi tiết');
     }
   }
+
+  // Lấy hồ sơ bệnh án theo lịch hẹn (appointment_id)
+  static Future<MedicalRecord?> getMedicalRecordByAppointment(String appointmentId) async {
+    final url = Uri.parse('$baseUrl/medical-records/appointment/$appointmentId');
+    final response = await http.get(url, headers: await _headers());
+
+    if (response.statusCode == 200) {
+      final body = response.body;
+      if (body == 'null' || body.isEmpty) return null;
+      final Map<String, dynamic>? data = json.decode(utf8.decode(response.bodyBytes));
+      if (data == null) return null;
+      return MedicalRecord.fromJson(data);
+    } else {
+      return null;
+    }
+  }
 }
