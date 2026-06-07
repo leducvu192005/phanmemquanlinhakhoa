@@ -626,21 +626,7 @@ class _StaffAppointmentDashboardState extends State<StaffAppointmentDashboard> {
             onPressed: () => _updateStatus(appt.id, 'checked_in'),
           ),
 
-        // START TREATMENT Action (Checked In -> In Progress)
-        if (status == 'checked_in')
-          IconButton(
-            tooltip: 'Bác sĩ bắt đầu khám',
-            icon: const Icon(Icons.play_circle_outline, color: Colors.teal),
-            onPressed: () => _updateStatus(appt.id, 'in_progress'),
-          ),
 
-        // COMPLETE TREATMENT Action (In Progress -> Completed)
-        if (status == 'in_progress')
-          IconButton(
-            tooltip: 'Hoàn thành điều trị',
-            icon: const Icon(Icons.task_alt, color: Colors.green),
-            onPressed: () => _updateStatus(appt.id, 'completed'),
-          ),
 
         // RESCHEDULE Action
         if (status == 'pending' || status == 'confirmed')

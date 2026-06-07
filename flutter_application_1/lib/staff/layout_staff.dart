@@ -6,16 +6,26 @@ import 'DoctorScheduleManagement.dart';
 import '../doctor/leave_request_screen.dart';
 import 'appointment_management_screen.dart';
 
+import 'payment_screen.dart';
+
 class LayoutStaff extends StatefulWidget {
-  const LayoutStaff({super.key});
+  final int initialIndex;
+  const LayoutStaff({super.key, this.initialIndex = 0});
 
   @override
   State<LayoutStaff> createState() => _LayoutStaffState();
 }
 
 class _LayoutStaffState extends State<LayoutStaff> {
-  int selectedIndex = 0;
+  late int selectedIndex;
   final _storage = const FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    selectedIndex = widget.initialIndex;
+  }
+  
   Future<void> _doLogout() async {
     try {
       await _storage.deleteAll();
@@ -50,6 +60,7 @@ class _LayoutStaffState extends State<LayoutStaff> {
       const Doctorschedulemanagement(),
       const LeaveRequestScreen(isEmbedded: true, isStaff: true),
       const StaffAppointmentDashboard(),
+      const PaymentScreen(),
     ];
 
     return Scaffold(
@@ -144,6 +155,17 @@ class _LayoutStaffState extends State<LayoutStaff> {
                         onTap: () {
                           setState(() {
                             selectedIndex = 3;
+                          });
+                        },
+                      ),
+                      _SidebarItem(
+                        icon: Icons.receipt_long_outlined,
+                        label: 'Quản lý thanh toán',
+                        wide: isWide,
+                        selected: selectedIndex == 4,
+                        onTap: () {
+                          setState(() {
+                            selectedIndex = 4;
                           });
                         },
                       ),

@@ -1,5 +1,6 @@
 import 'patient_model.dart';
 import 'doctor_model.dart';
+import 'service.dart';
 
 class Booking {
   final String id;
@@ -12,6 +13,16 @@ class Booking {
   final Patient? patient;
   final Doctor? doctor;
 
+  // New payment fields
+  final String paymentStatus;
+  final String? paymentMethod;
+  final DateTime? paymentTime;
+  final double discountAmount;
+  final double totalAmount;
+
+  // Indicated services list
+  final List<Service> services;
+
   Booking({
     required this.id,
     required this.patientId,
@@ -22,6 +33,12 @@ class Booking {
     required this.status,
     this.patient,
     this.doctor,
+    this.paymentStatus = 'unpaid',
+    this.paymentMethod,
+    this.paymentTime,
+    this.discountAmount = 0.0,
+    this.totalAmount = 0.0,
+    this.services = const [],
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
@@ -35,6 +52,14 @@ class Booking {
       status: json['status'] ?? 'pending',
       patient: json['patient'] != null ? Patient.fromJson(json['patient']) : null,
       doctor: json['doctor'] != null ? Doctor.fromJson(json['doctor']) : null,
+      paymentStatus: json['payment_status'] ?? 'unpaid',
+      paymentMethod: json['payment_method'],
+      paymentTime: json['payment_time'] != null ? DateTime.tryParse(json['payment_time']) : null,
+      discountAmount: (json['discount_amount'] as num?)?.toDouble() ?? 0.0,
+      totalAmount: (json['total_amount'] as num?)?.toDouble() ?? 0.0,
+      services: json['services'] != null
+          ? (json['services'] as List).map((e) => Service.fromJson(e)).toList()
+          : const [],
     );
   }
 
@@ -46,6 +71,12 @@ class Booking {
       'time_slot': timeSlot,
       'symptoms': symptoms,
       'status': status,
+      'payment_status': paymentStatus,
+      'payment_method': paymentMethod,
+      'payment_time': paymentTime?.toIso8601String(),
+      'discount_amount': discountAmount,
+      'total_amount': totalAmount,
+      'services': services.map((e) => e.toJson()).toList(),
     };
   }
 }

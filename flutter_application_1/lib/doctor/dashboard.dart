@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
-import '../models/appointment_model.dart';
+import '../models/booking_model.dart';
 import '../models/patient_model.dart';
 import '../models/service.dart';
 import '../models/medical_record_model.dart';
-import '../services/appointment_service.dart';
+import '../services/booking_service.dart';
 import '../services/medical_record_service.dart';
 import '../services/service_api.dart';
 import '../services/api.dart';
@@ -16,6 +16,7 @@ import '../login.dart';
 import 'profile_screen.dart';
 import 'schedule_register_screen.dart';
 import 'leave_request_screen.dart';
+import 'doctor_work_calendar_screen.dart';
 
 class SidebarItem {
   final IconData icon;
@@ -35,17 +36,18 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
   int _selectedTabIndex = 0;
 
   final List<SidebarItem> _sidebarItems = const [
-    SidebarItem(icon: Icons.assignment_outlined, title: 'Ca khám hôm nay'),
-    SidebarItem(icon: Icons.calendar_month_outlined, title: 'Đăng ký lịch trực'),
-    SidebarItem(icon: Icons.event_busy_outlined, title: 'Yêu cầu nghỉ phép'),
+    SidebarItem(icon: Icons.local_hospital_outlined, title: 'Khám bệnh'),
+    SidebarItem(icon: Icons.calendar_today_outlined, title: 'Lịch làm việc'),
+    SidebarItem(icon: Icons.alarm_outlined, title: 'Lịch trực'),
+    SidebarItem(icon: Icons.note_alt_outlined, title: 'Nghỉ phép'),
     SidebarItem(icon: Icons.person_outline, title: 'Hồ sơ cá nhân'),
   ];
 
   bool _isLoadingAppointments = true;
   bool _isLoadingServices = true;
-  List<Appointment> _appointments = [];
+  List<Booking> _appointments = [];
   List<Service> _allServices = [];
-  Appointment? _selectedAppointment;
+  Booking? _selectedAppointment;
 
   // Chi tiết bệnh án cho ca đã hoàn thành
   bool _isLoadingRecord = false;
@@ -129,7 +131,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
   Future<void> _fetchAppointments() async {
     setState(() => _isLoadingAppointments = true);
     try {
-      final list = await AppointmentService.getDoctorTodayAppointments();
+      final list = await BookingService.getDoctorTodayBookings();
       setState(() {
         _appointments = list;
         // Tự động chọn ca đầu tiên nếu chưa chọn và danh sách có dữ liệu
@@ -168,7 +170,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
     }
   }
 
-  void _selectAppointment(Appointment appointment) {
+  void _selectAppointment(Booking appointment) {
     setState(() {
       _selectedAppointment = appointment;
       // Reset form cập nhật khi đổi ca khám
@@ -285,7 +287,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
     final payload = {
       'appointment_id': int.parse(_selectedAppointment!.id),
       'patient_id': int.parse(_selectedAppointment!.patientId),
-      'doctor_id': int.parse(_selectedAppointment!.doctorId),
+      'doctor_id': _selectedAppointment!.doctorId,
       'diagnosis': _diagnosisCtrl.text.trim(),
       'treatment': _treatmentCtrl.text.trim(),
       'prescription': prescriptionText.isEmpty ? null : prescriptionText,
@@ -361,7 +363,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                         backgroundColor: lightTeal,
                         backgroundImage:
                             _doctorAvatarUrl != null &&
-                                    _doctorAvatarUrl!.isNotEmpty
+                                _doctorAvatarUrl!.isNotEmpty
                             ? NetworkImage(
                                 _doctorAvatarUrl!.startsWith('http')
                                     ? _doctorAvatarUrl!
@@ -431,10 +433,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                 children: [
                   const Text(
                     'Danh sách ca khám hôm nay',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                   IconButton(
                     icon: const Icon(Icons.refresh, size: 20),
@@ -465,9 +464,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                           const SizedBox(height: 12),
                           Text(
                             'Không có lịch hẹn nào hôm nay',
-                            style: TextStyle(
-                              color: Colors.grey.shade500,
-                            ),
+                            style: TextStyle(color: Colors.grey.shade500),
                           ),
                         ],
                       ),
@@ -477,17 +474,20 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                     itemCount: _appointments.length,
                     itemBuilder: (context, index) {
                       final app = _appointments[index];
-                      final isSelected =
-                          _selectedAppointment?.id == app.id;
-                      final timeStr = DateFormat(
-                        'HH:mm',
-                      ).format(app.appointmentTime);
+                      final isSelected = _selectedAppointment?.id == app.id;
+                      final timeStr = app.timeSlot;
 
-                      Color statusColor = Colors.orange;
+                      Color statusColor = const Color(0xFF028090);
                       String statusText = "Chờ khám";
                       if (app.status == 'completed') {
-                        statusColor = Colors.green;
+                        statusColor = const Color(0xFF0D9488);
                         statusText = "Đã khám";
+                      } else if (app.status == 'in_progress') {
+                        statusColor = const Color(0xFF00A896);
+                        statusText = "Đang khám";
+                      } else if (app.status == 'checked_in') {
+                        statusColor = const Color(0xFF028090);
+                        statusText = "Chờ khám";
                       } else if (app.status == 'confirmed') {
                         statusColor = Colors.blue;
                         statusText = "Đã xác nhận";
@@ -502,9 +502,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? lightTeal
-                              : Colors.transparent,
+                          color: isSelected ? lightTeal : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected
@@ -534,8 +532,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                             ),
                           ),
                           title: Text(
-                            app.patient?.fullName ??
-                                'Bệnh nhân chưa rõ',
+                            app.patient?.fullName ?? 'Bệnh nhân chưa rõ',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
@@ -544,27 +541,15 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           subtitle: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 4),
                               Text(
-                                'Dịch vụ đặt trước: ${app.service?.serviceName ?? "Khám tổng quát"}',
+                                'Triệu chứng: ${app.symptoms ?? "Không có"}',
                                 style: const TextStyle(fontSize: 12),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              if (app.reason != null &&
-                                  app.reason!.isNotEmpty)
-                                Text(
-                                  'Lý do: ${app.reason}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 11,
-                                  ),
-                                ),
                             ],
                           ),
                           trailing: Container(
@@ -588,21 +573,25 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                           onTap: () {
                             _selectAppointment(app);
                             if (!isWide) {
-                              // Trên điện thoại, khi tap sẽ mở màn hình chi tiết/khám bệnh đầy đủ
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      MobileExaminationScreen(
-                                        appointment: app,
-                                        allServices: _allServices,
-                                        onCompleted: () {
-                                          _fetchAppointments();
-                                          Navigator.pop(context);
-                                        },
-                                      ),
-                                ),
-                              );
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        MobileExaminationScreen(
+                                          appointment: app,
+                                          allServices: _allServices,
+                                          onStatusChanged: () {
+                                            _fetchAppointments();
+                                          },
+                                          onCompleted: () {
+                                            _fetchAppointments();
+                                            Navigator.pop(context);
+                                          },
+                                        ),
+                                  ),
+                                );
+                              });
                             }
                           },
                         ),
@@ -638,16 +627,14 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // THÔNG TIN BỆNH NHÂN
-                _buildPatientProfileSection(
-                  _selectedAppointment!.patient,
-                ),
+                _buildPatientProfileSection(_selectedAppointment!.patient),
                 const SizedBox(height: 24),
 
                 // NẾU CA ĐÃ KHÁM XONG
                 if (_selectedAppointment!.status == 'completed')
-                  _buildCompletedExaminationNotice(
-                    _selectedAppointment!,
-                  )
+                  _buildCompletedExaminationNotice(_selectedAppointment!)
+                else if (_selectedAppointment!.status == 'checked_in')
+                  _buildStartExaminationSection(_selectedAppointment!)
                 else
                   // FORM GHI NHẬN KHÁM BỆNH
                   _buildExaminationFormSection(),
@@ -666,7 +653,11 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: Row(
               children: [
-                Icon(Icons.medical_services_outlined, color: primaryTeal, size: 28),
+                Icon(
+                  Icons.medical_services_outlined,
+                  color: primaryTeal,
+                  size: 28,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -683,7 +674,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
             ),
           ),
           const Divider(height: 1),
-          
+
           // Doctor Profile summary
           Padding(
             padding: const EdgeInsets.all(20.0),
@@ -691,7 +682,8 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
               children: [
                 CircleAvatar(
                   backgroundColor: lightTeal,
-                  backgroundImage: _doctorAvatarUrl != null && _doctorAvatarUrl!.isNotEmpty
+                  backgroundImage:
+                      _doctorAvatarUrl != null && _doctorAvatarUrl!.isNotEmpty
                       ? NetworkImage(
                           _doctorAvatarUrl!.startsWith('http')
                               ? _doctorAvatarUrl!
@@ -709,13 +701,19 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                     children: [
                       Text(
                         _doctorName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         _doctorSpecialty,
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 11,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -742,8 +740,14 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                     });
                   },
                   child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: isSelected ? lightTeal : Colors.transparent,
                       borderRadius: BorderRadius.circular(10),
@@ -752,15 +756,21 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                       children: [
                         Icon(
                           item.icon,
-                          color: isSelected ? primaryTeal : Colors.grey.shade600,
+                          color: isSelected
+                              ? primaryTeal
+                              : Colors.grey.shade600,
                           size: 20,
                         ),
                         const SizedBox(width: 12),
                         Text(
                           item.title,
                           style: TextStyle(
-                            color: isSelected ? primaryTeal : Colors.grey.shade700,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            color: isSelected
+                                ? primaryTeal
+                                : Colors.grey.shade700,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                             fontSize: 14,
                           ),
                         ),
@@ -780,7 +790,10 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
               onPressed: _doLogout,
               style: TextButton.styleFrom(
                 foregroundColor: Colors.redAccent,
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
                 alignment: Alignment.centerLeft,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -824,39 +837,61 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
               ),
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.calendar_month, color: Colors.white),
-                  tooltip: 'Đăng ký lịch trực',
+                  icon: const Icon(Icons.calendar_today, color: Colors.white),
+                  tooltip: 'Lịch làm việc',
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const DoctorScheduleRegisterScreen(),
-                      ),
-                    );
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const DoctorWorkCalendarScreen(),
+                        ),
+                      );
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.calendar_month, color: Colors.white),
+                  tooltip: 'Lịch trực',
+                  onPressed: () {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const DoctorScheduleRegisterScreen(),
+                        ),
+                      );
+                    });
                   },
                 ),
                 IconButton(
                   icon: const Icon(Icons.event_busy, color: Colors.white),
-                  tooltip: 'Yêu cầu nghỉ phép',
+                  tooltip: 'Nghỉ phép',
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LeaveRequestScreen(),
-                      ),
-                    );
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LeaveRequestScreen(),
+                        ),
+                      );
+                    });
                   },
                 ),
                 IconButton(
                   icon: const Icon(Icons.person, color: Colors.white),
                   tooltip: 'Hồ sơ cá nhân',
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const DoctorProfileScreen(),
-                      ),
-                    ).then((_) => _loadDoctorInfo());
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DoctorProfileScreen(),
+                        ),
+                      ).then((_) => _loadDoctorInfo());
+                    });
                   },
                 ),
                 IconButton(
@@ -870,26 +905,25 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
           ? Row(
               children: [
                 sidebar,
-                Container(
-                  width: 1.5,
-                  color: Colors.grey.shade200,
-                ),
+                Container(width: 1.5, color: Colors.grey.shade200),
                 Expanded(
                   child: IndexedStack(
                     index: _selectedTabIndex,
                     children: [
-                      // Tab 0: Ca khám hôm nay
+                      // Tab 0: Khám bệnh
                       Row(
                         children: [
                           Expanded(flex: 4, child: leftColumn),
                           Expanded(flex: 8, child: rightColumn),
                         ],
                       ),
-                      // Tab 1: Đăng ký lịch trực
+                      // Tab 1: Lịch làm việc
+                      const DoctorWorkCalendarScreen(isEmbedded: true),
+                      // Tab 2: Lịch trực
                       const DoctorScheduleRegisterScreen(isEmbedded: true),
-                      // Tab 2: Yêu cầu nghỉ phép
+                      // Tab 3: Nghỉ phép
                       const LeaveRequestScreen(isEmbedded: true),
-                      // Tab 3: Hồ sơ cá nhân
+                      // Tab 4: Hồ sơ cá nhân
                       DoctorProfileScreen(
                         isEmbedded: true,
                         onProfileUpdated: _loadDoctorInfo,
@@ -899,11 +933,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                 ),
               ],
             )
-          : Row(
-              children: [
-                Expanded(flex: 12, child: leftColumn),
-              ],
-            ),
+          : Row(children: [Expanded(flex: 12, child: leftColumn)]),
     );
 
     return mainScaffold;
@@ -986,7 +1016,10 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                         ),
                     children: [
                       _buildProfileItem('Họ và tên', patient.fullName),
-                      _buildProfileItem('Giới tính', patient.gender ?? 'Chưa cập nhật'),
+                      _buildProfileItem(
+                        'Giới tính',
+                        patient.gender ?? 'Chưa cập nhật',
+                      ),
                       _buildProfileItem('Ngày sinh', dob ?? 'Chưa cập nhật'),
                       _buildProfileItem('Số điện thoại', patient.phone),
                       _buildProfileItem(
@@ -1049,7 +1082,107 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
   }
 
   // Widget thông báo ca khám đã khám xong và hiển thị chi tiết bệnh án
-  Widget _buildCompletedExaminationNotice(Appointment app) {
+  Widget _buildStartExaminationSection(Booking app) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.play_circle_outline,
+              size: 72,
+              color: Color(0xFF0F766E),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Bệnh nhân đang chờ khám',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F766E),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Bệnh nhân ${app.patient?.fullName ?? "chưa rõ"} đã làm thủ tục check-in và đang đợi bác sĩ.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+            ),
+            if (app.symptoms != null && app.symptoms!.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6F7F6),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Triệu chứng lâm sàng: ${app.symptoms}',
+                  style: const TextStyle(
+                    color: Color(0xFF0F766E),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: () => _startExamination(app.id),
+                icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
+                label: const Text(
+                  'Bắt đầu khám',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0F766E),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _startExamination(String bookingId) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    try {
+      await BookingService.updateStatus(bookingId, 'in_progress');
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Bắt đầu khám ca này!'),
+          backgroundColor: Colors.teal,
+        ),
+      );
+      await _fetchAppointments();
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Không thể bắt đầu ca khám: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Widget _buildCompletedExaminationNotice(Booking app) {
     if (_isLoadingRecord) {
       return const Center(
         child: Padding(
@@ -1618,14 +1751,16 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
 // MÀN HÌNH KHÁM BỆNH CHO THIẾT BỊ DI ĐỘNG (MOBILE VIEW)
 // ==========================================
 class MobileExaminationScreen extends StatefulWidget {
-  final Appointment appointment;
+  final Booking appointment;
   final List<Service> allServices;
+  final VoidCallback? onStatusChanged;
   final VoidCallback onCompleted;
 
   const MobileExaminationScreen({
     Key? key,
     required this.appointment,
     required this.allServices,
+    this.onStatusChanged,
     required this.onCompleted,
   }) : super(key: key);
 
@@ -1653,11 +1788,13 @@ class _MobileExaminationScreenState extends State<MobileExaminationScreen> {
 
   bool _isLoadingRecord = false;
   MedicalRecord? _completedRecord;
+  late String _currentStatus;
 
   @override
   void initState() {
     super.initState();
-    if (widget.appointment.status == 'completed') {
+    _currentStatus = widget.appointment.status;
+    if (_currentStatus == 'completed') {
       _loadCompletedRecord();
     }
   }
@@ -1732,7 +1869,7 @@ class _MobileExaminationScreenState extends State<MobileExaminationScreen> {
     final payload = {
       'appointment_id': int.parse(widget.appointment.id),
       'patient_id': int.parse(widget.appointment.patientId),
-      'doctor_id': int.parse(widget.appointment.doctorId),
+      'doctor_id': widget.appointment.doctorId,
       'diagnosis': _diagnosisCtrl.text.trim(),
       'treatment': _treatmentCtrl.text.trim(),
       'prescription': prescriptionText.isEmpty ? null : prescriptionText,
@@ -1887,6 +2024,114 @@ class _MobileExaminationScreenState extends State<MobileExaminationScreen> {
     );
   }
 
+  Future<void> _startExaminationMobile() async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    try {
+      await BookingService.updateStatus(widget.appointment.id, 'in_progress');
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Bắt đầu khám ca này!'),
+          backgroundColor: Colors.teal,
+        ),
+      );
+      setState(() {
+        _currentStatus = 'in_progress';
+      });
+      if (widget.onStatusChanged != null) {
+        widget.onStatusChanged!();
+      }
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Không thể bắt đầu ca khám: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Widget _buildStartExaminationSectionMobile() {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.play_circle_outline,
+              size: 64,
+              color: Color(0xFF0F766E),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Bệnh nhân đang chờ khám',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F766E),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Bệnh nhân đã làm thủ tục check-in và đang đợi bác sĩ.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+            ),
+            if (widget.appointment.symptoms != null &&
+                widget.appointment.symptoms!.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6F7F6),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Triệu chứng lâm sàng: ${widget.appointment.symptoms}',
+                  style: const TextStyle(
+                    color: Color(0xFF0F766E),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: _startExaminationMobile,
+                icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
+                label: const Text(
+                  'Bắt đầu khám',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0F766E),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final patient = widget.appointment.patient;
@@ -1952,7 +2197,10 @@ class _MobileExaminationScreenState extends State<MobileExaminationScreen> {
                       Row(
                         children: [
                           Expanded(
-                            child: _buildInfoItem('Giới tính', patient.gender ?? 'Chưa cập nhật'),
+                            child: _buildInfoItem(
+                              'Giới tính',
+                              patient.gender ?? 'Chưa cập nhật',
+                            ),
                           ),
                           Expanded(
                             child: _buildInfoItem(
@@ -2010,7 +2258,7 @@ class _MobileExaminationScreenState extends State<MobileExaminationScreen> {
             const SizedBox(height: 16),
 
             // CA KHÁM ĐÃ HOÀN THÀNH
-            if (widget.appointment.status == 'completed') ...[
+            if (_currentStatus == 'completed') ...[
               if (_isLoadingRecord)
                 const Center(
                   child: Padding(
@@ -2073,7 +2321,7 @@ class _MobileExaminationScreenState extends State<MobileExaminationScreen> {
                         _buildRecordDetailItemMobile(
                           'Chẩn đoán lâm sàng',
                           _completedRecord!.diagnosis,
-                          Icons.search,
+                          Icons.medical_services,
                         ),
                         const Divider(height: 20),
                         _buildRecordDetailItemMobile(
@@ -2134,7 +2382,9 @@ class _MobileExaminationScreenState extends State<MobileExaminationScreen> {
                 ),
             ]
             // CA KHÁM CHƯA HOÀN THÀNH (FORM NHẬP LIỆU)
-            else
+            else if (_currentStatus == 'checked_in') ...[
+              _buildStartExaminationSectionMobile(),
+            ] else
               Form(
                 key: _formKey,
                 child: Column(

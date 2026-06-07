@@ -15,6 +15,8 @@ from routers.appointment_router import router as appointment_router
 from routers.medical_record_router import router as medical_record_router
 from routers.leave_request_router import router as leave_request_router
 from routers.booking_router import router as booking_router
+from routers.reports_router import router as reports_router
+from routers.user import router as user_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -81,6 +83,8 @@ app.include_router(work_shift_router)
 app.include_router(doctor_work_schedule)
 app.include_router(leave_request_router)
 app.include_router(booking_router)
+app.include_router(reports_router)
+app.include_router(user_router)
 @app.get("/")
 def home():
     return {

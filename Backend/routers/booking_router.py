@@ -13,8 +13,9 @@ from schemas.booking import (
     BookingCreate,
     BookingUpdate,
     BookingOut,
+    BookingPay,
 )
-from dependencies import get_current_user
+from dependencies import get_current_user, get_current_doctor
 from models.user import User
 
 router = APIRouter(
@@ -209,6 +210,27 @@ def get_booking_stats(
 
 
 # ==========================================
+# LẤY DANH SÁCH CA KHÁM HÔM NAY CỦA BÁC SĨ (Doctor)
+# ==========================================
+@router.get("/doctor/today", response_model=List[BookingOut])
+def get_doctor_today_bookings(
+    db: Session = Depends(get_db),
+    current_doctor: Doctor = Depends(get_current_doctor)
+):
+    from datetime import date
+    today_str = date.today().strftime("%Y-%m-%d")
+    
+    # Chỉ lấy các booking thuộc bác sĩ hiện tại có trạng thái checked_in, in_progress, completed vào ngày hôm nay
+    bookings = db.query(Booking).filter(
+        Booking.doctor_id == current_doctor.id,
+        Booking.booking_date == today_str,
+        Booking.status.in_(["checked_in", "in_progress", "completed"])
+    ).order_by(Booking.id.asc()).all()
+    
+    return bookings
+
+
+# ==========================================
 # XEM CHI TIẾT BOOKING
 # ==========================================
 @router.get("/{booking_id}", response_model=BookingOut)
@@ -242,6 +264,19 @@ def update_booking_status(
             status_code=404,
             detail="Không tìm thấy lịch đặt khám"
         )
+
+    # Chặn quyền của Nhân viên (Staff) khi cố tình chuyển trạng thái sang Đang khám/Hoàn thành hoặc sửa ca đang khám/hoàn thành
+    if current_user.role == "staff":
+        if status_update in ["in_progress", "completed"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Nhân viên không được phép chuyển trạng thái lịch khám sang Đang khám hoặc Hoàn thành"
+            )
+        if booking.status in ["in_progress", "completed"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Không thể thay đổi trạng thái của ca khám đang tiến hành hoặc đã hoàn thành"
+            )
 
     # Hợp lệ hóa trạng thái
     valid_statuses = ["pending", "confirmed", "completed", "cancelled", "checked_in", "in_progress"]
@@ -305,6 +340,19 @@ def update_booking(
             detail="Không tìm thấy lịch đặt khám"
         )
 
+    # Chặn quyền của Nhân viên (Staff)
+    if current_user.role == "staff":
+        if payload.status is not None and payload.status in ["in_progress", "completed"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Nhân viên không được phép chuyển trạng thái lịch khám sang Đang khám hoặc Hoàn thành"
+            )
+        if booking.status in ["in_progress", "completed"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Không thể chỉnh sửa thông tin của ca khám đang tiến hành hoặc đã hoàn thành"
+            )
+
     if payload.booking_date is not None:
         booking.booking_date = payload.booking_date
     if payload.time_slot is not None:
@@ -327,6 +375,36 @@ def update_booking(
                 detail="Không tìm thấy thông tin bác sĩ"
             )
         booking.doctor_id = payload.doctor_id
+
+    db.commit()
+    db.refresh(booking)
+    return booking
+
+
+# ==========================================
+# CẬP NHẬT THANH TOÁN (Staff/Admin)
+# ==========================================
+@router.put("/{booking_id}/pay", response_model=BookingOut)
+def pay_booking(
+    booking_id: int,
+    payload: BookingPay,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(
+            status_code=404,
+            detail="Không tìm thấy lịch đặt khám"
+        )
+
+    booking.payment_status = "paid"
+    booking.payment_method = payload.payment_method
+    booking.discount_amount = payload.discount_amount
+    booking.total_amount = payload.total_amount
+    
+    from datetime import datetime
+    booking.payment_time = datetime.utcnow()
 
     db.commit()
     db.refresh(booking)

@@ -29,7 +29,7 @@ class MedicalRecord(Base):
     id = Column(Integer, primary_key=True, index=True)
     appointment_id = Column(
         Integer,
-        ForeignKey("appointments.id", ondelete="CASCADE"),
+        ForeignKey("bookings.id", ondelete="CASCADE"),
         unique=True,
         nullable=False
     )
@@ -55,7 +55,7 @@ class MedicalRecord(Base):
     # Quan hệ với các bảng khác để dễ dàng query
     patient = relationship("Patient")
     doctor = relationship("Doctor")
-    appointment = relationship("Appointment")
+    appointment = relationship("Booking", back_populates="medical_record")
     
     # Quan hệ nhiều-nhiều với Dịch vụ nha khoa chỉ định thêm
     indicated_services = relationship(

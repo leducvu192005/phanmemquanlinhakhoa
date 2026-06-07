@@ -103,8 +103,6 @@ class _BookingScreenState extends State<BookingScreen> {
     {'value': '7', 'label': 'Chủ Nhật', 'short': 'CN'},
   ];
 
-
-
   // Filters doctor work schedules based on user selection
   List<DoctorWorkSchedule> get _filteredSchedules {
     final now = DateTime.now();
@@ -125,7 +123,8 @@ class _BookingScreenState extends State<BookingScreen> {
       // 4. Filter by weekday
       if (_selectedDateFilter != 'all') {
         final weekdayVal = int.tryParse(_selectedDateFilter);
-        if (weekdayVal != null && s.workDate.weekday != weekdayVal) return false;
+        if (weekdayVal != null && s.workDate.weekday != weekdayVal)
+          return false;
       }
 
       // 5. Filter by shift type

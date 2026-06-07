@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from db import get_db
 from models.medical_record import MedicalRecord
-from models.appointment import Appointment
+from models.booking import Booking
 from models.patient import Patient
 from models.doctor import Doctor
 from models.service import Service
@@ -34,9 +34,9 @@ def create_medical_record(
     db: Session = Depends(get_db),
     current_doctor: Doctor = Depends(get_current_doctor)
 ):
-    # 1. Kiểm tra tồn tại ca khám (Appointment)
-    appointment = db.query(Appointment).filter(
-        Appointment.id == payload.appointment_id
+    # 1. Kiểm tra tồn tại ca khám (Booking)
+    appointment = db.query(Booking).filter(
+        Booking.id == payload.appointment_id
     ).first()
 
     if not appointment:
@@ -65,24 +65,28 @@ def create_medical_record(
         follow_up_date=payload.follow_up_date
     )
 
-    # 4. Chỉ định dịch vụ bổ sung nếu có
+    # 4. Chỉ định dịch vụ bổ sung nếu có và tính tổng tiền
+    calculated_amount = 0.0
     if payload.indicated_service_ids:
         services = db.query(Service).filter(
             Service.id.in_(payload.indicated_service_ids)
         ).all()
         new_record.indicated_services.extend(services)
+        calculated_amount = sum(s.price for s in services)
 
-    # 5. Cập nhật trạng thái ca khám thành "completed"
+    # 5. Cập nhật trạng thái ca khám thành "completed" và thiết lập thanh toán
     appointment.status = "completed"
-    appointment.updated_at = datetime_now = datetime_now_placeholder = Appointment.updated_at.type.python_type() if hasattr(Appointment.updated_at.type, 'python_type') else None
+    appointment.payment_status = "unpaid"
+    appointment.total_amount = calculated_amount
+    
+    from datetime import datetime
+    datetime_now = datetime.utcnow()
+    appointment.updated_at = datetime_now
     
     # Cập nhật thời điểm cuối cùng ghé thăm của bệnh nhân
-    patient.last_visit = datetime_now or Patient.last_visit.type.python_type() if hasattr(Patient.last_visit.type, 'python_type') else None
+    patient.last_visit = datetime_now
     if hasattr(new_record, 'created_at') and not new_record.created_at:
-        from datetime import datetime
-        new_record.created_at = datetime.utcnow()
-        appointment.updated_at = datetime.utcnow()
-        patient.last_visit = datetime.utcnow()
+        new_record.created_at = datetime_now
 
     db.add(new_record)
     db.commit()

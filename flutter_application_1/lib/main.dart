@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'admin/dashboard.dart';
+import 'admin/layout_admin.dart';
 import 'login.dart';
 import 'doctor/dashboard.dart';
 import 'patient/dashboard.dart';
@@ -26,9 +27,12 @@ class DentalApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.grey[100],
       ),
       routes: {
-        '/admin': (_) => const AdminDashboard(),
+        '/admin': (_) => const AdminLayout(),
+        '/admin/revenue': (_) => const AdminLayout(initialIndex: 5),
+        '/admin/role-management': (_) => const AdminLayout(initialIndex: 6),
         '/doctor': (_) => const DoctorDashboard(),
         '/staff': (_) => const LayoutStaff(),
+        '/staff/payments': (_) => const LayoutStaff(initialIndex: 4),
         '/patient': (_) => const PatientDashboard(),
         '/login': (_) => const LoginPage(),
       },
@@ -69,7 +73,7 @@ class _AuthGateState extends State<AuthGate> {
     if (_loading)
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     if (_role == null) return const LoginPage();
-    if (_role == 'admin') return const AdminDashboard();
+    if (_role == 'admin') return const AdminLayout();
     if (_role == 'doctor') return const DoctorDashboard();
     if (_role == 'staff') return const LayoutStaff();
     return const PatientDashboard();

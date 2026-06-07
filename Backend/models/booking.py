@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
@@ -31,6 +31,17 @@ class Booking(Base):
         nullable=False
     )  # pending, confirmed, completed, cancelled, checked_in, in_progress
 
+    # Payment details
+    payment_status = Column(
+        String(20),
+        default="unpaid",
+        nullable=False
+    )  # unpaid, paid
+    payment_method = Column(String(50), nullable=True)
+    payment_time = Column(DateTime, nullable=True)
+    discount_amount = Column(Float, default=0.0, nullable=False)
+    total_amount = Column(Float, default=0.0, nullable=False)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(
         DateTime,
@@ -41,3 +52,10 @@ class Booking(Base):
     # Relationships
     patient = relationship("Patient")
     doctor = relationship("Doctor")
+    medical_record = relationship("MedicalRecord", back_populates="appointment", uselist=False)
+
+    @property
+    def services(self):
+        if self.medical_record:
+            return self.medical_record.indicated_services
+        return []

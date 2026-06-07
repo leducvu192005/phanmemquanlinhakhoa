@@ -6,17 +6,27 @@ import 'patient_management_screen.dart';
 import 'pricing_screen.dart';
 import 'service_management_screen.dart';
 import 'doctor_management.dart'; // Chứa AdminDashboard quản lý bác sĩ
+import 'revenue_screen.dart';
+import 'role_management_screen.dart';
+
 
 class AdminLayout extends StatefulWidget {
-  const AdminLayout({super.key});
+  final int initialIndex;
+  const AdminLayout({super.key, this.initialIndex = 0});
 
   @override
   State<AdminLayout> createState() => _AdminLayoutState();
 }
 
 class _AdminLayoutState extends State<AdminLayout> {
-  int selectedIndex = 0; // Mặc định hiển thị trang đầu tiên (Dashboard)
+  late int selectedIndex;
   final _storage = const FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    selectedIndex = widget.initialIndex;
+  }
 
   final Color primaryTeal = const Color(0xFF00A896);
 
@@ -56,6 +66,8 @@ class _AdminLayoutState extends State<AdminLayout> {
       PatientManagementContent(), // Index 2: Quản lý Bệnh nhân
       ServiceManagementScreen(), // Index 3: Quản lý Dịch vụ
       PricingScreen(), // Index 4: Cấu hình Bảng giá
+      AdminRevenueScreen(), // Index 5: Thống kê doanh thu
+      const RoleManagementScreen(), // Index 6: Quản lý phân quyền
     ];
 
     return Scaffold(
@@ -169,6 +181,28 @@ class _AdminLayoutState extends State<AdminLayout> {
                         selected: selectedIndex == 4,
                         onTap: () {
                           setState(() => selectedIndex = 4);
+                        },
+                      ),
+
+                      // 6. THỐNG KÊ DOANH THU
+                      _SidebarItem(
+                        icon: Icons.analytics_outlined,
+                        label: 'Thống kê doanh thu',
+                        wide: isWide,
+                        selected: selectedIndex == 5,
+                        onTap: () {
+                          setState(() => selectedIndex = 5);
+                        },
+                      ),
+
+                      // 7. QUẢN LÝ PHÂN QUYỀN
+                      _SidebarItem(
+                        icon: Icons.admin_panel_settings_outlined,
+                        label: 'Quản lý phân quyền',
+                        wide: isWide,
+                        selected: selectedIndex == 6,
+                        onTap: () {
+                          setState(() => selectedIndex = 6);
                         },
                       ),
                     ],

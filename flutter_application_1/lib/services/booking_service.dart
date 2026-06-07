@@ -161,4 +161,17 @@ class BookingService {
       throw Exception('Không thể cập nhật lịch đặt: ${response.body}');
     }
   }
+
+  // Lấy danh sách ca khám hôm nay của bác sĩ đang đăng nhập
+  static Future<List<Booking>> getDoctorTodayBookings() async {
+    final url = Uri.parse('$baseUrl/doctor/today');
+    final response = await http.get(url, headers: await _headers());
+
+    if (response.statusCode == 200) {
+      final List data = json.decode(utf8.decode(response.bodyBytes));
+      return data.map((e) => Booking.fromJson(e)).toList();
+    } else {
+      throw Exception('Không thể lấy lịch khám hôm nay của bác sĩ: ${response.statusCode}');
+    }
+  }
 }

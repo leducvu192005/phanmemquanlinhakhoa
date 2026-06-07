@@ -1,21 +1,125 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart'; // Dùng để vẽ biểu đồ doanh thu xịn xò
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
+import '../models/booking_model.dart';
+import '../services/booking_service.dart';
+import 'revenue_service.dart';
+import 'revenue_model.dart';
 
 class DentalAdminDashboard extends StatefulWidget {
+  const DentalAdminDashboard({super.key});
+
   @override
-  _DentalAdminDashboardState createState() => _DentalAdminDashboardState();
+  State<DentalAdminDashboard> createState() => _DentalAdminDashboardState();
 }
 
 class _DentalAdminDashboardState extends State<DentalAdminDashboard> {
-  // Hệ màu cao cấp chuyên biệt cho Nha Khoa (Teal Modern)
+  // Brand color palette (Teal Modern)
   final Color primaryTeal = const Color(0xFF00A896);
   final Color darkTeal = const Color(0xFF028090);
   final Color lightTeal = const Color(0xFFF0FDFA);
   final Color bgGrey = const Color(0xFFF8FAFC);
   final Color accentOrange = const Color(0xFFF59E0B);
 
+  bool _isLoading = true;
+  String? _error;
+
+  // Real Database statistics
+  int _todayBookingsCount = 0;
+  int _pendingBookingsCount = 0;
+  double _todayRevenue = 0.0;
+  double _monthRevenue = 0.0;
+
+  List<Booking> _todayBookingsList = [];
+  List<DailyRevenue> _chartRevenueTrend = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDashboardData();
+  }
+
+  Future<void> _fetchDashboardData() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+      // 1. Fetch Today's Bookings
+      final bookings = await BookingService.getAllBookings(dateStr: todayStr);
+      _todayBookingsList = bookings;
+      _todayBookingsCount = bookings.length;
+
+      // 2. Fetch Booking stats summary for pending appointments count
+      final stats = await BookingService.getStatsSummary();
+      _pendingBookingsCount = (stats['all']?['pending'] as num?)?.toInt() ?? 0;
+
+      // 3. Fetch Revenue statistics (for last 7 days / current month)
+      final report = await RevenueService.fetchRevenueReport();
+      _todayRevenue = report.todayRevenue;
+      _monthRevenue = report.monthRevenue;
+      _chartRevenueTrend = report.dailyRevenue;
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  String _formatCurrency(double amount) {
+    return NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0).format(amount);
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return accentOrange;
+      case 'confirmed':
+        return Colors.blue;
+      case 'checked_in':
+        return Colors.indigo;
+      case 'in_progress':
+        return Colors.purple;
+      case 'completed':
+        return primaryTeal;
+      case 'cancelled':
+        return Colors.redAccent;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _getStatusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Chờ duyệt';
+      case 'confirmed':
+        return 'Đã duyệt';
+      case 'checked_in':
+        return 'Đã check-in';
+      case 'in_progress':
+        return 'Đang khám';
+      case 'completed':
+        return 'Hoàn thành';
+      case 'cancelled':
+        return 'Đã hủy';
+      default:
+        return status;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool isWide = MediaQuery.of(context).size.width > 900;
+
     return Scaffold(
       backgroundColor: bgGrey,
       appBar: AppBar(
@@ -26,7 +130,7 @@ class _DentalAdminDashboardState extends State<DentalAdminDashboard> {
               'Tổng quan hệ thống',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: Colors.black87,
                 fontSize: 18,
               ),
             ),
@@ -44,21 +148,18 @@ class _DentalAdminDashboardState extends State<DentalAdminDashboard> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: Badge(
-              label: const Text('3'),
-              child: Icon(
-                Icons.notifications_none_rounded,
-                color: Colors.grey[700],
-              ),
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: Colors.grey,
             ),
-            onPressed: () {},
+            onPressed: _fetchDashboardData,
           ),
           const SizedBox(width: 8),
           const CircleAvatar(
             radius: 18,
             backgroundColor: Color(0xFF00A896),
             child: Text(
-              'V',
+              'A',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -68,99 +169,105 @@ class _DentalAdminDashboardState extends State<DentalAdminDashboard> {
           const SizedBox(width: 16),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. CÁC THẺ KPI STATS (GRID VIEW)
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              // Tăng tỉ lệ này lên giúp các ô lưới dẹt lại, fit vừa vặn với card nhỏ
-              childAspectRatio: 2.1,
-              children: [
-                _buildStatCard(
-                  title: 'Hẹn hôm nay',
-                  value: '42',
-                  icon: Icons.calendar_today_rounded,
-                  color: primaryTeal,
-                  trending: '+12% so với hôm qua',
-                ),
-                _buildStatCard(
-                  title: 'Khách hàng mới',
-                  value: '18',
-                  icon: Icons.people_alt_rounded,
-                  color: darkTeal,
-                  trending: '+5% tuần này',
-                ),
-                _buildStatCard(
-                  title: 'Doanh thu (đ)',
-                  value: '24.5M',
-                  icon: Icons.analytics_rounded,
-                  color: accentOrange,
-                  trending: 'Mục tiêu đạt 85%',
-                ),
-                _buildStatCard(
-                  title: 'Ghế trống',
-                  value: '3/5',
-                  icon: Icons.airline_seat_flat_angled_rounded,
-                  color: Colors.blue,
-                  trending: 'Hiệu suất: 60%',
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator(color: primaryTeal))
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline_rounded, size: 48, color: Colors.redAccent),
+                      const SizedBox(height: 12),
+                      Text('Không thể tải dữ liệu: $_error'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: primaryTeal),
+                        onPressed: _fetchDashboardData,
+                        child: const Text('Thử lại', style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. STATS KPI CARDS GRID
+                      _buildStatsGrid(isWide),
+                      const SizedBox(height: 24),
 
-            // 2. BIỂU ĐỒ DOANH THU TUẦN
-            const Text(
-              'Xu hướng doanh thu tuần',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _buildChartCard(),
-            const SizedBox(height: 24),
-
-            // 3. DANH SÁCH LỊCH HẸN GẦN NHẤT
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Lịch hẹn sắp tới',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                      // 2. CHART & QUEUE LIST VIEWPORT
+                      isWide
+                          ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(flex: 3, child: _buildChartCard()),
+                                const SizedBox(width: 16),
+                                Expanded(flex: 2, child: _buildQueueCard()),
+                              ],
+                            )
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildChartCard(),
+                                const SizedBox(height: 24),
+                                _buildQueueCard(),
+                              ],
+                            ),
+                    ],
                   ),
                 ),
-                TextButton(
-                  onPressed: () {},
-                  child: Text(
-                    'Xem tất cả',
-                    style: TextStyle(
-                      color: darkTeal,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            _buildAppointmentList(),
-          ],
-        ),
-      ),
     );
   }
 
-  // Widget dựng thẻ thống kê nhanh (KPI) - ĐÃ ĐƯỢC THU NHỎ GỌN GÀNG
+  Widget _buildStatsGrid(bool isWide) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final double width = constraints.maxWidth;
+      final int crossAxisCount = width > 1100 ? 4 : (width > 600 ? 2 : 1);
+      final double childAspectRatio = width > 1100 ? 2.3 : 2.0;
+
+      return GridView.count(
+        crossAxisCount: crossAxisCount,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: childAspectRatio,
+        children: [
+          _buildStatCard(
+            title: 'HẸN HÔM NAY',
+            value: '$_todayBookingsCount',
+            icon: Icons.calendar_today_rounded,
+            color: Colors.blue,
+            trending: 'Số ca đặt khám của ngày hôm nay',
+          ),
+          _buildStatCard(
+            title: 'DOANH THU HÔM NAY',
+            value: _formatCurrency(_todayRevenue),
+            icon: Icons.monetization_on_rounded,
+            color: primaryTeal,
+            trending: 'Thực thu sau khi trừ giảm giá',
+          ),
+          _buildStatCard(
+            title: 'DOANH THU THÁNG NÀY',
+            value: _formatCurrency(_monthRevenue),
+            icon: Icons.analytics_rounded,
+            color: darkTeal,
+            trending: 'Thống kê lũy kế tháng hiện tại',
+          ),
+          _buildStatCard(
+            title: 'HẸN CHỜ DUYỆT',
+            value: '$_pendingBookingsCount',
+            icon: Icons.pending_actions_rounded,
+            color: accentOrange,
+            trending: 'Lịch hẹn mới cần phê duyệt',
+          ),
+        ],
+      );
+    });
+  }
+
   Widget _buildStatCard({
     required String title,
     required String value,
@@ -169,50 +276,41 @@ class _DentalAdminDashboardState extends State<DentalAdminDashboard> {
     required String trending,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment:
-            MainAxisAlignment.spaceBetween, // Phân bổ đều không gian dọc
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 11, // Chữ tiêu đề nhỏ gọn
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              Text(
+                title,
+                style: TextStyle(
+                  color: Colors.grey[500],
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(width: 4),
               Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 13, // Icon mini tinh tế
-                ),
+                child: Icon(icon, color: color, size: 20),
               ),
             ],
           ),
@@ -222,18 +320,17 @@ class _DentalAdminDashboardState extends State<DentalAdminDashboard> {
               Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 16, // Số liệu rõ ràng nhưng vừa vặn
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
-                  height: 1.1,
                 ),
               ),
-              const SizedBox(height: 1),
+              const SizedBox(height: 4),
               Text(
                 trending,
                 style: TextStyle(
                   color: Colors.grey[400],
-                  fontSize: 8.5, // Dòng xu hướng nhỏ phía dưới
+                  fontSize: 10,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -245,158 +342,296 @@ class _DentalAdminDashboardState extends State<DentalAdminDashboard> {
     );
   }
 
-  // Widget dựng biểu đồ đường (LineChart)
   Widget _buildChartCard() {
+    if (_chartRevenueTrend.isEmpty) {
+      return Container(
+        height: 300,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Center(child: Text('Không có dữ liệu xu hướng doanh thu.')),
+      );
+    }
+
+    final List<FlSpot> spots = [];
+    double maxRevenue = 1000000;
+
+    for (int i = 0; i < _chartRevenueTrend.length; i++) {
+      final rev = _chartRevenueTrend[i].revenue;
+      if (rev > maxRevenue) maxRevenue = rev;
+      spots.add(FlSpot(i.toDouble(), rev));
+    }
+
     return Container(
-      height: 200,
-      padding: const EdgeInsets.fromLTRB(12, 24, 24, 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: LineChart(
-        LineChartData(
-          gridData: const FlGridData(show: false),
-          titlesData: FlTitlesData(
-            rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Xu hướng doanh thu theo ngày',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  const days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-                  if (value.toInt() >= 0 && value.toInt() < days.length) {
-                    return Text(
-                      days[value.toInt()],
-                      style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                    );
-                  }
-                  return const Text('');
-                },
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 232,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: Colors.grey[100]!,
+                    strokeWidth: 1,
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        final int idx = value.toInt();
+                        if (idx >= 0 && idx < _chartRevenueTrend.length) {
+                          final dateParsed = DateTime.tryParse(_chartRevenueTrend[idx].date);
+                          if (dateParsed != null) {
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                DateFormat('dd/MM').format(dateParsed),
+                                style: TextStyle(color: Colors.grey[500], fontSize: 10),
+                              ),
+                            );
+                          }
+                        }
+                        return const Text('');
+                      },
+                      reservedSize: 28,
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        if (value == 0) return const Text('0');
+                        if (value >= 1000000) {
+                          return Text('${(value / 1000000).toStringAsFixed(1)}M');
+                        }
+                        return Text('${(value / 1000).toStringAsFixed(0)}k');
+                      },
+                      reservedSize: 40,
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    isCurved: true,
+                    color: primaryTeal,
+                    barWidth: 3.5,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                        radius: 4.5,
+                        color: Colors.white,
+                        strokeColor: primaryTeal,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: primaryTeal.withOpacity(0.1),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          borderData: FlBorderData(show: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: [
-                const FlSpot(0, 10),
-                const FlSpot(1, 15),
-                const FlSpot(2, 12),
-                const FlSpot(3, 24),
-                const FlSpot(4, 18),
-                const FlSpot(5, 28),
-                const FlSpot(6, 22),
-              ],
-              isCurved: true,
-              color: primaryTeal,
-              barWidth: 4,
-              isStrokeCapRound: true,
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(
-                show: true,
-                color: primaryTeal.withOpacity(0.1),
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
 
-  // Widget dựng danh sách hàng đợi / lịch hẹn
-  Widget _buildAppointmentList() {
-    final appointments = [
-      {
-        'name': 'Nguyễn Văn A',
-        'time': '09:00',
-        'service': 'Nhổ răng khôn',
-        'status': 'Đang đợi',
-      },
-      {
-        'name': 'Trần Thị B',
-        'time': '10:30',
-        'service': 'Bọc răng sứ',
-        'status': 'Đang khám',
-      },
-      {
-        'name': 'Lê Văn C',
-        'time': '14:00',
-        'service': 'Niềng răng kiểm tra',
-        'status': 'Đã hẹn',
-      },
-    ];
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: appointments.length,
-      itemBuilder: (context, index) {
-        final item = appointments[index];
-        Color statusColor = primaryTeal;
-        if (item['status'] == 'Đang khám') statusColor = accentOrange;
-        if (item['status'] == 'Đã hẹn') statusColor = Colors.blue;
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[100]!),
+  Widget _buildQueueCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 6,
-            ),
-            leading: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: lightTeal,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.person_outline_rounded, color: primaryTeal),
-            ),
-            title: Text(
-              item['name']!,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                '${item['time']} | ${item['service']}',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
-              ),
-            ),
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                item['status']!,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Lịch hẹn hôm nay',
                 style: TextStyle(
-                  color: statusColor,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  fontSize: 12,
+                  color: Colors.black87,
                 ),
               ),
-            ),
+              if (_todayBookingsList.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${_todayBookingsList.length} ca',
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+            ],
           ),
-        );
-      },
+          const SizedBox(height: 16),
+          if (_todayBookingsList.isEmpty)
+            Container(
+              height: 200,
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.event_busy_rounded,
+                    size: 48,
+                    color: Colors.grey[300],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Không có ca khám nào hôm nay',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                  ),
+                ],
+              ),
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _todayBookingsList.length > 5 ? 5 : _todayBookingsList.length,
+              itemBuilder: (context, index) {
+                final b = _todayBookingsList[index];
+                final statusColor = _getStatusColor(b.status);
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: bgGrey,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[100]!),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: lightTeal,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.person_outline_rounded,
+                          color: primaryTeal,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              b.patient?.fullName ?? 'Bệnh nhân ẩn danh',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: Colors.black87,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Bác sĩ: ${b.doctor?.fullName ?? "Chưa chỉ định"}',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 11,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              b.timeSlot,
+                              style: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 10,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _getStatusLabel(b.status),
+                          style: TextStyle(
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
     );
   }
 }

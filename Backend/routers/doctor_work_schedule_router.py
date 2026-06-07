@@ -14,6 +14,7 @@ from schemas.doctor_work_schedule import (
     DoctorWorkScheduleUpdate,
     DoctorWorkScheduleResponse
 )
+from dependencies import get_current_doctor
 
 router = APIRouter(
     prefix="/doctor-work-schedules",
@@ -129,6 +130,110 @@ def get_all_schedules(
     )
 
     return [_format_schedule_response(schedule, db) for schedule in schedules]
+
+
+# ==========================================
+# LẤY LỊCH TRỰC CHO CALENDAR BÁC SĨ
+# ==========================================
+@router.get("/calendar")
+def get_doctor_calendar_schedules(
+    db: Session = Depends(get_db),
+    current_doctor: Doctor = Depends(get_current_doctor)
+):
+    from models.work_shift import WorkShift
+    from models.booking import Booking
+    from models.patient import Patient
+    from models.leave_request import LeaveRequest
+    from models.user import User
+    from datetime import datetime, timedelta
+
+    # 1. Query all work schedules for the current doctor
+    schedules = db.query(DoctorWorkSchedule).filter(
+        DoctorWorkSchedule.doctor_id == current_doctor.id
+    ).all()
+
+    calendar_items = []
+
+    # Map work schedules
+    for s in schedules:
+        # Get shift details
+        shift = db.query(WorkShift).filter(WorkShift.id == s.work_shift_id).first()
+        if not shift:
+            continue
+        
+        # Format timeslot string to match booking's time_slot
+        start_t_str = shift.start_time.strftime("%H:%M")
+        end_t_str = shift.end_time.strftime("%H:%M")
+        slot_str = f"{shift.shift_name} ({start_t_str} - {end_t_str})"
+        
+        # Get bookings for this schedule to count and get patient names
+        bookings = db.query(Booking).filter(
+            Booking.doctor_id == current_doctor.id,
+            Booking.booking_date == str(s.work_date),
+            Booking.time_slot == slot_str,
+            Booking.status != "cancelled"
+        ).all()
+        
+        patient_names = []
+        for b in bookings:
+            patient = db.query(Patient).filter(Patient.id == b.patient_id).first()
+            if patient:
+                patient_names.append(patient.full_name)
+                
+        # Determine shift type (morning, afternoon, evening)
+        name_lower = shift.shift_name.lower()
+        if "sáng" in name_lower:
+            shift_type = "morning"
+        elif "chiều" in name_lower or "trưa" in name_lower:
+            shift_type = "afternoon"
+        elif "tối" in name_lower:
+            shift_type = "evening"
+        else:
+            shift_type = "morning"
+
+        calendar_items.append({
+            "id": s.id,
+            "date": str(s.work_date),
+            "shift": shift_type,
+            "shift_name": shift.shift_name,
+            "start_time": start_t_str,
+            "end_time": end_t_str,
+            "max_patients": s.max_patients,
+            "current_patients": len(bookings),
+            "status": "working",
+            "patients": patient_names
+        })
+
+    # 2. Query all approved leave requests for this doctor
+    # Find doctor's user id from user email
+    user = db.query(User).filter(User.email == current_doctor.email).first()
+    if user:
+        leaves = db.query(LeaveRequest).filter(
+            LeaveRequest.user_id == user.id,
+            LeaveRequest.status == "Approved"
+        ).all()
+
+        for l in leaves:
+            # Generate calendar entries for each date in the leave range
+            current_date = l.start_date
+            while current_date <= l.end_date:
+                calendar_items.append({
+                    "id": f"leave-{l.id}-{str(current_date)}",
+                    "date": str(current_date),
+                    "shift": "leave",
+                    "shift_name": "Nghỉ phép",
+                    "start_time": "08:00",
+                    "end_time": "21:00",
+                    "max_patients": 0,
+                    "current_patients": 0,
+                    "status": "leave",
+                    "patients": [],
+                    "leave_type": l.leave_type,
+                    "reason": l.reason
+                })
+                current_date += timedelta(days=1)
+
+    return calendar_items
 
 
 # ==========================================
