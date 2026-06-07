@@ -174,11 +174,18 @@ def get_doctor_calendar_schedules(
             Booking.status != "cancelled"
         ).all()
         
-        patient_names = []
+        patient_details = []
         for b in bookings:
             patient = db.query(Patient).filter(Patient.id == b.patient_id).first()
             if patient:
-                patient_names.append(patient.full_name)
+                patient_details.append({
+                    "name": patient.full_name,
+                    "phone": patient.phone,
+                    "gender": patient.gender,
+                    "dob": str(patient.date_of_birth) if patient.date_of_birth else None,
+                    "symptoms": b.symptoms or "Không có triệu chứng ghi nhận",
+                    "status": b.status
+                })
                 
         # Determine shift type (morning, afternoon, evening)
         name_lower = shift.shift_name.lower()
@@ -201,7 +208,7 @@ def get_doctor_calendar_schedules(
             "max_patients": s.max_patients,
             "current_patients": len(bookings),
             "status": "working",
-            "patients": patient_names
+            "patients": patient_details
         })
 
     # 2. Query all approved leave requests for this doctor

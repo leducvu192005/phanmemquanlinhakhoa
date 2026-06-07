@@ -1,3 +1,43 @@
+class CalendarPatientDetail {
+  final String name;
+  final String phone;
+  final String? gender;
+  final String? dob;
+  final String symptoms;
+  final String status;
+
+  CalendarPatientDetail({
+    required this.name,
+    required this.phone,
+    this.gender,
+    this.dob,
+    required this.symptoms,
+    required this.status,
+  });
+
+  factory CalendarPatientDetail.fromJson(Map<String, dynamic> json) {
+    return CalendarPatientDetail(
+      name: json['name'] ?? '',
+      phone: json['phone'] ?? '',
+      gender: json['gender'],
+      dob: json['dob'],
+      symptoms: json['symptoms'] ?? '',
+      status: json['status'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'phone': phone,
+      'gender': gender,
+      'dob': dob,
+      'symptoms': symptoms,
+      'status': status,
+    };
+  }
+}
+
 class DoctorCalendarItem {
   final String id;
   final String date;
@@ -8,7 +48,7 @@ class DoctorCalendarItem {
   final int maxPatients;
   final int currentPatients;
   final String status;
-  final List<String> patients;
+  final List<CalendarPatientDetail> patients;
   final String? leaveType;
   final String? reason;
 
@@ -39,7 +79,16 @@ class DoctorCalendarItem {
       currentPatients: json['current_patients'] ?? 0,
       status: json['status'] ?? 'working',
       patients: json['patients'] != null
-          ? List<String>.from(json['patients'])
+          ? (json['patients'] as List)
+              .map((e) => e is Map<String, dynamic>
+                  ? CalendarPatientDetail.fromJson(e)
+                  : CalendarPatientDetail(
+                      name: e.toString(),
+                      phone: '',
+                      symptoms: '',
+                      status: '',
+                    ))
+              .toList()
           : const [],
       leaveType: json['leave_type'],
       reason: json['reason'],
@@ -57,7 +106,7 @@ class DoctorCalendarItem {
       'max_patients': maxPatients,
       'current_patients': currentPatients,
       'status': status,
-      'patients': patients,
+      'patients': patients.map((e) => e.toJson()).toList(),
       'leave_type': leaveType,
       'reason': reason,
     };

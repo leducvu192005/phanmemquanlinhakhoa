@@ -7,9 +7,58 @@ import 'api.dart';
 class DoctorWorkScheduleService {
   String get baseUrl => Api.baseUrl;
 
-  // =========================
-  // GET ALL
-  // =========================
+  Future<List<DoctorWorkSchedule>> getScheduleByRange({
+    String? doctorId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final startStr = startDate.toIso8601String().split('T')[0];
+    final endStr = endDate.toIso8601String().split('T')[0];
+
+    String url =
+        "$baseUrl/doctor-work-schedules/range?start_date=$startStr&end_date=$endStr";
+    if (doctorId != null && doctorId.isNotEmpty) {
+      url += "&doctor_id=$doctorId";
+    }
+
+    final res = await http.get(Uri.parse(url));
+
+    if (res.statusCode == 200) {
+      List data = jsonDecode(utf8.decode(res.bodyBytes));
+      return data.map((e) => DoctorWorkSchedule.fromJson(e)).toList();
+    } else {
+      throw Exception("Failed to load schedules by range");
+    }
+  }
+
+  Future<Map<String, List<DoctorWorkSchedule>>> getMonthlyOverview({
+    required int year,
+    required int month,
+    String? doctorId,
+  }) async {
+    String url =
+        "$baseUrl/doctor-work-schedules/monthly?year=$year&month=$month";
+    if (doctorId != null && doctorId.isNotEmpty) {
+      url += "&doctor_id=$doctorId";
+    }
+
+    final res = await http.get(Uri.parse(url));
+
+    if (res.statusCode == 200) {
+      Map<String, dynamic> data = jsonDecode(utf8.decode(res.bodyBytes));
+
+      return data.map((key, value) {
+        List listJson = value;
+        return MapEntry(
+          key,
+          listJson.map((e) => DoctorWorkSchedule.fromJson(e)).toList(),
+        );
+      });
+    } else {
+      throw Exception("Failed to load monthly overview");
+    }
+  }
+
   Future<List<DoctorWorkSchedule>> getAll() async {
     final res = await http.get(Uri.parse("$baseUrl/doctor-work-schedules/"));
 
@@ -21,9 +70,6 @@ class DoctorWorkScheduleService {
     }
   }
 
-  // =========================
-  // GET OPEN (ca trống)
-  // =========================
   Future<List<DoctorWorkSchedule>> getOpen() async {
     final res = await http.get(
       Uri.parse("$baseUrl/doctor-work-schedules/status/open/list"),
@@ -37,22 +83,18 @@ class DoctorWorkScheduleService {
     }
   }
 
-  // =========================
-  // GET BY ID
-  // =========================
   Future<DoctorWorkSchedule> getById(String id) async {
     final res = await http.get(Uri.parse("$baseUrl/doctor-work-schedules/$id"));
 
     if (res.statusCode == 200) {
-      return DoctorWorkSchedule.fromJson(jsonDecode(utf8.decode(res.bodyBytes)));
+      return DoctorWorkSchedule.fromJson(
+        jsonDecode(utf8.decode(res.bodyBytes)),
+      );
     } else {
       throw Exception("Not found");
     }
   }
 
-  // =========================
-  // CREATE (Admin tạo ca)
-  // =========================
   Future<void> create(DoctorWorkSchedule schedule) async {
     final res = await http.post(
       Uri.parse("$baseUrl/doctor-work-schedules/"),
@@ -65,9 +107,6 @@ class DoctorWorkScheduleService {
     }
   }
 
-  // =========================
-  // UPDATE
-  // =========================
   Future<void> update(String id, Map<String, dynamic> data) async {
     final res = await http.put(
       Uri.parse("$baseUrl/doctor-work-schedules/$id"),
@@ -80,9 +119,6 @@ class DoctorWorkScheduleService {
     }
   }
 
-  // =========================
-  // DELETE
-  // =========================
   Future<void> delete(String id) async {
     final res = await http.delete(
       Uri.parse("$baseUrl/doctor-work-schedules/$id"),
@@ -93,9 +129,6 @@ class DoctorWorkScheduleService {
     }
   }
 
-  // =========================
-  // REGISTER (bác sĩ đăng ký)
-  // =========================
   Future<void> register(String scheduleId, String doctorId) async {
     final res = await http.put(
       Uri.parse(
@@ -108,24 +141,16 @@ class DoctorWorkScheduleService {
     }
   }
 
-  // =========================
-  // UNREGISTER (bác sĩ hủy đăng ký)
-  // =========================
   Future<void> unregister(String scheduleId) async {
     final res = await http.put(
-      Uri.parse(
-        "$baseUrl/doctor-work-schedules/$scheduleId/unregister",
-      ),
+      Uri.parse("$baseUrl/doctor-work-schedules/$scheduleId/unregister"),
     );
 
     if (res.statusCode != 200) {
-      throw Exception("Hủy đăng ký thất bại");
+      throw Exception("Unregister failed");
     }
   }
 
-  // =========================
-  // GET BY DOCTOR
-  // =========================
   Future<List<DoctorWorkSchedule>> getByDoctor(String doctorId) async {
     final res = await http.get(
       Uri.parse("$baseUrl/doctor-work-schedules/doctor/$doctorId"),
@@ -135,7 +160,7 @@ class DoctorWorkScheduleService {
       List data = jsonDecode(utf8.decode(res.bodyBytes));
       return data.map((e) => DoctorWorkSchedule.fromJson(e)).toList();
     } else {
-      throw Exception("Failed");
+      throw Exception("Failed to load doctor schedules");
     }
   }
 }
