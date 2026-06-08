@@ -75,13 +75,13 @@ def create_booking(
         # Cập nhật số bệnh nhân hiện tại trong ca trực
         schedule.current_patients += 1
 
-    # Tạo booking mới
     new_booking = Booking(
         patient_id=payload.patient_id,
         doctor_id=payload.doctor_id,
         booking_date=payload.booking_date,
         time_slot=payload.time_slot,
         symptoms=payload.symptoms,
+        complexity_level=payload.complexity_level or "Thông thường",
         status="pending"
     )
 
@@ -375,6 +375,8 @@ def update_booking(
                 detail="Không tìm thấy thông tin bác sĩ"
             )
         booking.doctor_id = payload.doctor_id
+    if payload.complexity_level is not None:
+        booking.complexity_level = payload.complexity_level
 
     db.commit()
     db.refresh(booking)

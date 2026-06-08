@@ -5,7 +5,8 @@ from sqlalchemy import (
     Boolean,
     Text,
     Date,
-    DateTime
+    DateTime,
+    Float
 )
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
@@ -52,6 +53,8 @@ class Doctor(Base):
     qualification = Column(Text)
 
     experience_years = Column(Integer)
+
+    salary_coefficient = Column(Float, default=1.0, nullable=False)
 
     address = Column(Text)
 

@@ -17,6 +17,7 @@ from routers.leave_request_router import router as leave_request_router
 from routers.booking_router import router as booking_router
 from routers.reports_router import router as reports_router
 from routers.user import router as user_router
+from routers.salary_router import router as salary_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -85,6 +86,7 @@ app.include_router(leave_request_router)
 app.include_router(booking_router)
 app.include_router(reports_router)
 app.include_router(user_router)
+app.include_router(salary_router)
 @app.get("/")
 def home():
     return {

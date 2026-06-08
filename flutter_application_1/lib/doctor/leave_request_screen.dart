@@ -83,9 +83,9 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
   }
 
   Future<void> _loadCurrentUserId() async {
-    final token = await _storage.read(key: 'jwt');
-    if (token != null) {
-      try {
+    try {
+      final token = await _storage.read(key: 'jwt');
+      if (token != null) {
         final parts = token.split('.');
         if (parts.length == 3) {
           String normalized = base64Url.normalize(parts[1]);
@@ -95,9 +95,9 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
             _currentUserId = int.tryParse(payload['sub']?.toString() ?? '');
           });
         }
-      } catch (e) {
-        debugPrint("Error decoding jwt: $e");
       }
+    } catch (e) {
+      debugPrint("Error loading/decoding current user ID: $e");
     }
   }
 

@@ -22,6 +22,7 @@ class Doctor {
   final String? qualification;
 
   final int? experienceYears;
+  final double salaryCoefficient;
 
   final String? address;
 
@@ -45,6 +46,7 @@ class Doctor {
     this.specialty,
     this.qualification,
     this.experienceYears,
+    this.salaryCoefficient = 1.0,
     this.address,
     this.bio,
     required this.status,
@@ -55,39 +57,27 @@ class Doctor {
   factory Doctor.fromJson(Map<String, dynamic> json) {
     return Doctor(
       id: json['id']?.toString() ?? '',
-
       doctorCode: json['doctor_code'] ?? '',
-
       fullName: json['full_name'] ?? '',
-
       gender: json['gender'],
-
-      dateOfBirth: json['date_of_birth'],
-
+      dateOfBirth: json['date_of_birth']?.toString(),
       phone: json['phone'] ?? '',
-
       email: json['email'] ?? '',
-
       avatar: json['avatar'],
-
       specialty: json['specialty'],
-
       qualification: json['qualification'],
-
-      experienceYears: json['experience_years'],
-
-      address: json['address'],
-
-      bio: json['bio'],
-
-      status: json['status'] ?? true,
-
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+      experienceYears: json['experience_years'] is num
+          ? (json['experience_years'] as num).toInt()
           : null,
-
+      salaryCoefficient: (json['salary_coefficient'] as num?)?.toDouble() ?? 1.0,
+      address: json['address'],
+      bio: json['bio'],
+      status: json['status'] ?? true,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'])
+          : null,
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+          ? DateTime.tryParse(json['updated_at'])
           : null,
     );
   }
@@ -115,6 +105,7 @@ class Doctor {
       'qualification': qualification,
 
       'experience_years': experienceYears,
+      'salary_coefficient': salaryCoefficient,
 
       'address': address,
 
@@ -140,6 +131,7 @@ class Doctor {
     String? specialty,
     String? qualification,
     int? experienceYears,
+    double? salaryCoefficient,
     String? address,
     String? bio,
     bool? status,
@@ -158,6 +150,7 @@ class Doctor {
       specialty: specialty ?? this.specialty,
       qualification: qualification ?? this.qualification,
       experienceYears: experienceYears ?? this.experienceYears,
+      salaryCoefficient: salaryCoefficient ?? this.salaryCoefficient,
       address: address ?? this.address,
       bio: bio ?? this.bio,
       status: status ?? this.status,

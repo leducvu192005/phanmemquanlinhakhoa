@@ -31,6 +31,8 @@ class Booking(Base):
         nullable=False
     )  # pending, confirmed, completed, cancelled, checked_in, in_progress
 
+    complexity_level = Column(String(50), default="Thông thường", nullable=False)
+
     # Payment details
     payment_status = Column(
         String(20),

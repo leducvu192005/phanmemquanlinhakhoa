@@ -23,7 +23,12 @@ class RevenueService {
       queryParameters: queryParams,
     );
 
-    final token = await _storage.read(key: 'jwt');
+    String? token;
+    try {
+      token = await _storage.read(key: 'jwt');
+    } catch (_) {
+      // Safely ignore storage issues
+    }
     final response = await http.get(
       uri,
       headers: {

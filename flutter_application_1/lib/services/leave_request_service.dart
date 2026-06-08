@@ -10,7 +10,12 @@ class LeaveRequestService {
   static const _storage = FlutterSecureStorage();
 
   static Future<Map<String, String>> _headers() async {
-    final token = await _storage.read(key: 'jwt');
+    String? token;
+    try {
+      token = await _storage.read(key: 'jwt');
+    } catch (e) {
+      // Safely ignore secure storage read errors (e.g. on web or unsupported environments)
+    }
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -67,7 +72,7 @@ class LeaveRequestService {
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
-      return data.map((key, value) => MapEntry(key, value as int));
+      return data.map((key, value) => MapEntry(key, int.tryParse(value.toString()) ?? 0));
     } else {
       throw Exception("Không thể tải thống kê nghỉ phép");
     }

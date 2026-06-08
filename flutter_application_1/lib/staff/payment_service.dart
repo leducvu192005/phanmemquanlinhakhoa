@@ -252,7 +252,12 @@ class PaymentService {
     final totalAmount = subtotal - discount;
 
     // Call backend API to mark as paid
-    final token = await _storage.read(key: 'jwt');
+    String? token;
+    try {
+      token = await _storage.read(key: 'jwt');
+    } catch (_) {
+      // Safely ignore storage issues
+    }
     final response = await http.put(
       Uri.parse('${Api.baseUrl}/bookings/$bId/pay'),
       headers: {

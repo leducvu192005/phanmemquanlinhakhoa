@@ -7,14 +7,24 @@ import 'user_role_model.dart';
 class RoleManagementService {
   static const _storage = FlutterSecureStorage();
 
+  static Future<Map<String, String>> _headers({bool withJson = false}) async {
+    String? token;
+    try {
+      token = await _storage.read(key: 'jwt');
+    } catch (_) {
+      // Safely ignore storage issues
+    }
+    return {
+      if (withJson) 'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
   static Future<List<UserRoleModel>> fetchUsers() async {
-    final token = await _storage.read(key: 'jwt');
     final response = await http.get(
       Uri.parse('${Api.baseUrl}/users/'),
-      headers: {
-        'Accept': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
+      headers: await _headers(),
     );
 
     if (response.statusCode == 200) {
@@ -26,14 +36,9 @@ class RoleManagementService {
   }
 
   static Future<UserRoleModel> updateUserRole(int userId, String role) async {
-    final token = await _storage.read(key: 'jwt');
     final response = await http.put(
       Uri.parse('${Api.baseUrl}/users/$userId/role'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
+      headers: await _headers(withJson: true),
       body: jsonEncode({
         'role': role.toLowerCase(),
       }),

@@ -24,14 +24,18 @@ class Service {
   factory Service.fromJson(Map<String, dynamic> json) {
     return Service(
       id: json['id']?.toString() ?? '',
-      serviceCode: json['service_code'],
-      serviceName: json['service_name'],
-      category: json['category'],
+      serviceCode: json['service_code'] ?? '',
+      serviceName: json['service_name'] ?? '',
+      category: json['category'] ?? '',
       description: json['description'],
-      duration_minutes: json['duration_minutes'],
-      price: (json['price'] as num).toDouble(),
-      status: json['status'],
-      createdAt: DateTime.parse(json['created_at']),
+      duration_minutes: json['duration_minutes'] is num
+          ? (json['duration_minutes'] as num).toInt()
+          : null,
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      status: json['status'] ?? true,
+      createdAt: json['created_at'] != null
+          ? (DateTime.tryParse(json['created_at']) ?? DateTime.now())
+          : DateTime.now(),
     );
   }
 

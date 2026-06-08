@@ -8,6 +8,8 @@ import 'service_management_screen.dart';
 import 'doctor_management.dart'; // Chứa AdminDashboard quản lý bác sĩ
 import 'revenue_screen.dart';
 import 'role_management_screen.dart';
+import 'salary_management_screen.dart';
+import 'salary_report_screen.dart';
 
 
 class AdminLayout extends StatefulWidget {
@@ -68,6 +70,8 @@ class _AdminLayoutState extends State<AdminLayout> {
       PricingScreen(), // Index 4: Cấu hình Bảng giá
       AdminRevenueScreen(), // Index 5: Thống kê doanh thu
       const RoleManagementScreen(), // Index 6: Quản lý phân quyền
+      const SalaryManagementScreen(), // Index 7: Quản lý tham số lương
+      const SalaryReportScreen(), // Index 8: Báo cáo lương
     ];
 
     return Scaffold(
@@ -203,6 +207,28 @@ class _AdminLayoutState extends State<AdminLayout> {
                         selected: selectedIndex == 6,
                         onTap: () {
                           setState(() => selectedIndex = 6);
+                        },
+                      ),
+
+                      // 8. QUẢN LÝ THAM SỐ LƯƠNG
+                      _SidebarItem(
+                        icon: Icons.settings_outlined,
+                        label: 'Quản lý tham số lương',
+                        wide: isWide,
+                        selected: selectedIndex == 7,
+                        onTap: () {
+                          setState(() => selectedIndex = 7);
+                        },
+                      ),
+
+                      // 9. BÁO CÁO LƯƠNG
+                      _SidebarItem(
+                        icon: Icons.insert_chart_outlined_rounded,
+                        label: 'Báo cáo lương',
+                        wide: isWide,
+                        selected: selectedIndex == 8,
+                        onTap: () {
+                          setState(() => selectedIndex = 8);
                         },
                       ),
                     ],

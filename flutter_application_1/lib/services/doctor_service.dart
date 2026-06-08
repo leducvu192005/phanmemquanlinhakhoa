@@ -11,7 +11,12 @@ class DoctorService {
   static const _storage = FlutterSecureStorage();
 
   static Future<Map<String, String>> _headers() async {
-    final token = await _storage.read(key: 'jwt');
+    String? token;
+    try {
+      token = await _storage.read(key: 'jwt');
+    } catch (_) {
+      // Safely ignore storage issues
+    }
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -47,7 +52,9 @@ class DoctorService {
     if (response.statusCode == 200) {
       return Doctor.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
     } else {
-      throw Exception("Cập nhật hồ sơ thất bại: ${utf8.decode(response.bodyBytes)}");
+      throw Exception(
+        "Cập nhật hồ sơ thất bại: ${utf8.decode(response.bodyBytes)}",
+      );
     }
   }
 
@@ -70,12 +77,14 @@ class DoctorService {
     if (ext == 'webp') mimeType = 'image/webp';
     if (ext == 'gif') mimeType = 'image/gif';
 
-    request.files.add(http.MultipartFile.fromBytes(
-      'file',
-      bytes,
-      filename: filename,
-      contentType: MediaType.parse(mimeType),
-    ));
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'file',
+        bytes,
+        filename: filename,
+        contentType: MediaType.parse(mimeType),
+      ),
+    );
 
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);

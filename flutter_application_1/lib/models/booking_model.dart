@@ -22,6 +22,7 @@ class Booking {
 
   // Indicated services list
   final List<Service> services;
+  final String complexityLevel;
 
   Booking({
     required this.id,
@@ -39,9 +40,39 @@ class Booking {
     this.discountAmount = 0.0,
     this.totalAmount = 0.0,
     this.services = const [],
+    this.complexityLevel = 'Thông thường',
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
+    Patient? parsedPatient;
+    try {
+      if (json['patient'] != null) {
+        parsedPatient = Patient.fromJson(json['patient']);
+      }
+    } catch (e) {
+      print("Error parsing patient in Booking: $e");
+    }
+
+    Doctor? parsedDoctor;
+    try {
+      if (json['doctor'] != null) {
+        parsedDoctor = Doctor.fromJson(json['doctor']);
+      }
+    } catch (e) {
+      print("Error parsing doctor in Booking: $e");
+    }
+
+    List<Service> parsedServices = [];
+    try {
+      if (json['services'] != null) {
+        parsedServices = (json['services'] as List)
+            .map((e) => Service.fromJson(e))
+            .toList();
+      }
+    } catch (e) {
+      print("Error parsing services in Booking: $e");
+    }
+
     return Booking(
       id: json['id']?.toString() ?? '',
       patientId: json['patient_id']?.toString() ?? '',
@@ -50,16 +81,15 @@ class Booking {
       timeSlot: json['time_slot'] ?? '',
       symptoms: json['symptoms'],
       status: json['status'] ?? 'pending',
-      patient: json['patient'] != null ? Patient.fromJson(json['patient']) : null,
-      doctor: json['doctor'] != null ? Doctor.fromJson(json['doctor']) : null,
+      patient: parsedPatient,
+      doctor: parsedDoctor,
       paymentStatus: json['payment_status'] ?? 'unpaid',
       paymentMethod: json['payment_method'],
       paymentTime: json['payment_time'] != null ? DateTime.tryParse(json['payment_time']) : null,
       discountAmount: (json['discount_amount'] as num?)?.toDouble() ?? 0.0,
       totalAmount: (json['total_amount'] as num?)?.toDouble() ?? 0.0,
-      services: json['services'] != null
-          ? (json['services'] as List).map((e) => Service.fromJson(e)).toList()
-          : const [],
+      services: parsedServices,
+      complexityLevel: json['complexity_level'] ?? 'Thông thường',
     );
   }
 
@@ -77,6 +107,7 @@ class Booking {
       'discount_amount': discountAmount,
       'total_amount': totalAmount,
       'services': services.map((e) => e.toJson()).toList(),
+      'complexity_level': complexityLevel,
     };
   }
 }

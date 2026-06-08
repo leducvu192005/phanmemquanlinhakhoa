@@ -42,14 +42,14 @@ class Patient {
       patientCode: json['patient_code'] ?? '',
       fullName: json['full_name'] ?? '',
       gender: json['gender'],
-      dateOfBirth: json['date_of_birth'],
+      dateOfBirth: json['date_of_birth']?.toString(),
       phone: json['phone'] ?? '',
       email: json['email'] ?? '',
       address: json['address'],
       avatar: json['avatar'],
       bloodType: json['blood_type'],
       lastVisit: json['last_visit'] != null
-          ? DateTime.parse(json['last_visit'])
+          ? DateTime.tryParse(json['last_visit'])
           : null,
       notes: json['notes'],
       allergies: json['allergies'],

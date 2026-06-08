@@ -8,6 +8,7 @@ from schemas.user import (
     UserOut,
     LoginSchema,
     TokenOut,
+    UserUpdate,
 )
 
 from auth import (
@@ -133,4 +134,36 @@ def login(
 def get_me(
     current_user: User = Depends(get_current_user),
 ):
+    return current_user
+
+
+# =========================
+# UPDATE CURRENT USER
+# =========================
+@router.put(
+    "/me",
+    response_model=UserOut,
+)
+def update_me(
+    payload: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if payload.username is not None:
+        current_user.username = payload.username
+    if payload.phone is not None:
+        current_user.phone = payload.phone
+    if payload.email is not None:
+        new_email = payload.email.lower()
+        if new_email != current_user.email.lower():
+            existing = db.query(User).filter(User.email == new_email).first()
+            if existing:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email already registered"
+                )
+            current_user.email = new_email
+            
+    db.commit()
+    db.refresh(current_user)
     return current_user

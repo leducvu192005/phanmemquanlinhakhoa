@@ -33,6 +33,7 @@ class DoctorMin(BaseModel):
     phone: Optional[str] = None
     specialty: Optional[str] = None
     avatar: Optional[str] = None
+    salary_coefficient: Optional[float] = 1.0
 
     class Config:
         from_attributes = True

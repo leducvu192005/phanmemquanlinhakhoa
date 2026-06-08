@@ -19,6 +19,7 @@ class DoctorBase(BaseModel):
     specialty: Optional[str] = None   # ✅ FIX: đúng DB
     qualification: Optional[str] = None
     experience_years: Optional[int] = None
+    salary_coefficient: Optional[float] = 1.0
 
     address: Optional[str] = None
     avatar: Optional[str] = None
@@ -50,6 +51,7 @@ class DoctorUpdate(BaseModel):
     specialty: Optional[str] = None   # ✅ FIX
     qualification: Optional[str] = None
     experience_years: Optional[int] = None
+    salary_coefficient: Optional[float] = None
 
     address: Optional[str] = None
     avatar: Optional[str] = None

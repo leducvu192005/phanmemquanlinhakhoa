@@ -10,7 +10,12 @@ class MedicalRecordService {
   static const _storage = FlutterSecureStorage();
 
   static Future<Map<String, String>> _headers() async {
-    final token = await _storage.read(key: 'jwt');
+    String? token;
+    try {
+      token = await _storage.read(key: 'jwt');
+    } catch (_) {
+      // Safely ignore storage issues
+    }
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',

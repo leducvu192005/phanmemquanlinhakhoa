@@ -13,6 +13,7 @@ class BookingBase(BaseModel):
     booking_date: str
     time_slot: str
     symptoms: Optional[str] = None
+    complexity_level: Optional[str] = "Thông thường"
 
 
 class BookingCreate(BookingBase):
@@ -25,6 +26,7 @@ class BookingUpdate(BaseModel):
     symptoms: Optional[str] = None
     status: Optional[str] = None
     doctor_id: Optional[UUID] = None
+    complexity_level: Optional[str] = None
 
 
 class BookingPay(BaseModel):

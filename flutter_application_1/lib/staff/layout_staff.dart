@@ -5,8 +5,9 @@ import 'work_shift_management.dart';
 import 'DoctorScheduleManagement.dart';
 import '../doctor/leave_request_screen.dart';
 import 'appointment_management_screen.dart';
-
 import 'payment_screen.dart';
+import 'profile_screen.dart';
+import 'salary_slip_screen.dart';
 
 class LayoutStaff extends StatefulWidget {
   final int initialIndex;
@@ -61,6 +62,8 @@ class _LayoutStaffState extends State<LayoutStaff> {
       const LeaveRequestScreen(isEmbedded: true, isStaff: true),
       const StaffAppointmentDashboard(),
       const PaymentScreen(),
+      const StaffProfileScreen(isEmbedded: true),
+      const SalarySlipScreen(),
     ];
 
     return Scaffold(
@@ -166,6 +169,28 @@ class _LayoutStaffState extends State<LayoutStaff> {
                         onTap: () {
                           setState(() {
                             selectedIndex = 4;
+                          });
+                        },
+                      ),
+                      _SidebarItem(
+                        icon: Icons.person_outline,
+                        label: 'Hồ sơ cá nhân',
+                        wide: isWide,
+                        selected: selectedIndex == 5,
+                        onTap: () {
+                          setState(() {
+                            selectedIndex = 5;
+                          });
+                        },
+                      ),
+                      _SidebarItem(
+                        icon: Icons.payments_outlined,
+                        label: 'Lập phiếu lương',
+                        wide: isWide,
+                        selected: selectedIndex == 6,
+                        onTap: () {
+                          setState(() {
+                            selectedIndex = 6;
                           });
                         },
                       ),

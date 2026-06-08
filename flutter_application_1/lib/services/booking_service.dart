@@ -9,11 +9,17 @@ class BookingService {
   static const _storage = FlutterSecureStorage();
 
   static Future<Map<String, String>> _headers() async {
-    final token = await _storage.read(key: 'jwt');
+    String? token;
+    try {
+      token = await _storage.read(key: 'jwt');
+    } catch (e) {
+      // Safely ignore storage read issues
+    }
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
+      if (token != null && token != 'null' && token.isNotEmpty)
+        'Authorization': 'Bearer $token',
     };
   }
 
@@ -49,14 +55,32 @@ class BookingService {
 
   // Lấy danh sách lịch đặt khám của bệnh nhân đang đăng nhập
   static Future<List<Booking>> getMyBookings() async {
+    String? token;
+    try {
+      token = await _storage.read(key: 'jwt');
+    } catch (_) {}
+    if (token == null || token == 'null' || token.isEmpty) {
+      print("BookingService: Token is null/empty. Skipping getMyBookings.");
+      return [];
+    }
+
     final url = Uri.parse('$baseUrl/patient/me');
-    final response = await http.get(url, headers: await _headers());
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
 
     if (response.statusCode == 200) {
       final List data = json.decode(utf8.decode(response.bodyBytes));
       return data.map((e) => Booking.fromJson(e)).toList();
     } else {
-      throw Exception('Không thể lấy danh sách lịch đặt khám: ${response.statusCode}');
+      throw Exception(
+        'Không thể lấy danh sách lịch đặt khám: ${response.statusCode}',
+      );
     }
   }
 
@@ -79,7 +103,9 @@ class BookingService {
     if (response.statusCode == 200) {
       return Booking.fromJson(json.decode(utf8.decode(response.bodyBytes)));
     } else {
-      throw Exception('Không tìm thấy chi tiết đặt khám: ${response.statusCode}');
+      throw Exception(
+        'Không tìm thấy chi tiết đặt khám: ${response.statusCode}',
+      );
     }
   }
 
@@ -91,39 +117,86 @@ class BookingService {
     String? status,
     String? search,
   }) async {
+    String? token;
+    try {
+      token = await _storage.read(key: 'jwt');
+    } catch (_) {}
+    if (token == null || token == 'null' || token.isEmpty) {
+      print("BookingService: Token is null/empty. Skipping getAllBookings.");
+      return [];
+    }
+
     final queryParams = <String, String>{};
-    if (doctorId != null && doctorId.isNotEmpty) queryParams['doctor_id'] = doctorId;
-    if (patientId != null && patientId.isNotEmpty) queryParams['patient_id'] = patientId;
-    if (dateStr != null && dateStr.isNotEmpty) queryParams['booking_date'] = dateStr;
-    if (status != null && status.isNotEmpty) queryParams['status_filter'] = status;
+    if (doctorId != null && doctorId.isNotEmpty)
+      queryParams['doctor_id'] = doctorId;
+    if (patientId != null && patientId.isNotEmpty)
+      queryParams['patient_id'] = patientId;
+    if (dateStr != null && dateStr.isNotEmpty)
+      queryParams['booking_date'] = dateStr;
+    if (status != null && status.isNotEmpty)
+      queryParams['status_filter'] = status;
     if (search != null && search.isNotEmpty) queryParams['search'] = search;
 
     final uri = Uri.parse('$baseUrl/').replace(queryParameters: queryParams);
-    final response = await http.get(uri, headers: await _headers());
+    final response = await http.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
 
     if (response.statusCode == 200) {
       final List data = json.decode(utf8.decode(response.bodyBytes));
       return data.map((e) => Booking.fromJson(e)).toList();
     } else {
-      throw Exception('Không thể lấy danh sách đặt khám: ${response.statusCode}');
+      throw Exception(
+        'Không thể lấy danh sách đặt khám: ${response.statusCode}',
+      );
     }
   }
 
   // Lấy thống kê bookings
   static Future<Map<String, dynamic>> getStatsSummary() async {
+    String? token;
+    try {
+      token = await _storage.read(key: 'jwt');
+    } catch (_) {}
+    if (token == null || token == 'null' || token.isEmpty) {
+      print("BookingService: Token is null/empty. Skipping getStatsSummary.");
+      return {};
+    }
+
     final url = Uri.parse('$baseUrl/stats/summary');
-    final response = await http.get(url, headers: await _headers());
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
 
     if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(json.decode(utf8.decode(response.bodyBytes)));
+      return Map<String, dynamic>.from(
+        json.decode(utf8.decode(response.bodyBytes)),
+      );
     } else {
-      throw Exception('Không thể lấy thống kê đặt khám: ${response.statusCode}');
+      throw Exception(
+        'Không thể lấy thống kê đặt khám: ${response.statusCode}',
+      );
     }
   }
 
   // Cập nhật trạng thái booking
-  static Future<Booking> updateStatus(String bookingId, String statusUpdate) async {
-    final url = Uri.parse('$baseUrl/$bookingId/status?status_update=$statusUpdate');
+  static Future<Booking> updateStatus(
+    String bookingId,
+    String statusUpdate,
+  ) async {
+    final url = Uri.parse(
+      '$baseUrl/$bookingId/status?status_update=$statusUpdate',
+    );
     final response = await http.put(url, headers: await _headers());
 
     if (response.statusCode == 200) {
@@ -164,14 +237,34 @@ class BookingService {
 
   // Lấy danh sách ca khám hôm nay của bác sĩ đang đăng nhập
   static Future<List<Booking>> getDoctorTodayBookings() async {
+    String? token;
+    try {
+      token = await _storage.read(key: 'jwt');
+    } catch (_) {}
+    if (token == null || token == 'null' || token.isEmpty) {
+      print(
+        "BookingService: Token is null/empty. Skipping getDoctorTodayBookings.",
+      );
+      return [];
+    }
+
     final url = Uri.parse('$baseUrl/doctor/today');
-    final response = await http.get(url, headers: await _headers());
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
 
     if (response.statusCode == 200) {
       final List data = json.decode(utf8.decode(response.bodyBytes));
       return data.map((e) => Booking.fromJson(e)).toList();
     } else {
-      throw Exception('Không thể lấy lịch khám hôm nay của bác sĩ: ${response.statusCode}');
+      throw Exception(
+        'Không thể lấy lịch khám hôm nay của bác sĩ: ${response.statusCode}',
+      );
     }
   }
 }
