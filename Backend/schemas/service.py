@@ -14,12 +14,12 @@ class ServiceCreate(ServiceBase):
     pass
 
 class ServiceUpdate(BaseModel):
-    service_name: Optional[str]
-    category: Optional[str]
-    description: Optional[str]
-    duration_minutes: Optional[int]
-    price: Optional[float]
-    status: Optional[bool]
+    service_name: Optional[str] = Field(None, min_length=1)
+    category: Optional[str] = Field(None, min_length=1)
+    description: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    price: Optional[float] = Field(None, gt=0)
+    status: Optional[bool] = None
 
 class ServiceResponse(ServiceBase):
     id: int

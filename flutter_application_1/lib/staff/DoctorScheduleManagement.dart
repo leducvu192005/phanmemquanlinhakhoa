@@ -173,7 +173,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
     // THỐNG NHẤT KIỂU STRING? THEO MODEL ĐÃ CẬP NHẬT
     String? selectedDoctorId;
     String? selectedShiftId;
-    final maxPatientsController = TextEditingController();
+    int selectedMaxPatients = 5;
     DateTime selectedDate = DateTime.now();
 
     await showDialog(
@@ -270,13 +270,27 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      TextField(
-                        controller: maxPatientsController,
-                        keyboardType: TextInputType.number,
+                      DropdownButtonFormField<int>(
+                        value: selectedMaxPatients,
                         decoration: _buildInputDecoration(
                           'Số bệnh nhân tối đa',
                           Icons.people_outline,
                         ),
+                        dropdownColor: cardColor,
+                        items: [1, 2, 3, 4, 5].map((val) {
+                          return DropdownMenuItem<int>(
+                            value: val,
+                            child: Text(
+                              '$val bệnh nhân',
+                              style: TextStyle(color: darkTeal),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          setDialogState(() {
+                            selectedMaxPatients = val ?? 5;
+                          });
+                        },
                       ),
                       const SizedBox(height: 16),
                       InkWell(
@@ -353,15 +367,6 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                         return;
                       }
 
-                      if (maxPatientsController.text.isEmpty) {
-                        ScaffoldMessenger.of(dialogContext).showSnackBar(
-                          const SnackBar(
-                            content: Text('Vui lòng nhập số bệnh nhân tối đa'),
-                          ),
-                        );
-                        return;
-                      }
-
                       String? doctorName;
                       String? doctorCode;
 
@@ -379,7 +384,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                           doctorId: selectedDoctorId,
                           workShiftId: selectedShiftId!,
                           workDate: selectedDate,
-                          maxPatients: int.parse(maxPatientsController.text),
+                          maxPatients: selectedMaxPatients,
                           currentPatients: 0,
                           status: "available",
                           note: null,
@@ -435,9 +440,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
     String? selectedDoctorId = item.doctorId;
     String? selectedShiftId = item.workShiftId;
 
-    final maxPatientsController = TextEditingController(
-      text: item.maxPatients.toString(),
-    );
+    int selectedMaxPatients = item.maxPatients.clamp(1, 5);
 
     DateTime selectedDate = item.workDate;
 
@@ -537,13 +540,27 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      TextField(
-                        controller: maxPatientsController,
-                        keyboardType: TextInputType.number,
+                      DropdownButtonFormField<int>(
+                        value: selectedMaxPatients,
                         decoration: _buildInputDecoration(
-                          'Max Patients',
+                          'Số bệnh nhân tối đa',
                           Icons.people_outline,
                         ),
+                        dropdownColor: cardColor,
+                        items: [1, 2, 3, 4, 5].map((val) {
+                          return DropdownMenuItem<int>(
+                            value: val,
+                            child: Text(
+                              '$val bệnh nhân',
+                              style: TextStyle(color: darkTeal),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          setDialogState(() {
+                            selectedMaxPatients = val ?? 5;
+                          });
+                        },
                       ),
                       const SizedBox(height: 16),
                       InkWell(
@@ -629,7 +646,7 @@ class _DoctorschedulemanagementState extends State<Doctorschedulemanagement> {
                         "work_date": selectedDate.toIso8601String().split(
                           'T',
                         )[0],
-                        "max_patients": int.parse(maxPatientsController.text),
+                        "max_patients": selectedMaxPatients,
                       });
 
                       if (!dialogContext.mounted) return;

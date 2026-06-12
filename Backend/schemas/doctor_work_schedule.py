@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from uuid import UUID
 
@@ -13,7 +13,7 @@ class DoctorWorkScheduleCreate(BaseModel):
 
     work_date: date
 
-    max_patients: int = 10
+    max_patients: int = Field(5, ge=1, le=5)
 
     status: str = "available"
 
@@ -30,7 +30,7 @@ class DoctorWorkScheduleUpdate(BaseModel):
 
     work_date: Optional[date] = None
 
-    max_patients: Optional[int] = None
+    max_patients: Optional[int] = Field(None, ge=1, le=5)
 
     current_patients: Optional[int] = None
 
