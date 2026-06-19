@@ -539,6 +539,88 @@ class _PricingScreenState extends State<PricingScreen> {
     );
   }
 
+  // Giao diện Dialog xác nhận xóa dịch vụ
+  void confirmDeleteService(Service service) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 28),
+            SizedBox(width: 10),
+            Text(
+              'Xác nhận xóa dịch vụ',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ],
+        ),
+        content: Text(
+          'Bạn có chắc chắn muốn xóa dịch vụ "${service.serviceName}" khỏi bảng giá?',
+          style: TextStyle(color: Colors.grey[700]),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Hủy',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            onPressed: () async {
+              // Hiển thị vòng xoay loading
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => Center(
+                  child: CircularProgressIndicator(color: primaryTeal),
+                ),
+              );
+
+              try {
+                await ServiceApi.deleteService(service.id);
+                Navigator.pop(context); // Tắt loading spinner
+                Navigator.pop(context); // Đóng Dialog xác nhận
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Đã xóa dịch vụ "${service.serviceName}" thành công!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                fetchServices(); // Tải lại danh sách mới
+              } catch (e) {
+                Navigator.pop(context); // Tắt loading spinner
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Có lỗi xảy ra khi xóa: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text(
+              'Xóa',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -761,6 +843,14 @@ class _PricingScreenState extends State<PricingScreen> {
                                   ),
                                   tooltip: 'Xem lịch sử',
                                   onPressed: () => showPriceHistory(s),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete_outline_rounded,
+                                    color: Colors.redAccent,
+                                  ),
+                                  tooltip: 'Xóa dịch vụ',
+                                  onPressed: () => confirmDeleteService(s),
                                 ),
                               ],
                             ),

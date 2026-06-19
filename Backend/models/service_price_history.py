@@ -1,6 +1,6 @@
 from sqlalchemy import Column, BigInteger, DECIMAL, DateTime, ForeignKey
 from sqlalchemy.sql import func
-from .base import Base
+from db import Base
 
 class ServicePriceHistory(Base):
     __tablename__ = "service_price_history"

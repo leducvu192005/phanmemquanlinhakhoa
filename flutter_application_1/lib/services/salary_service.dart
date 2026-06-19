@@ -50,6 +50,30 @@ class SalaryService {
     throw Exception(error['detail'] ?? 'Thiết lập mức lương cơ bản thất bại');
   }
 
+  static Future<SalaryConfigModel> updateConfig(int id, double baseRate, String effectiveDate) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/configs/$id'),
+      headers: await _headers(withJson: true),
+      body: jsonEncode({
+        'base_salary_per_hour': baseRate,
+        'effective_date': effectiveDate,
+      }),
+    );
+    if (response.statusCode == 200) {
+      return SalaryConfigModel.fromJson(json.decode(utf8.decode(response.bodyBytes)));
+    }
+    final error = json.decode(utf8.decode(response.bodyBytes));
+    throw Exception(error['detail'] ?? 'Cập nhật mức lương cơ bản thất bại');
+  }
+
+  static Future<void> deleteConfig(int id) async {
+    final response = await http.delete(Uri.parse('$baseUrl/configs/$id'), headers: await _headers());
+    if (response.statusCode != 200) {
+      final error = json.decode(utf8.decode(response.bodyBytes));
+      throw Exception(error['detail'] ?? 'Xóa mức lương cơ bản thất bại');
+    }
+  }
+
   // ==========================================
   // 2. ADMIN - SHIFT COEFFICIENTS
   // ==========================================

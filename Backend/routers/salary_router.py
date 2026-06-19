@@ -79,6 +79,37 @@ def create_salary_config(
     return new_config
 
 
+@router.put("/configs/{config_id}", response_model=SalaryConfigResponse)
+def update_salary_config(
+    config_id: int,
+    payload: SalaryConfigCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin)
+):
+    config = db.query(SalaryConfig).filter(SalaryConfig.id == config_id).first()
+    if not config:
+        raise HTTPException(status_code=404, detail="Không tìm thấy cấu hình lương cơ bản")
+    config.base_salary_per_hour = payload.base_salary_per_hour
+    config.effective_date = payload.effective_date
+    db.commit()
+    db.refresh(config)
+    return config
+
+
+@router.delete("/configs/{config_id}")
+def delete_salary_config(
+    config_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin)
+):
+    config = db.query(SalaryConfig).filter(SalaryConfig.id == config_id).first()
+    if not config:
+        raise HTTPException(status_code=404, detail="Không tìm thấy cấu hình lương cơ bản")
+    db.delete(config)
+    db.commit()
+    return {"message": "Đã xóa cấu hình lương cơ bản thành công"}
+
+
 @router.get("/shifts", response_model=List[SalaryShiftCoefficientResponse])
 def get_shift_coefficients(
     db: Session = Depends(get_db),
@@ -235,37 +266,89 @@ def delete_complexity_coefficient(
 # 2. STAFF - TÍNH TOÁN & LẬP PHIẾU LƯƠNG
 # ==========================================
 
-def calculate_salary_details(doctor: Doctor, month: int, year: int, db: Session):
-    # Find active hourly rate
-    # Look for SalaryConfig effective on or before the first day of that month/year
-    target_date = date(year, month, 1)
-    config = db.query(SalaryConfig).filter(
-        SalaryConfig.effective_date <= target_date
-    ).order_by(SalaryConfig.effective_date.desc()).first()
+def get_qualification_coefficient(qualification: Optional[str]) -> float:
+    if not qualification:
+        return 1.0
+    qual_lower = qualification.lower()
     
-    base_rate = config.base_salary_per_hour if config else 200000.0
+    # 1. Tiến sĩ
+    if "tiến sĩ" in qual_lower or "ts" in qual_lower:
+        return 1.6
+    # 2. Chuyên khoa II / CKII
+    if "ckii" in qual_lower or "chuyên khoa ii" in qual_lower or "chuyên khoa 2" in qual_lower or "ck2" in qual_lower:
+        return 1.5
+    # 3. Thạc sĩ / Chuyên khoa I / CKI
+    if (
+        "thạc sĩ" in qual_lower 
+        or "ths" in qual_lower 
+        or "cki" in qual_lower 
+        or "chuyên khoa i" in qual_lower 
+        or "chuyên khoa 1" in qual_lower 
+        or "ck1" in qual_lower
+    ):
+        return 1.3
+    # 4. Bác sĩ thường / Bác sĩ
+    if "bác sĩ" in qual_lower or "bs" in qual_lower or "nha khoa" in qual_lower:
+        return 1.1
+        
+    return 1.0
 
-    # Get shift coefficients
-    shifts_list = db.query(SalaryShiftCoefficient).all()
-    shift_coeffs = {s.shift_name.lower(): s.coefficient for s in shifts_list}
+
+def calculate_salary_details(
+    doctor: Doctor,
+    month: int,
+    year: int,
+    db: Session,
+    base_rate: Optional[float] = None,
+    shift_coeffs: Optional[dict] = None,
+    complexity_coeffs: Optional[dict] = None
+):
+    # Find active hourly rate if not provided
+    if base_rate is None:
+        target_date = date(year, month, 1)
+        config = db.query(SalaryConfig).filter(
+            SalaryConfig.effective_date <= target_date
+        ).order_by(SalaryConfig.effective_date.desc()).first()
+        base_rate = config.base_salary_per_hour if config else 200000.0
+
+    # Get shift coefficients if not provided
+    if shift_coeffs is None:
+        shifts_list = db.query(SalaryShiftCoefficient).all()
+        shift_coeffs = {s.shift_name.lower(): s.coefficient for s in shifts_list}
     
-    # Get complexity coefficients
-    complexities_list = db.query(SalaryComplexityCoefficient).all()
-    complexity_coeffs = {c.complexity_level.lower(): c.coefficient for c in complexities_list}
+    # Get complexity coefficients if not provided
+    if complexity_coeffs is None:
+        complexities_list = db.query(SalaryComplexityCoefficient).all()
+        complexity_coeffs = {c.complexity_level.lower(): c.coefficient for c in complexities_list}
 
-    # Fetch doctor schedules
-    schedules = db.query(DoctorWorkSchedule).join(WorkShift).filter(
+    # Fetch doctor schedules along with WorkShifts in a single query (eliminates N+1 queries)
+    # Using range filter on date to allow indexing
+    start_date = date(year, month, 1)
+    if month == 12:
+        end_date = date(year + 1, 1, 1)
+    else:
+        end_date = date(year, month + 1, 1)
+
+    schedules = db.query(DoctorWorkSchedule, WorkShift).join(
+        WorkShift, DoctorWorkSchedule.work_shift_id == WorkShift.id
+    ).filter(
         DoctorWorkSchedule.doctor_id == doctor.id,
-        extract('month', DoctorWorkSchedule.work_date) == month,
-        extract('year', DoctorWorkSchedule.work_date) == year
+        DoctorWorkSchedule.work_date >= start_date,
+        DoctorWorkSchedule.work_date < end_date
     ).all()
 
-    # Fetch all completed bookings in this month for this doctor
-    date_prefix = f"{year}-{month:02d}-"
+    # Fetch all completed bookings in this month for this doctor using range query
+    start_date_str = f"{year}-{month:02d}-01"
+    if month == 12:
+        end_date_str = f"{year + 1}-01-01"
+    else:
+        end_date_str = f"{year}-{month + 1:02d}-01"
+
     bookings = db.query(Booking).filter(
         Booking.doctor_id == doctor.id,
         Booking.status == "completed",
-        Booking.booking_date.like(f"{date_prefix}%")
+        Booking.booking_date >= start_date_str,
+        Booking.booking_date < end_date_str
     ).all()
 
     total_shifts = len(schedules)
@@ -273,8 +356,11 @@ def calculate_salary_details(doctor: Doctor, month: int, year: int, db: Session)
     total_complexity_coef = 0.0
     total_salary = 0.0
 
-    for sched in schedules:
-        shift = db.query(WorkShift).filter(WorkShift.id == sched.work_shift_id).first()
+    # Determine doctor coefficient: if database has override (not 1.0), use it; otherwise map qualification text
+    qual_coef = get_qualification_coefficient(doctor.qualification)
+    doctor_coef = doctor.salary_coefficient if (doctor.salary_coefficient and doctor.salary_coefficient != 1.0) else qual_coef
+
+    for sched, shift in schedules:
         if not shift:
             continue
         # 1. Hours duration
@@ -290,7 +376,6 @@ def calculate_salary_details(doctor: Doctor, month: int, year: int, db: Session)
         elif weekday == 6: # Sunday
             shift_coef = shift_coeffs.get("chủ nhật", 1.5)
         else: # Weekday, match by shift name
-            # match substring e.g. "sáng", "chiều", "tối"
             shift_name_lower = shift.shift_name.lower()
             if "sáng" in shift_name_lower:
                 shift_coef = shift_coeffs.get("ca sáng", 1.0)
@@ -330,15 +415,13 @@ def calculate_salary_details(doctor: Doctor, month: int, year: int, db: Session)
                     total_complexity_coef += coef
 
         # 4. Ca salary
-        # Số_giờ_quy_đổi = Số_giờ_mỗi_ca × (Hệ_số_ca_làm_việc + Tổng_hệ_số_bệnh_nhân)
         converted_hours = duration_hours * (shift_coef + sum_complexity_shift)
-        # Tiền_ca = Số_giờ_quy_đổi × Hệ_số_bác_sĩ × Tiền_một_giờ
-        ca_salary = converted_hours * (doctor.salary_coefficient or 1.0) * base_rate
+        ca_salary = converted_hours * doctor_coef * base_rate
         total_salary += ca_salary
 
     return {
         "base_rate": base_rate,
-        "doctor_coefficient": doctor.salary_coefficient or 1.0,
+        "doctor_coefficient": doctor_coef,
         "total_shifts": total_shifts,
         "total_hours": total_hours,
         "total_complexity_coef": total_complexity_coef,
@@ -365,7 +448,7 @@ def calculate_doctor_salary(
         "doctor_code": doctor.doctor_code,
         "full_name": doctor.full_name,
         "qualification": doctor.qualification,
-        "salary_coefficient": doctor.salary_coefficient or 1.0,
+        "salary_coefficient": details["doctor_coefficient"],
         "month": month,
         "year": year,
         **details
@@ -458,13 +541,29 @@ def get_monthly_all_doctors_report(
     doctors = db.query(Doctor).filter(Doctor.status == True).all()
     report_items = []
     
+    # Pre-fetch configs once (avoids redundant DB hits inside loop)
+    target_date = date(year, month, 1)
+    config = db.query(SalaryConfig).filter(
+        SalaryConfig.effective_date <= target_date
+    ).order_by(SalaryConfig.effective_date.desc()).first()
+    base_rate = config.base_salary_per_hour if config else 200000.0
+
+    shifts_list = db.query(SalaryShiftCoefficient).all()
+    shift_coeffs = {s.shift_name.lower(): s.coefficient for s in shifts_list}
+
+    complexities_list = db.query(SalaryComplexityCoefficient).all()
+    complexity_coeffs = {c.complexity_level.lower(): c.coefficient for c in complexities_list}
+
+    # Pre-fetch all salary slips for this month/year to avoid N+1 queries in the doctor loop
+    slips = db.query(SalarySlip).filter(
+        SalarySlip.month == month,
+        SalarySlip.year == year
+    ).all()
+    slips_map = {s.doctor_id: s for s in slips}
+
     for doc in doctors:
-        # Check if saved slip exists first
-        slip = db.query(SalarySlip).filter(
-            SalarySlip.doctor_id == doc.id,
-            SalarySlip.month == month,
-            SalarySlip.year == year
-        ).first()
+        # Look up saved slip in memory
+        slip = slips_map.get(doc.id)
 
         if slip:
             report_items.append(
@@ -478,8 +577,13 @@ def get_monthly_all_doctors_report(
                 )
             )
         else:
-            # Calculate dynamically
-            details = calculate_salary_details(doc, month, year, db)
+            # Calculate dynamically using cached configs
+            details = calculate_salary_details(
+                doc, month, year, db,
+                base_rate=base_rate,
+                shift_coeffs=shift_coeffs,
+                complexity_coeffs=complexity_coeffs
+            )
             report_items.append(
                 DoctorSalaryReportItem(
                     doctor_id=doc.id,
@@ -513,12 +617,23 @@ def get_yearly_doctor_report(
     months_data = []
     total_salary_year = 0.0
 
+    # Pre-fetch coefficients once
+    shifts_list = db.query(SalaryShiftCoefficient).all()
+    shift_coeffs = {s.shift_name.lower(): s.coefficient for s in shifts_list}
+
+    complexities_list = db.query(SalaryComplexityCoefficient).all()
+    complexity_coeffs = {c.complexity_level.lower(): c.coefficient for c in complexities_list}
+
+    # Pre-fetch all salary slips for this doctor and year (reduces 12 DB queries to 1)
+    slips = db.query(SalarySlip).filter(
+        SalarySlip.doctor_id == doctor_id,
+        SalarySlip.year == year
+    ).all()
+    slips_map = {s.month: s for s in slips}
+
     for m in range(1, 13):
-        slip = db.query(SalarySlip).filter(
-            SalarySlip.doctor_id == doctor_id,
-            SalarySlip.month == m,
-            SalarySlip.year == year
-        ).first()
+        # Look up saved slip in memory
+        slip = slips_map.get(m)
 
         if slip:
             total_salary_year += slip.total_salary
@@ -531,7 +646,12 @@ def get_yearly_doctor_report(
                 )
             )
         else:
-            details = calculate_salary_details(doctor, m, year, db)
+            # Calculate dynamically using cached configs
+            details = calculate_salary_details(
+                doctor, m, year, db,
+                shift_coeffs=shift_coeffs,
+                complexity_coeffs=complexity_coeffs
+            )
             total_salary_year += details["total_salary"]
             months_data.append(
                 YearlyDoctorSalaryReportItem(
@@ -565,6 +685,26 @@ def get_yearly_all_doctors_report(
     report_items = []
     total_pool = 0.0
 
+    # Pre-fetch coefficients once
+    shifts_list = db.query(SalaryShiftCoefficient).all()
+    shift_coeffs = {s.shift_name.lower(): s.coefficient for s in shifts_list}
+
+    complexities_list = db.query(SalaryComplexityCoefficient).all()
+    complexity_coeffs = {c.complexity_level.lower(): c.coefficient for c in complexities_list}
+
+    # Pre-calculate base rates for each of the 12 months (reduces DB hits)
+    base_rates = {}
+    for m in range(1, 13):
+        target_date = date(year, m, 1)
+        config = db.query(SalaryConfig).filter(
+            SalaryConfig.effective_date <= target_date
+        ).order_by(SalaryConfig.effective_date.desc()).first()
+        base_rates[m] = config.base_salary_per_hour if config else 200000.0
+
+    # Pre-fetch all salary slips for the entire year (reduces N*12 DB queries to 1)
+    slips = db.query(SalarySlip).filter(SalarySlip.year == year).all()
+    slips_map = {(s.doctor_id, s.month): s for s in slips}
+
     for doc in doctors:
         doc_total_salary = 0.0
         doc_total_hours = 0.0
@@ -572,18 +712,21 @@ def get_yearly_all_doctors_report(
         
         # Aggregate across 12 months
         for m in range(1, 13):
-            slip = db.query(SalarySlip).filter(
-                SalarySlip.doctor_id == doc.id,
-                SalarySlip.month == m,
-                SalarySlip.year == year
-            ).first()
+            # Look up saved slip in memory
+            slip = slips_map.get((doc.id, m))
 
             if slip:
                 doc_total_salary += slip.total_salary
                 doc_total_hours += slip.total_hours
                 doc_total_shifts += slip.total_shifts
             else:
-                details = calculate_salary_details(doc, m, year, db)
+                # Calculate dynamically using cached configs
+                details = calculate_salary_details(
+                    doc, m, year, db,
+                    base_rate=base_rates[m],
+                    shift_coeffs=shift_coeffs,
+                    complexity_coeffs=complexity_coeffs
+                )
                 doc_total_salary += details["total_salary"]
                 doc_total_hours += details["total_hours"]
                 doc_total_shifts += details["total_shifts"]

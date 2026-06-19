@@ -143,6 +143,16 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (_dob == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng chọn ngày sinh'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     final payload = {
@@ -356,7 +366,7 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                                     child: DropdownButtonFormField<String>(
                                       value: _gender,
                                       decoration: InputDecoration(
-                                        labelText: 'Giới tính',
+                                        labelText: 'Giới tính *',
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(
                                             12,
@@ -375,6 +385,9 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                                       ],
                                       onChanged: (v) =>
                                           setState(() => _gender = v),
+                                      validator: (v) => (v == null || v.isEmpty)
+                                          ? 'Vui lòng chọn giới tính'
+                                          : null,
                                     ),
                                   ),
                                   Expanded(
@@ -382,7 +395,7 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                                       icon: const Icon(Icons.calendar_month),
                                       label: Text(
                                         _dob == null
-                                            ? 'Chọn ngày sinh'
+                                            ? 'Chọn ngày sinh *'
                                             : 'Ngày sinh: ${DateFormat('dd/MM/yyyy').format(_dob!)}',
                                         style: TextStyle(
                                           color: _dob == null
@@ -423,20 +436,23 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                                     child: TextFormField(
                                       controller: _specialtyCtrl,
                                       decoration: InputDecoration(
-                                        labelText: 'Chuyên khoa',
+                                        labelText: 'Chuyên khoa *',
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(
                                             12,
                                           ),
                                         ),
                                       ),
+                                      validator: (v) => (v == null || v.trim().isEmpty)
+                                          ? 'Vui lòng nhập chuyên khoa'
+                                          : null,
                                     ),
                                   ),
                                   Expanded(
                                     child: TextFormField(
                                       controller: _qualificationCtrl,
                                       decoration: InputDecoration(
-                                        labelText: 'Học vị / Học hàm',
+                                        labelText: 'Học vị / Học hàm *',
                                         hintText:
                                             'Ví dụ: Bác sĩ CKI, Thạc sĩ...',
                                         border: OutlineInputBorder(
@@ -445,6 +461,9 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                                           ),
                                         ),
                                       ),
+                                      validator: (v) => (v == null || v.trim().isEmpty)
+                                          ? 'Vui lòng nhập học vị / học hàm'
+                                          : null,
                                     ),
                                   ),
                                 ]),
@@ -457,26 +476,32 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                                       controller: _experienceCtrl,
                                       keyboardType: TextInputType.number,
                                       decoration: InputDecoration(
-                                        labelText: 'Số năm kinh nghiệm',
+                                        labelText: 'Số năm kinh nghiệm *',
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(
                                             12,
                                           ),
                                         ),
                                       ),
+                                      validator: (v) => (v == null || v.trim().isEmpty)
+                                          ? 'Vui lòng nhập số năm kinh nghiệm'
+                                          : null,
                                     ),
                                   ),
                                   Expanded(
                                     child: TextFormField(
                                       controller: _addressCtrl,
                                       decoration: InputDecoration(
-                                        labelText: 'Địa chỉ liên hệ',
+                                        labelText: 'Địa chỉ liên hệ *',
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(
                                             12,
                                           ),
                                         ),
                                       ),
+                                      validator: (v) => (v == null || v.trim().isEmpty)
+                                          ? 'Vui lòng nhập địa chỉ liên hệ'
+                                          : null,
                                     ),
                                   ),
                                 ]),
@@ -488,13 +513,16 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                                   maxLines: 4,
                                   decoration: InputDecoration(
                                     labelText:
-                                        'Giới thiệu bản thân / Tiểu sử bác sĩ',
+                                        'Giới thiệu bản thân / Tiểu sử bác sĩ *',
                                     hintText:
                                         'Nhập thông tin giới thiệu để bệnh nhân hiểu rõ về bạn...',
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
+                                  validator: (v) => (v == null || v.trim().isEmpty)
+                                      ? 'Vui lòng nhập giới thiệu bản thân / tiểu sử'
+                                      : null,
                                 ),
                                 const SizedBox(height: 32),
 

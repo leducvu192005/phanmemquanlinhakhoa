@@ -58,16 +58,16 @@ class _SalaryManagementScreenState extends State<SalaryManagementScreen> {
   // ==========================================
   // actions - config
   // ==========================================
-  Future<void> _addBaseRate() async {
+  Future<void> _addOrEditBaseRate({SalaryConfigModel? config}) async {
     final formKey = GlobalKey<FormState>();
-    final rateController = TextEditingController();
-    DateTime selectedDate = DateTime.now();
+    final rateController = TextEditingController(text: config?.baseSalaryPerHour.toString() ?? '');
+    DateTime selectedDate = config != null ? DateTime.parse(config.effectiveDate) : DateTime.now();
 
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Thiết lập mức lương cơ bản', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(config == null ? 'Thiết lập mức lương cơ bản' : 'Sửa mức lương cơ bản', style: const TextStyle(fontWeight: FontWeight.bold)),
           content: Form(
             key: formKey,
             child: Column(
@@ -137,11 +137,51 @@ class _SalaryManagementScreenState extends State<SalaryManagementScreen> {
     try {
       final rate = double.parse(rateController.text);
       final dateStr = DateFormat('yyyy-MM-dd').format(selectedDate);
-      await SalaryService.createConfig(rate, dateStr);
+      if (config == null) {
+        await SalaryService.createConfig(rate, dateStr);
+      } else {
+        await SalaryService.updateConfig(config.id, rate, dateStr);
+      }
       await _loadAllData();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Thiết lập mức lương cơ bản thành công!'), backgroundColor: Colors.green),
+        const SnackBar(content: Text('Lưu mức lương cơ bản thành công!'), backgroundColor: Colors.green),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.redAccent),
+      );
+    }
+  }
+
+  Future<void> _deleteBaseRate(SalaryConfigModel config) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('Bạn có chắc chắn muốn xóa thiết lập mức lương cơ bản này?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text('Xóa', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isLoading = true);
+    try {
+      await SalaryService.deleteConfig(config.id);
+      await _loadAllData();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Xóa mức lương cơ bản thành công!'), backgroundColor: Colors.green),
       );
     } catch (e) {
       if (!mounted) return;
@@ -556,7 +596,7 @@ class _SalaryManagementScreenState extends State<SalaryManagementScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             ElevatedButton.icon(
-              onPressed: _addBaseRate,
+              onPressed: () => _addOrEditBaseRate(),
               icon: const Icon(Icons.add, color: Colors.white),
               label: const Text('Thiết lập mới', style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
@@ -599,19 +639,35 @@ class _SalaryManagementScreenState extends State<SalaryManagementScreen> {
                         ),
                       ),
                       subtitle: Text('Ngày hiệu lực: $dateStr'),
-                      trailing: isFirst
-                          ? Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: primaryColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isFirst ? primaryColor.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              isFirst ? 'Đang áp dụng' : 'Hết hạn',
+                              style: TextStyle(
+                                color: isFirst ? primaryColor : Colors.grey,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
                               ),
-                              child: Text(
-                                'Đang áp dụng',
-                                style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 12),
-                              ),
-                            )
-                          : const Text('Hết hạn', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
+                            onPressed: () => _addOrEditBaseRate(config: conf),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                            onPressed: () => _deleteBaseRate(conf),
+                          ),
+                        ],
+                      ),
                     );
                   },
                 ),

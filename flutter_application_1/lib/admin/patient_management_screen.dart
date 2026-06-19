@@ -341,7 +341,8 @@ class _PatientManagementContentState extends State<PatientManagementContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    p.dateOfBirth != null && DateTime.tryParse(p.dateOfBirth!) != null
+                    p.dateOfBirth != null &&
+                            DateTime.tryParse(p.dateOfBirth!) != null
                         ? "Tuổi: ${calculateAge(DateTime.tryParse(p.dateOfBirth!)!)} tuổi"
                         : "Tuổi: Chưa cập nhật",
                     style: TextStyle(color: Colors.grey[800], fontSize: 13),

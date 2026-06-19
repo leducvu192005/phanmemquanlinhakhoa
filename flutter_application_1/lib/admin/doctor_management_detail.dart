@@ -139,7 +139,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                             child: TextField(
                               controller: codeCtrl,
                               decoration: const InputDecoration(
-                                labelText: 'Mã bác sĩ',
+                                labelText: 'Mã bác sĩ *',
                                 border: OutlineInputBorder(),
                               ),
                             ),
@@ -149,7 +149,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                             child: TextField(
                               controller: nameCtrl,
                               decoration: const InputDecoration(
-                                labelText: 'Họ và tên',
+                                labelText: 'Họ và tên *',
                                 border: OutlineInputBorder(),
                               ),
                             ),
@@ -163,7 +163,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                             child: TextField(
                               controller: genderCtrl,
                               decoration: const InputDecoration(
-                                labelText: 'Giới tính',
+                                labelText: 'Giới tính *',
                                 border: OutlineInputBorder(),
                               ),
                             ),
@@ -173,7 +173,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                             child: TextField(
                               controller: dobCtrl,
                               decoration: const InputDecoration(
-                                labelText: 'Ngày sinh (YYYY-MM-DD)',
+                                labelText: 'Ngày sinh (YYYY-MM-DD) *',
                                 border: OutlineInputBorder(),
                               ),
                             ),
@@ -187,7 +187,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                             child: TextField(
                               controller: phoneCtrl,
                               decoration: const InputDecoration(
-                                labelText: 'Số điện thoại',
+                                labelText: 'Số điện thoại *',
                                 border: OutlineInputBorder(),
                               ),
                             ),
@@ -197,7 +197,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                             child: TextField(
                               controller: emailCtrl,
                               decoration: const InputDecoration(
-                                labelText: 'Email',
+                                labelText: 'Email *',
                                 border: OutlineInputBorder(),
                               ),
                             ),
@@ -211,7 +211,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                             child: TextField(
                               controller: specialtyCtrl,
                               decoration: const InputDecoration(
-                                labelText: 'Chuyên khoa',
+                                labelText: 'Chuyên khoa *',
                                 border: OutlineInputBorder(),
                               ),
                             ),
@@ -221,7 +221,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                             child: TextField(
                               controller: qualCtrl,
                               decoration: const InputDecoration(
-                                labelText: 'Trình độ',
+                                labelText: 'Trình độ *',
                                 border: OutlineInputBorder(),
                               ),
                             ),
@@ -236,7 +236,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                               controller: expCtrl,
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
-                                labelText: 'Số năm kinh nghiệm',
+                                labelText: 'Số năm kinh nghiệm *',
                                 border: OutlineInputBorder(),
                               ),
                             ),
@@ -246,7 +246,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                             child: TextField(
                               controller: addressCtrl,
                               decoration: const InputDecoration(
-                                labelText: 'Địa chỉ',
+                                labelText: 'Địa chỉ *',
                                 border: OutlineInputBorder(),
                               ),
                             ),
@@ -258,7 +258,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                         controller: bioCtrl,
                         maxLines: 3,
                         decoration: const InputDecoration(
-                          labelText: 'Mô tả / Tiểu sử',
+                          labelText: 'Mô tả / Tiểu sử *',
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -288,7 +288,28 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
               child: Text('Hủy', style: TextStyle(color: Colors.grey[600])),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () {
+                if (codeCtrl.text.trim().isEmpty ||
+                    nameCtrl.text.trim().isEmpty ||
+                    genderCtrl.text.trim().isEmpty ||
+                    dobCtrl.text.trim().isEmpty ||
+                    phoneCtrl.text.trim().isEmpty ||
+                    emailCtrl.text.trim().isEmpty ||
+                    specialtyCtrl.text.trim().isEmpty ||
+                    qualCtrl.text.trim().isEmpty ||
+                    expCtrl.text.trim().isEmpty ||
+                    addressCtrl.text.trim().isEmpty ||
+                    bioCtrl.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Vui lòng điền đầy đủ tất cả các trường thông tin, không được để trống!'),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                  return;
+                }
+                Navigator.of(context).pop(true);
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
                 foregroundColor: Colors.white,
@@ -306,21 +327,15 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
     final body = {
       "doctor_code": codeCtrl.text.trim(),
       "full_name": nameCtrl.text.trim(),
-      "gender": genderCtrl.text.trim().isEmpty ? null : genderCtrl.text.trim(),
-      "date_of_birth": dobCtrl.text.trim().isEmpty ? null : dobCtrl.text.trim(),
+      "gender": genderCtrl.text.trim(),
+      "date_of_birth": dobCtrl.text.trim(),
       "phone": phoneCtrl.text.trim(),
       "email": emailCtrl.text.trim(),
-      "specialty": specialtyCtrl.text.trim().isEmpty
-          ? null
-          : specialtyCtrl.text.trim(),
-      "qualification": qualCtrl.text.trim().isEmpty
-          ? null
-          : qualCtrl.text.trim(),
-      "experience_years": int.tryParse(expCtrl.text.trim()),
-      "address": addressCtrl.text.trim().isEmpty
-          ? null
-          : addressCtrl.text.trim(),
-      "bio": bioCtrl.text.trim().isEmpty ? null : bioCtrl.text.trim(),
+      "specialty": specialtyCtrl.text.trim(),
+      "qualification": qualCtrl.text.trim(),
+      "experience_years": int.tryParse(expCtrl.text.trim()) ?? 0,
+      "address": addressCtrl.text.trim(),
+      "bio": bioCtrl.text.trim(),
       "status": status,
       "avatar": _currentDoctor.avatar,
     };

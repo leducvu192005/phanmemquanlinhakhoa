@@ -90,5 +90,5 @@ app.include_router(salary_router)
 @app.get("/")
 def home():
     return {
-        "message": "Dental API Running 🚀"
+        "message": "Dental API Running 🚀 (Reloaded v2)"
     }
